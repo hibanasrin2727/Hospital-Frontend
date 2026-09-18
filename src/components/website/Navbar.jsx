@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getUser, isLoggedIn, logout } from "../../utils/auth";
@@ -6,8 +6,15 @@ import { getUser, isLoggedIn, logout } from "../../utils/auth";
 const Navbar = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const moreDropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
+
+  const navigate = useNavigate();
 
   // =====================================================
   // Detect scrolling
@@ -75,6 +82,47 @@ const Navbar = () => {
   }, []);
 
   // =====================================================
+  // Close desktop More dropdown when clicking outside
+  // =====================================================
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        moreDropdownRef.current &&
+        !moreDropdownRef.current.contains(event.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // =====================================================
+  // Close mobile menu when clicking outside
+  // =====================================================
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target)
+      ) {
+        setMobileMenu(false);
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // =====================================================
   // Smooth scroll to section
   // =====================================================
   const scrollToSection = (id) => {
@@ -96,11 +144,12 @@ const Navbar = () => {
 
     setMobileMenu(false);
     setDropdownOpen(false);
+    setAccountDropdownOpen(false);
   };
 
-
-  const navigate = useNavigate();
-
+  // =====================================================
+  // Authentication
+  // =====================================================
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
   const [user, setUser] = useState(getUser());
 
@@ -117,7 +166,49 @@ const Navbar = () => {
     };
   }, []);
 
+  // =====================================================
+  // Logout Handler
+  // =====================================================
+  const handleLogout = () => {
+    // Logout immediately
+    logout();
+
+    setLoggedIn(false);
+    setUser(null);
+    setAccountDropdownOpen(false);
+    setMobileMenu(false);
+    setDropdownOpen(false);
+
+    // Show loading
+    setLogoutLoading(true);
+
+    // Wait 1 second
+    setTimeout(() => {
+      setLogoutLoading(false);
+      navigate("/");
+    }, 400);
+  };
+
   return (
+    <>
+      {logoutLoading && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center">
+
+            <div className="h-11 w-11 animate-spin rounded-full border-4 border-gray-200 border-t-[#1976c8]"></div>
+
+            <p className="mt-4 animate-[blink_0.7s_steps(2,start)_infinite] text-[15px] font-semibold text-[#294b68]">
+              Logging out...
+            </p>
+
+          </div>
+        </div>
+      )}
+
+
+
+
+
     <header className="sticky top-0 z-[9999] w-full bg-white">
 
       {/* =====================================================
@@ -137,7 +228,7 @@ const Navbar = () => {
 
             <a
               href="mailto:info@hospitalcare.com"
-              className="flex items-center gap-1.5 text-[13px] text-white no-underline transition hover:opacity-80"
+                className="flex items-center gap-1.5 text-[13px] text-white !no-underline transition hover:opacity-80"
             >
               <i className="bi bi-envelope text-[13px]"></i>
 
@@ -148,7 +239,7 @@ const Navbar = () => {
 
             <a
               href="tel:+919876543210"
-              className="flex items-center gap-1.5 text-[13px] text-white no-underline transition hover:opacity-80"
+                className="flex items-center gap-1.5 text-[13px] text-white !no-underline transition hover:opacity-80"
             >
               <i className="bi bi-phone text-[13px]"></i>
 
@@ -206,6 +297,25 @@ const Navbar = () => {
 
         <div className="mx-auto flex h-full max-w-[1400px] items-center px-4">
 
+            {/* =================================================
+              MOBILE MENU BUTTON
+              ================================================= */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenu(!mobileMenu);
+                setDropdownOpen(false);
+                setAccountDropdownOpen(false);
+              }}
+              className="mr-3 flex h-10 w-10 shrink-0 items-center justify-center border-0 bg-transparent p-0 !text-[23px] text-[#052038] lg:hidden"
+              aria-label="Toggle navigation"
+            >
+              <i
+                className={`bi ${mobileMenu ? "bi-x" : "bi-list"
+                  }`}
+              ></i>
+            </button>
+
           {/* =================================================
               LOGO
               ================================================= */}
@@ -220,13 +330,11 @@ const Navbar = () => {
           {/* =================================================
               DESKTOP NAVIGATION
               ================================================= */}
-          <nav className="lg:ml-[350px]   hidden items-center lg:flex">
+            <nav className="hidden items-center lg:ml-[350px] lg:flex">
 
             <ul className="m-0 flex list-none items-center gap-[29px] p-0">
 
-              {/* =================================================
-                  HOME
-                  ================================================= */}
+                {/* HOME */}
               <li>
                 <button
                   type="button"
@@ -245,9 +353,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-              {/* =================================================
-                  ABOUT
-                  ================================================= */}
+                {/* ABOUT */}
               <li>
                 <button
                   type="button"
@@ -266,9 +372,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-              {/* =================================================
-                  SERVICES
-                  ================================================= */}
+                {/* SERVICES */}
               <li>
                 <button
                   type="button"
@@ -287,9 +391,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-              {/* =================================================
-                  DEPARTMENTS
-                  ================================================= */}
+                {/* DEPARTMENTS */}
               <li>
                 <button
                   type="button"
@@ -310,9 +412,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-              {/* =================================================
-                  DOCTORS
-                  ================================================= */}
+                {/* DOCTORS */}
               <li>
                 <button
                   type="button"
@@ -331,16 +431,15 @@ const Navbar = () => {
                 </button>
               </li>
 
-              {/* =================================================
-                  MORE DROPDOWN
-                  ================================================= */}
-              <li className="relative">
+                {/* MORE DROPDOWN */}
+                <li ref={moreDropdownRef} className="relative">
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setDropdownOpen(!dropdownOpen)
-                  }
+                    onClick={() => {
+                      setDropdownOpen(!dropdownOpen);
+                      setAccountDropdownOpen(false);
+                    }}
                   className="flex h-[70px] items-center gap-1 border-0 bg-transparent px-0 text-[14px] text-[#444444] transition-colors duration-300 hover:text-[#1976c8]"
                 >
                   More
@@ -384,13 +483,13 @@ const Navbar = () => {
 
               </li>
 
-              {/* =================================================
-                  CONTACT
-                  ================================================= */}
+                {/* CONTACT */}
               <li>
                 <button
                   type="button"
-                  onClick={() => scrollToSection("contact")}
+                    onClick={() =>
+                      scrollToSection("contact")
+                    }
                   className={`relative flex h-[70px] items-center border-0 bg-transparent px-0 text-[14px] no-underline transition-colors duration-300 ${
                     activeSection === "contact"
                       ? "font-medium text-[#1976c8]"
@@ -410,18 +509,16 @@ const Navbar = () => {
           </nav>
 
           {/* =================================================
-              SIGN IN / SIGN UP / USER
+              DESKTOP SIGN IN / SIGN UP
               ================================================= */}
+            {!loggedIn && (
+              <div className="ml-[34px] hidden items-center gap-2 lg:flex">
 
-          <div className="ml-[25px] hidden items-center gap-3 lg:flex">
-
-            {!loggedIn ? (
-              <>
                 {/* Sign In */}
                 <button
                   type="button"
                   onClick={() => navigate("/login")}
-                  className="whitespace-nowrap border-0 bg-transparent px-2 text-[13px] font-medium text-[#444444] transition-colors duration-300 hover:text-[#1976c8]"
+                  className="whitespace-nowrap !rounded-full border-1 bg-transparent px-4 py-1.5 text-[13px] font-medium text-[#444444] transition-colors duration-200 hover:text-[#1976c8] "
                 >
                   Sign In
                 </button>
@@ -430,35 +527,15 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/signup")}
-                  className="whitespace-nowrap !rounded-full border border-[#1976c8] bg-transparent px-5 py-2 text-[13px] font-medium text-[#1976c8] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
+                  className="whitespace-nowrap !rounded-full border-1 border-indigo-900 bg-[#3fa6ff] px-4 py-1.5 text-[13px] font-medium text-white transition-colors duration-200 hover:text-[#1976c8]"
                 >
                   Sign Up
                 </button>
-              </>
-            ) : (
-              <>
 
-                {/* Logout */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    navigate("/");
-                  }}
-                  className="flex w-full items-center justify-center gap-2 !rounded-full border border-[#1976c8] bg-white px-5 py-2 text-[14px] font-medium text-[#1976c8] transition hover:bg-[#1976c8] hover:text-black "
-                >
-                  <i className="bi bi-box-arrow-right"></i>
-                  Logout
-                </button>
-              </>
+              </div>
             )}
-
-          </div>
-
-
-
           {/* =================================================
-              APPOINTMENT BUTTON
+              DESKTOP APPOINTMENT BUTTON
               ================================================= */}
           <button
             type="button"
@@ -470,69 +547,203 @@ const Navbar = () => {
             Make an Appointment
           </button>
 
-{/* =================================================
-    DESKTOP ACCOUNT LOGO
-    ================================================= */}
-
-{loggedIn && (
-  <div className="ml-[18px] mr-auto hidden items-center lg:flex">
-
-    <button
-      type="button"
-      onClick={() => navigate("/")}
-      className="group flex items-center border-0 bg-transparent p-0"
-      title={user?.name || "My Account"}
-    >
-      <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#1976c8] text-[16px] font-bold uppercase text-white shadow-sm transition-all duration-300 group-hover:bg-[#294b68]">
-        {(user?.name || "User").charAt(0)}
-      </div>
-    </button>
-
-  </div>
-)}
 
 
-           {/* =================================================
-              MOBILE BUTTON
+            {/* =================================================
+              DESKTOP ACCOUNT
               ================================================= */}
+            {loggedIn && (
+              <div className="relative ml-[18px] hidden items-center lg:flex">
 
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenu(!mobileMenu);
-              setDropdownOpen(false);
-            }}
-            className="ml-4 flex h-10 w-10 items-center justify-center border-0 bg-transparent text-[28px] text-[#1976c8] lg:hidden"
-            aria-label="Toggle navigation"
-          >
-            <i
-              className={`bi ${
-                mobileMenu ? "bi-x" : "bi-list"
-              }`}
-            ></i>
-          </button>
+                {/* Account Logo */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountDropdownOpen(
+                      !accountDropdownOpen
+                    );
+                    setDropdownOpen(false);
+                  }}
+                  className="group flex items-center border-0 bg-transparent p-0"
+                  title={user?.name || "My Account"}
+                >
+                  <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#1976c8] text-[16px] font-bold uppercase text-white shadow-sm transition-all duration-300 group-hover:bg-[#294b68]">
+                    {(user?.name || "User").charAt(0)}
+                  </div>
+                </button>
+
+                {/* Account Dropdown */}
+                {accountDropdownOpen && (
+                  <div className="absolute right-0 top-[52px] w-[200px] rounded-xl border border-gray-100 bg-white py-2 shadow-[0_8px_25px_rgba(0,0,0,0.12)]">
+
+                    {/* User Information */}
+                    <div className="border-b border-gray-100 px-4 py-3">
+
+                      <p className="m-0 truncate text-[14px] font-semibold text-[#294b68]">
+                        {user?.name || "User"}
+                      </p>
+
+                      <p className="m-0 mt-1 truncate text-[12px] text-gray-500">
+                        {user?.email || ""}
+                      </p>
+
+                    </div>
+
+                    {/* Profile */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountDropdownOpen(false);
+                        navigate("/profile");
+                      }}
+                      className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-3 text-left text-[14px] text-gray-600 transition-colors duration-200 hover:bg-[#f5f9fd] hover:text-[#1976c8]"
+                    >
+                      <i className="bi bi-person text-[16px]"></i>
+
+                      <span>
+                        Profile
+                      </span>
+                    </button>
+
+                    {/* Logout */}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-3 text-left text-[14px] text-gray-600 transition-colors duration-200 hover:bg-[#f5f9fd] hover:text-[#1976c8]"
+                    >
+                      <i className="bi bi-box-arrow-right text-[16px]"></i>
+
+                      <span>
+                        Logout
+                      </span>
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* =================================================
+              MOBILE AUTHENTICATION
+              ================================================= */}
+            <div className="ml-auto flex items-center lg:hidden">
+
+              {!loggedIn ? (
+
+                <div className="flex items-center gap-1.5">
+
+                  {/* Sign In */}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="whitespace-nowrap border-0 bg-transparent px-2 py-2 text-[12px] font-medium text-[#444444] transition-colors duration-200 hover:text-[#1976c8]"
+                  >
+                    Sign In
+                  </button>
+
+                  {/* Sign Up */}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/signup")}
+                    className="whitespace-nowrap !rounded-full border border-[#1976c8] bg-[#1976c8] px-3 py-1.5 text-[12px] font-medium text-white transition-all duration-200 hover:bg-[#294b68]"
+                  >
+                    Sign Up
+                  </button>
+
+                </div>
+
+              ) : (
+
+                <div className="relative flex items-center gap-2">
+
+                    {/* Mobile Account Logo */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountDropdownOpen(
+                          !accountDropdownOpen
+                        );
+                        setDropdownOpen(false);
+                      }}
+                      className="group flex h-9 w-9 items-center justify-center !rounded-full border-0 bg-[#1976c8] p-0 text-[14px] font-bold uppercase text-white shadow-sm transition-all duration-200 hover:bg-[#294b68]"
+                      title={user?.name || "My Account"}
+                    >
+                      {(user?.name || "User").charAt(0)}
+                    </button>
+
+                    {/* Mobile Account Dropdown */}
+                    {accountDropdownOpen && (
+                      <div className="absolute right-0 top-[48px] z-[10000] w-[190px] rounded-xl border border-gray-100 bg-white py-2 shadow-[0_8px_25px_rgba(0,0,0,0.12)]">
+
+                        {/* User Information */}
+                        <div className="border-b border-gray-100 px-4 py-3">
+
+                          <p className="m-0 truncate text-[14px] font-semibold text-[#294b68]">
+                            {user?.name || "User"}
+                          </p>
+
+                          <p className="m-0 mt-1 truncate text-[12px] text-gray-500">
+                            {user?.email || ""}
+                          </p>
+
+                        </div>
+
+                        {/* Profile */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAccountDropdownOpen(false);
+                            navigate("/profile");
+                          }}
+                          className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-3 text-left text-[14px] text-gray-600 transition-colors duration-200 hover:bg-[#f5f9fd] hover:text-[#1976c8]"
+                        >
+                          <i className="bi bi-person text-[16px]"></i>
+
+                          <span>
+                            Profile
+                          </span>
+                        </button>
+
+                        {/* Logout */}
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-3 text-left text-[14px] text-gray-600 transition-colors duration-200 hover:bg-[#f5f9fd] hover:text-[#1976c8]"
+                        >
+                          <i className="bi bi-box-arrow-right text-[16px]"></i>
+
+                          <span>
+                            Logout
+                          </span>
+                        </button>
+
+                      </div>
+                    )}
+
+                  </div>
+
+              )}
+
+            </div>
+
+          </div>
 
         </div>
-
-      </div>
-
 
       {/* =====================================================
           MOBILE NAVIGATION
           ===================================================== */}
-
-      {mobileMenu && (
-        <div className="absolute left-4 right-4 top-[70px] rounded-xl border border-gray-100 bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] lg:hidden">
-
+        {mobileMenu && (
+          <div
+            ref={mobileMenuRef}
+            className="absolute left-4 right-4 top-[70px] rounded-xl border border-gray-100 bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] lg:hidden"
+          >
           <nav>
 
             <ul className="m-0 flex list-none flex-col p-0">
 
-
-              {/* =================================================
-                  HOME
-                  ================================================= */}
-
+                {/* HOME */}
               <li>
                 <button
                   type="button"
@@ -549,11 +760,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-
-              {/* =================================================
-                  ABOUT
-                  ================================================= */}
-
+                {/* ABOUT */}
               <li>
                 <button
                   type="button"
@@ -570,11 +777,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-
-              {/* =================================================
-                  SERVICES
-                  ================================================= */}
-
+                {/* SERVICES */}
               <li>
                 <button
                   type="button"
@@ -591,11 +794,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-
-              {/* =================================================
-                  DEPARTMENTS
-                  ================================================= */}
-
+                {/* DEPARTMENTS */}
               <li>
                 <button
                   type="button"
@@ -612,11 +811,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-
-              {/* =================================================
-                  DOCTORS
-                  ================================================= */}
-
+                {/* DOCTORS */}
               <li>
                 <button
                   type="button"
@@ -633,11 +828,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-
-              {/* =================================================
-                  MOBILE MORE
-                  ================================================= */}
-
+                {/* MOBILE MORE */}
               <li>
 
                 <button
@@ -647,7 +838,9 @@ const Navbar = () => {
                   }
                   className="flex w-full items-center justify-between rounded-md border-0 bg-transparent px-3 py-3 text-left text-[14px] text-gray-600 hover:bg-gray-50"
                 >
-                  <span>More</span>
+                    <span>
+                      More
+                    </span>
 
                   <i
                     className={`bi ${
@@ -657,7 +850,6 @@ const Navbar = () => {
                     }`}
                   ></i>
                 </button>
-
 
                 {dropdownOpen && (
                   <div className="ml-3 border-l border-gray-200 pl-3">
@@ -672,7 +864,6 @@ const Navbar = () => {
                     >
                       Appointment
                     </button>
-
 
                     {/* FAQ */}
                     <button
@@ -690,11 +881,7 @@ const Navbar = () => {
 
               </li>
 
-
-              {/* =================================================
-                  CONTACT
-                  ================================================= */}
-
+                {/* CONTACT */}
               <li>
                 <button
                   type="button"
@@ -711,11 +898,7 @@ const Navbar = () => {
                 </button>
               </li>
 
-
-              {/* =================================================
-                  MOBILE APPOINTMENT
-                  ================================================= */}
-
+                {/* MOBILE APPOINTMENT */}
               <li className="mt-3 border-t border-gray-100 pt-3">
 
                 <button
@@ -723,109 +906,15 @@ const Navbar = () => {
                   onClick={() =>
                     scrollToSection("appointment")
                   }
-                  className="flex w-full items-center justify-center rounded-full border-0 bg-[#1976c8] px-5 py-3 text-[14px] font-medium text-white no-underline transition duration-200 hover:bg-[#294b68]"
+                    className="flex w-full items-center justify-center !rounded-full border-0 bg-[#1976c8] px-5 py-3 text-[14px] font-medium text-white no-underline transition duration-200 hover:bg-[#294b68]"
                 >
                   Make an Appointment
                 </button>
 
               </li>
 
-
-              {/* =================================================
-                  MOBILE AUTHENTICATION
-                  ================================================= */}
-
-              <li className="mt-3 border-t border-gray-100 pt-4">
-
-                {!loggedIn ? (
-
-                  /* =================================================
-                     SIGN IN / SIGN UP
-                     ================================================= */
-
-                  <div className="flex gap-3">
-
-                    {/* Sign In */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenu(false);
-                        navigate("/login");
-                      }}
-                      className="flex-1 rounded-full border border-[#1976c8] bg-white px-4 py-3 text-[14px] font-semibold text-[#1976c8] transition duration-200 hover:bg-[#f0f7fd]"
-                    >
-                      Sign In
-                    </button>
-
-
-                    {/* Sign Up */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenu(false);
-                        navigate("/signup");
-                      }}
-                      className="flex-1 rounded-full bg-[#1976c8] px-4 py-3 text-[14px] font-semibold text-white transition duration-200 hover:bg-[#294b68]"
-                    >
-                      Sign Up
-                    </button>
-
-                  </div>
-
-                ) : (
-
-                  /* =================================================
-                     LOGGED IN USER
-                     ================================================= */
-
-                  <div className="space-y-3">
-
-                    {/* Account */}
-                    <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#f5f9fd] px-4 py-3">
-
-                      {/* First Letter Logo */}
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1976c8] text-[16px] font-bold uppercase text-white shadow-sm">
-                        {(user?.name || "User").charAt(0)}
-                      </div>
-
-
-                      {/* User Name */}
-                      <div className="min-w-0 flex-1">
-
-                        <p className="truncate text-[14px] font-semibold text-[#294b68]">
-                          {user?.name || "User"}
-                        </p>
-
-                        <p className="mt-0.5 text-[12px] text-gray-500">
-                          My Account
-                        </p>
-
-                      </div>
-
-                    </div>
-
-
-                    {/* Logout */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        logout();
-                        setMobileMenu(false);
-                        navigate("/");
-                      }}
-                      className="flex w-full items-center justify-center gap-2 rounded-full border border-[#1976c8] bg-white px-5 py-3 text-[14px] font-semibold text-[#1976c8] transition duration-200 hover:bg-[#1976c8] hover:text-white"
-                    >
-                      <i className="bi bi-box-arrow-right text-[15px]"></i>
-                      Logout
-                    </button>
-
-                  </div>
-
-                )}
-
-              </li>
-
             </ul>
+
 
           </nav>
 
@@ -833,6 +922,7 @@ const Navbar = () => {
       )}
 
     </header>
+    </>
   );
 };
 

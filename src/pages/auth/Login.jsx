@@ -69,15 +69,27 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f9fd]">
+    <div className="relative min-h-screen bg-[#f5f9fd]">
 
-      
+      {/* ===============================
+          HOME BUTTON
+          =============================== */}
+
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        className="absolute left-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border-0 bg-white text-[#1976c8] shadow-sm transition-all duration-200 hover:bg-[#1976c8] hover:text-white"
+        title="Go to Home"
+      >
+        <i className="bi bi-house text-[18px]"></i>
+      </button>
+
 
       {/* ===============================
           LOGIN CONTAINER
           =============================== */}
 
-      <div className="flex min-h-[calc(100vh-70px)] items-center justify-center px-5 py-12">
+      <div className="flex min-h-screen items-center justify-center px-5 py-12">
 
         <div className="w-full max-w-[450px]">
 
@@ -87,7 +99,7 @@ const Login = () => {
                 ICON
                 =============================== */}
 
-            <div className="mb-5 flex justify-center">
+            <div className="mb-3 flex justify-center">
 
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f0f7fd]">
 
@@ -169,7 +181,7 @@ const Login = () => {
 
               {/* PASSWORD */}
 
-              <div className="mt-5">
+              <div className="mt-3">
 
                 <label
                   htmlFor="password"
@@ -201,7 +213,7 @@ const Login = () => {
 
               {/* FORGOT PASSWORD */}
 
-              <div className="mt-3 text-right">
+              <div className="mt-3 mb-2 text-right">
 
                 <button
                   type="button"
@@ -245,7 +257,7 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => navigate("/signup")}
-                className="mt-2 border-0 bg-transparent text-[14px] font-semibold text-[#1976c8] hover:text-[#294b68]"
+                className="mt-0 border-0 bg-transparent text-[14px] font-semibold text-[#1976c8] hover:text-[#294b68]"
               >
                 Create an Account
               </button>

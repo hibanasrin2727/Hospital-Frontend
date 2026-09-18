@@ -108,7 +108,7 @@ const Home = () => {
 
                   <a
                     href="#about"
-                    className="inline-flex items-center gap-2 rounded-full bg-[#4fa0e3] px-7 py-2.5 text-[14px] font-medium text-white no-underline transition-all duration-300 hover:bg-[#294b68]"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#4fa0e3] px-7 py-2.5 text-[14px] font-medium text-white !no-underline transition-all duration-300 hover:bg-[#294b68]"
                   >
                     <span>Learn More</span>
 
@@ -197,6 +197,9 @@ const Home = () => {
         </div>
 
       </section>
+
+
+
 
             {/* =====================================================
           ABOUT SECTION

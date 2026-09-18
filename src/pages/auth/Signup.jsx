@@ -85,6 +85,15 @@ const Signup = () => {
   return (
     <div className="min-h-screen bg-[#f5f9fd]">
 
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        className="absolute left-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border-0 bg-white text-[#1976c8] shadow-sm transition-all duration-200 hover:bg-[#1976c8] hover:text-white"
+        title="Go to Home"
+      >
+        <i className="bi bi-house text-[18px]"></i>
+      </button>
+
      
 
 
@@ -98,7 +107,7 @@ const Signup = () => {
 
             {/* ICON */}
 
-            <div className="mb-5 flex justify-center">
+            <div className="mb-3 flex justify-center">
 
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f0f7fd]">
 
@@ -183,7 +192,7 @@ const Signup = () => {
 
               {/* EMAIL */}
 
-              <div className="mt-5">
+              <div className="mt-2">
 
                 <label
                   htmlFor="email"
@@ -215,7 +224,7 @@ const Signup = () => {
 
               {/* PHONE */}
 
-              <div className="mt-5">
+              <div className="mt-2">
 
                 <label
                   htmlFor="phone"
@@ -247,7 +256,7 @@ const Signup = () => {
 
               {/* PASSWORD */}
 
-              <div className="mt-5">
+              <div className="mt-2">
 
                 <label
                   htmlFor="password"
@@ -279,7 +288,7 @@ const Signup = () => {
 
               {/* CONFIRM PASSWORD */}
 
-              <div className="mt-5">
+              <div className="mt-2">
 
                 <label
                   htmlFor="confirmPassword"
@@ -314,7 +323,7 @@ const Signup = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`mt-7 flex h-[48px] w-full items-center justify-center rounded-lg border-0 text-[14px] font-semibold text-white transition-all duration-300 ${
+                className={`mt-3 mb-3 flex h-[48px] w-full items-center justify-center !rounded-lg border-0 text-[14px] font-semibold text-white transition-all duration-300 ${
                   loading
                     ? "cursor-not-allowed bg-gray-400"
                     : "bg-[#1976c8] hover:bg-[#294b68]"
@@ -339,7 +348,7 @@ const Signup = () => {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="mt-2 border-0 bg-transparent text-[14px] font-semibold text-[#1976c8] hover:text-[#294b68]"
+                className="mt-0 border-0 bg-transparent text-[14px] font-semibold text-[#1976c8] hover:text-[#294b68]"
               >
                 Sign In
               </button>
