@@ -22,6 +22,8 @@ import Doctors from "./pages/website/Doctors";
 import Appointment from "./pages/website/Appointment";
 import FAQ from "./pages/website/FAQ";
 import Contact from "./pages/website/Contact";
+import Profile from "./pages/website/Profile";
+
 
 // =====================================================
 // AUTH PAGES
@@ -92,6 +94,8 @@ const router = createBrowserRouter([
         path: "contact",
         element: <Contact />,
       },
+
+
     ],
   },
 
@@ -108,6 +112,11 @@ const router = createBrowserRouter([
   {
     path: "/signup",
     element: <Signup />,
+  },
+  // user profile
+  {
+    path: "profile",
+    element: <Profile />,
   },
 
 

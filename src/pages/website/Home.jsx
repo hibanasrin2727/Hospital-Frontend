@@ -6,6 +6,8 @@ import Doctors from "./Doctors";
 import Appointment from "./Appointment";
 import FAQ from "./FAQ";
 import Contact from "./Contact";
+import Stats from "./Stats";
+
 
 
 
@@ -206,6 +208,8 @@ const Home = () => {
           ===================================================== */}
       <About />
 
+      <Stats />
+
       {/* =====================================================
           SERVICES SECTION
           ===================================================== */}
@@ -235,6 +239,7 @@ const Home = () => {
           CONTACT SECTION
           ===================================================== */}
       <Contact />
+
 
     </main>
   );

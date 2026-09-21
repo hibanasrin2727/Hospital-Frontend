@@ -173,21 +173,20 @@ const Navbar = () => {
     // Logout immediately
     logout();
 
-    setLoggedIn(false);
-    setUser(null);
-    setAccountDropdownOpen(false);
-    setMobileMenu(false);
-    setDropdownOpen(false);
+  setLoggedIn(false);
+  setUser(null);
+  setAccountDropdownOpen(false);
+  setMobileMenu(false);
+  setDropdownOpen(false);
 
-    // Show loading
-    setLogoutLoading(true);
+  // Show loading screen
+  setLogoutLoading(true);
 
-    // Wait 1 second
-    setTimeout(() => {
-      setLogoutLoading(false);
-      navigate("/");
-    }, 400);
-  };
+  // After 400ms, refresh and go to Home
+  setTimeout(() => {
+    window.location.href = "/";
+  }, 400);
+};
 
   return (
     <>

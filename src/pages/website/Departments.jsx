@@ -7,15 +7,24 @@ const Departments = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ================= GET DEPARTMENTS =================
+  // ================= GET ACTIVE DEPARTMENTS =================
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await api.get(
-          "/website/departments"
-        );
+        const response = await api.get("/website/departments");
 
-        setDepartments(response.data.data || response.data);
+        console.log("Departments API response:", response.data);
+
+        // Backend response:
+        // {
+        //   departments: [...]
+        // }
+
+        const departmentData = response.data?.departments || [];
+
+        setDepartments(
+          Array.isArray(departmentData) ? departmentData : []
+        );
       } catch (error) {
         console.error("Error fetching departments:", error);
         setError("Unable to load departments.");
@@ -27,155 +36,204 @@ const Departments = () => {
     fetchDepartments();
   }, []);
 
+  // ================= DEPARTMENT IMAGE =================
+  const getDepartmentImage = (department, index) => {
+    // If backend has an image, use it
+    if (department?.image) {
+      if (department.image.startsWith("http")) {
+        return department.image;
+      }
+
+      return department.image.startsWith("/")
+        ? department.image
+        : `/assets/img/${department.image}`;
+    }
+
+    // Otherwise use existing MediLab department images
+    const imageNumber = (index % 5) + 1;
+
+    return `/assets/img/departments-${imageNumber}.jpg`;
+  };
+
   return (
-    <main className="main">
+    <main className="w-full">
+      {/* =====================================================
+          DEPARTMENTS SECTION
+      ====================================================== */}
+      <section
+        id="departments"
+        className="scroll-mt-[107px] bg-white py-[65px] md:py-[65px] lg:py-[70px]"
+      >
+        <div className="mx-auto max-w-[1400px] px-6 md:px-8 lg:px-10">
 
-      {/* ================= DEPARTMENTS SECTION ================= */}
-      <section id="departments" className="departments section">
+          {/* =================================================
+              SECTION TITLE
+          ================================================== */}
+          <div className="mx-auto max-w-[850px] text-center">
 
-        {/* Section Title */}
-        <div
-          className="container section-title"
-          data-aos="fade-up"
-        >
-          <h2>Departments</h2>
+            <h2 className="text-[30px] font-semibold leading-[1.2] text-[#294b68] md:text-[32px]">
+              Departments
+            </h2>
 
-          <p>
-            Explore our specialized healthcare departments and
-            find the right medical care for your needs.
-          </p>
-        </div>
+            {/* Title Divider */}
+            <div className="mx-auto mt-[16px] flex h-[3px] w-[160px] items-center justify-center">
+              <span className="h-[1px] w-[50px] bg-[#bdbdbd]"></span>
 
-        <div
-          className="container"
-          data-aos="fade-up"
-          data-aos-delay="100"
-        >
+              <span className="h-[3px] w-[60px] bg-[#1976c8]"></span>
 
+              <span className="h-[1px] w-[50px] bg-[#bdbdbd]"></span>
+            </div>
+
+            <p className="mt-[20px] text-[14px] leading-[1.7] text-[#444] md:text-[15px]">
+              Explore our specialized healthcare departments and find the
+              right medical care for your needs.
+            </p>
+          </div>
+
+          {/* =================================================
+              LOADING
+          ================================================== */}
           {loading && (
-            <div className="text-center py-5">
-              <p>Loading departments...</p>
+            <div className="flex min-h-[300px] items-center justify-center">
+              <div className="flex flex-col items-center">
+
+                <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#dbeaf6] border-t-[#1976c8]"></div>
+
+                <p className="mt-4 text-[14px] text-[#666]">
+                  Loading departments...
+                </p>
+
+              </div>
             </div>
           )}
 
-          {error && (
-            <div className="text-center py-5">
-              <p>{error}</p>
+          {/* =================================================
+              ERROR
+          ================================================== */}
+          {!loading && error && (
+            <div className="flex min-h-[300px] items-center justify-center">
+              <p className="text-[15px] text-red-500">
+                {error}
+              </p>
             </div>
           )}
 
-          {!loading && !error && departments.length === 0 && (
-            <div className="text-center py-5">
-              <p>No departments available.</p>
-            </div>
-          )}
+          {/* =================================================
+              NO DEPARTMENTS
+          ================================================== */}
+          {!loading &&
+            !error &&
+            departments.length === 0 && (
+              <div className="flex min-h-[300px] items-center justify-center">
+                <p className="text-[15px] text-[#666]">
+                  No departments available.
+                </p>
+              </div>
+            )}
 
-          {!loading && !error && departments.length > 0 && (
+          {/* =================================================
+              DEPARTMENT CONTENT
+          ================================================== */}
+          {!loading &&
+            !error &&
+            departments.length > 0 && (
+              <div className="mt-[58px] grid grid-cols-1 gap-8 lg:grid-cols-[285px_1fr]">
 
-            <div className="row">
+              {/* =================================================
+                    LEFT SIDE - DEPARTMENT LIST
+                ================================================== */}
+              <div className="w-full">
 
-              {/* ================= DEPARTMENT TABS ================= */}
-              <div className="col-lg-3">
-
-                <ul className="nav nav-tabs flex-column">
+                <div className="flex flex-col">
 
                   {departments.map((department, index) => (
-                    <li
-                      className="nav-item"
+                    <button
                       key={department._id}
-                    >
-
-                      <button
-                        type="button"
-                        className={`nav-link ${
-                          activeDepartment === index
-                            ? "active show"
-                            : ""
-                        }`}
+                      type="button"
                         onClick={() =>
                           setActiveDepartment(index)
                         }
+                      className={`relative flex min-h-[46px] w-full items-center border-0 bg-transparent px-0 py-[10px] pr-[20px] text-left text-[14px] font-semibold transition-all duration-300 ${activeDepartment === index
+                        ? "text-[#1976c8]"
+                        : "text-[#222] hover:text-[#1976c8]"
+                        }`}
                       >
                         {department.name}
-                      </button>
 
-                    </li>
+                      {/* Active blue vertical line */}
+                      {activeDepartment === index && (
+                        <span className="absolute right-0 top-0 h-full w-[2px] bg-[#1976c8]"></span>
+                      )}
+                    </button>
                   ))}
 
-                </ul>
-
+                </div>
               </div>
 
-              {/* ================= DEPARTMENT CONTENT ================= */}
-              <div className="col-lg-9 mt-4 mt-lg-0">
+              {/* =================================================
+                    RIGHT SIDE
+                ================================================== */}
+              <div className="min-w-0">
 
-                <div className="tab-content">
+                {departments.map((department, index) => {
+                  const isActive =
+                    activeDepartment === index;
 
-                  {departments.map((department, index) => (
-
+                  return (
                     <div
                       key={department._id}
-                      className={`tab-pane ${
-                        activeDepartment === index
-                          ? "active show"
-                          : ""
-                      }`}
+                      className={isActive ? "block" : "hidden"}
                     >
 
-                      <div className="row">
+                      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_310px]">
 
-                        {/* Details */}
-                        <div className="col-lg-8 details order-2 order-lg-1">
+                        {/* =================================================
+                              DEPARTMENT DETAILS
+                          ================================================== */}
+                        <div className="border-l-[2px] border-[#e5e5e5] pl-[22px]">
 
-                          <h3>
+                          <h3 className="text-[26px] font-semibold leading-[1.25] text-[#294b68] md:text-[28px]">
                             {department.name}
                           </h3>
 
-                          <p className="fst-italic">
+                          <p className="mt-[20px] text-[14px] italic leading-[1.7] text-[#666] md:text-[15px]">
                             Specialized medical care provided by
                             experienced healthcare professionals.
                           </p>
 
-                          <p>
+                          <p className="mt-[18px] max-w-[650px] text-[14px] leading-[1.7] text-[#555] md:text-[15px]">
                             {department.description ||
-                              `Our ${department.name} department provides
-                              healthcare services and consultations for
-                              patients requiring specialized medical care.`}
+                              `Our ${department.name} department provides healthcare services and consultations for patients requiring specialized medical care.`}
                           </p>
 
                         </div>
 
-                        {/* Image */}
-                        <div className="col-lg-4 text-center order-1 order-lg-2">
+                        {/* =================================================
+                              DEPARTMENT IMAGE
+                          ================================================== */}
+                        <div className="flex justify-center lg:justify-end">
 
                           <img
-                            src={`/assets/img/departments-${
-                              (index % 5) + 1
-                            }.jpg`}
+                            src={getDepartmentImage(
+                              department,
+                              index
+                            )}
                             alt={department.name}
-                            className="img-fluid"
+                            className="h-[268px] w-full max-w-[310px] object-cover"
                           />
 
                         </div>
 
                       </div>
-
                     </div>
-
-                  ))}
-
-                </div>
+                  );
+                })}
 
               </div>
-
             </div>
-
-          )}
-
+            )}
         </div>
-
       </section>
-
     </main>
   );
 };
