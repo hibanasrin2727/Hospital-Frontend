@@ -9,6 +9,7 @@ import {
 // =====================================================
 
 import WebsiteLayout from "./layouts/WebsiteLayout";
+import DashboardLayout from "./layouts/DashboardLayout";
 
 // =====================================================
 // WEBSITE PAGES
@@ -24,6 +25,16 @@ import FAQ from "./pages/website/FAQ";
 import Contact from "./pages/website/Contact";
 import Profile from "./pages/website/Profile";
 
+// =====================================================
+// DASHBOARD PAGES
+// =====================================================
+
+import Dashboard from "./pages/dashboard/Dashboard";
+import DashboardDoctors from "./pages/dashboard/Doctors";
+import DashboardDepartments from "./pages/dashboard/Departments";
+import DashboardServices from "./pages/dashboard/Services";
+import DashboardAppointments from "./pages/dashboard/Appointments";
+import DashboardUsers from "./pages/dashboard/Users";
 
 // =====================================================
 // AUTH PAGES
@@ -31,7 +42,6 @@ import Profile from "./pages/website/Profile";
 
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
-
 
 // =====================================================
 // ROUTER
@@ -94,11 +104,55 @@ const router = createBrowserRouter([
         path: "contact",
         element: <Contact />,
       },
-
-
     ],
   },
 
+  // ===================================================
+  // ADMIN DASHBOARD
+  // ===================================================
+
+  {
+    path: "/dashboard",
+    element: <DashboardLayout />,
+
+    children: [
+      // DASHBOARD HOME
+      {
+        index: true,
+        element: <Dashboard />,
+      },
+
+      // DOCTORS
+      {
+        path: "doctors",
+        element: <DashboardDoctors />,
+      },
+
+      // DEPARTMENTS
+      {
+        path: "departments",
+        element: <DashboardDepartments />,
+      },
+
+      // SERVICES
+      {
+        path: "services",
+        element: <DashboardServices />,
+      },
+
+      // APPOINTMENTS
+      {
+        path: "appointments",
+        element: <DashboardAppointments />,
+      },
+
+      // USERS
+      {
+        path: "users",
+        element: <DashboardUsers />,
+      },
+    ],
+  },
 
   // ===================================================
   // AUTHENTICATION
@@ -113,12 +167,15 @@ const router = createBrowserRouter([
     path: "/signup",
     element: <Signup />,
   },
-  // user profile
+
+  // ===================================================
+  // USER PROFILE
+  // ===================================================
+
   {
-    path: "profile",
+    path: "/profile",
     element: <Profile />,
   },
-
 
   // ===================================================
   // UNKNOWN URL
@@ -129,7 +186,6 @@ const router = createBrowserRouter([
     element: <Navigate to="/" replace />,
   },
 ]);
-
 
 // =====================================================
 // APP
