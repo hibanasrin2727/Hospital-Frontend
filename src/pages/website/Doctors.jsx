@@ -59,7 +59,7 @@ const Doctors = () => {
       ====================================================== */}
       <section
         id="doctors"
-        className="scroll-mt-[107px] bg-white py-[65px] md:py-[75px] lg:py-[80px]"
+        className="scroll-mt-[107px] bg-white"
       >
         <div className="mx-auto max-w-[1400px] px-6 md:px-8 lg:px-10">
 

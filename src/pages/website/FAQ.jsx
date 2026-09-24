@@ -41,57 +41,101 @@ const FAQ = () => {
   };
 
   return (
-    <main className="main">
-      <section id="faq" className="faq section light-background">
+    <main className="w-full">
+      {/* ================= FAQ SECTION ================= */}
+      <section
+        id="faq"
+        className="scroll-mt-[107px] bg-[#eef7fd] py-[35px] md:py-[45px] lg:py-[55px]"
+      >
+        <div className="mx-auto max-w-[1400px] px-6 md:px-8 lg:px-10">
 
-        {/* Section Title */}
-        <div className="container section-title" data-aos="fade-up">
-          <h2>Frequently Asked Questions</h2>
-          <p>
-            Find answers to some of the most common questions
-            about HospitalCare and our healthcare services.
-          </p>
-        </div>
+          {/* ================= SECTION TITLE ================= */}
+          <div className="mx-auto max-w-[850px] text-center">
 
-        <div className="container">
-          <div className="row justify-content-center">
+            <h2 className="text-[30px] font-medium leading-[1.2] text-[#294b68] md:text-[32px]">
+              Frequently Asked Questions
+            </h2>
 
-            <div
-              className="col-lg-10"
-              data-aos="fade-up"
-              data-aos-delay="100"
-            >
-              <div className="faq-container">
+            {/* Title Line */}
+            <div className="mx-auto mt-[15px] flex w-[160px] items-center justify-center">
+              <span className="h-[1px] w-[50px] bg-[#bdbdbd]"></span>
 
-                {faqs.map((faq, index) => (
-                  <div
-                    className={`faq-item ${
-                      activeIndex === index ? "faq-active" : ""
-                    }`}
-                    key={index}
-                  >
-                    <h3 onClick={() => toggleFAQ(index)}>
-                      {faq.question}
-                    </h3>
+              <span className="h-[3px] w-[60px] bg-[#1976c8]"></span>
 
-                    <div className="faq-content">
-                      <p>{faq.answer}</p>
-                    </div>
-
-                    <i
-                      className={`faq-toggle bi ${
-                        activeIndex === index
-                          ? "bi-chevron-down"
-                          : "bi-chevron-right"
-                      }`}
-                      onClick={() => toggleFAQ(index)}
-                    ></i>
-                  </div>
-                ))}
-
-              </div>
+              <span className="h-[1px] w-[50px] bg-[#bdbdbd]"></span>
             </div>
 
+            <p className="mt-[18px] text-[14px] leading-[1.7] text-[#294b68] md:text-[15px]">
+              Find answers to some of the most common questions
+              about HospitalCare and our healthcare services.
+            </p>
+          </div>
+
+          {/* ================= FAQ LIST ================= */}
+          <div className="mx-auto mt-[60px] max-w-[1075px]">
+
+            <div className="flex flex-col gap-[16px]">
+
+              {faqs.map((faq, index) => {
+                const isActive = activeIndex === index;
+
+                return (
+                  <div
+                    key={index}
+                    className={`relative overflow-hidden rounded-[4px] border transition-all duration-300 ${isActive
+                        ? "border-[#1976c8] bg-[#247bc7] text-white"
+                        : "border-[#c9ddeb] bg-white text-[#294b68] hover:border-[#1976c8]"
+                      }`}
+                  >
+                    {/* ================= QUESTION ================= */}
+                    <button
+                      type="button"
+                      onClick={() => toggleFAQ(index)}
+                      className={`flex min-h-[64px] w-full items-center justify-between gap-5 border-0 px-[20px] py-[16px] text-left transition-all duration-300 md:px-[20px] ${isActive
+                          ? "bg-[#247bc7] text-white"
+                          : "bg-white text-[#294b68]"
+                        }`}
+                    >
+                      <span
+                        className={`text-[17px] font-medium leading-[1.4] md:text-[18px] ${isActive
+                            ? "text-white"
+                            : "text-[#294b68]"
+                          }`}
+                      >
+                        {faq.question}
+                      </span>
+
+                      <i
+                        className={`bi flex-shrink-0 text-[16px] transition-transform duration-300 ${isActive
+                            ? "bi-chevron-down text-white"
+                            : "bi-chevron-right text-[#294b68]"
+                          }`}
+                      ></i>
+                    </button>
+
+                    {/* ================= ANSWER ================= */}
+                    <div
+                      className={`grid transition-all duration-300 ${isActive
+                          ? "grid-rows-[1fr]"
+                          : "grid-rows-[0fr]"
+                        }`}
+                    >
+                      <div className="overflow-hidden">
+                        <div
+                          className={`px-[20px] pb-[20px] text-[14px] leading-[1.65] md:text-[15px] ${isActive
+                              ? "text-white"
+                              : "text-[#444]"
+                            }`}
+                        >
+                          {faq.answer}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+            </div>
           </div>
         </div>
       </section>

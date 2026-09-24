@@ -3,13 +3,15 @@ import api from "../../services/api";
 import { getUser } from "../../utils/auth";
 
 const Appointment = () => {
+  const user = getUser();
+
   const [departments, setDepartments] = useState([]);
   const [doctors, setDoctors] = useState([]);
 
   const [formData, setFormData] = useState({
-    patientName: "",
-    email: "",
-    phone: "",
+    patientName: user?.name || user?.username || "",
+    email: user?.email || "",
+    phone: user?.phone || user?.phoneNumber || "",
     doctorId: "",
     departmentId: "",
     date: "",
@@ -21,63 +23,22 @@ const Appointment = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // =====================================================
-  // AUTOFILL LOGGED-IN USER DETAILS
-  // =====================================================
-  useEffect(() => {
-    const user = getUser();
-
-    if (user) {
-      setFormData((previousData) => ({
-        ...previousData,
-
-        patientName:
-          user.name ||
-          user.username ||
-          user.fullName ||
-          "",
-
-        email:
-          user.email ||
-          "",
-
-        phone:
-          user.phone ||
-          user.phoneNumber ||
-          "",
-      }));
-    }
-  }, []);
-
-  // =====================================================
-  // GET DEPARTMENTS
-  // =====================================================
+  // ================= GET DEPARTMENTS =================
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await api.get(
-          "/website/departments"
-        );
-
-        console.log(
-          "Departments response:",
-          response.data
-        );
+        const response = await api.get("/website/departments");
 
         const departmentData =
-          response.data?.departments || [];
+          response.data?.data ||
+          response.data?.departments ||
+          response.data;
 
         setDepartments(
-          Array.isArray(departmentData)
-            ? departmentData
-            : []
+          Array.isArray(departmentData) ? departmentData : []
         );
       } catch (error) {
-        console.error(
-          "Error fetching departments:",
-          error
-        );
-
+        console.error("Error fetching departments:", error);
         setDepartments([]);
       }
     };
@@ -85,35 +46,22 @@ const Appointment = () => {
     fetchDepartments();
   }, []);
 
-  // =====================================================
-  // GET DOCTORS
-  // =====================================================
+  // ================= GET DOCTORS =================
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await api.get(
-          "/website/doctors"
-        );
-
-        console.log(
-          "Doctors response:",
-          response.data
-        );
+        const response = await api.get("/website/doctors");
 
         const doctorData =
-          response.data?.doctors || [];
+          response.data?.data ||
+          response.data?.doctors ||
+          response.data;
 
         setDoctors(
-          Array.isArray(doctorData)
-            ? doctorData
-            : []
+          Array.isArray(doctorData) ? doctorData : []
         );
       } catch (error) {
-        console.error(
-          "Error fetching doctors:",
-          error
-        );
-
+        console.error("Error fetching doctors:", error);
         setDoctors([]);
       }
     };
@@ -121,66 +69,36 @@ const Appointment = () => {
     fetchDoctors();
   }, []);
 
-  // =====================================================
-  // INPUT CHANGE
-  // =====================================================
+  // ================= INPUT CHANGE =================
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // =================================================
-    // DEPARTMENT CHANGE
-    // =================================================
-    if (name === "departmentId") {
-      setFormData((previousData) => ({
-        ...previousData,
-        departmentId: value,
-
-        // Clear selected doctor when department changes
-        doctorId: "",
-      }));
-
-      setMessage("");
-      setError("");
-
-      return;
-    }
-
-    // =================================================
-    // NORMAL INPUT CHANGE
-    // =================================================
     setFormData((previousData) => ({
       ...previousData,
       [name]: value,
     }));
 
-    setMessage("");
-    setError("");
+    // When department changes, clear selected doctor
+    if (name === "departmentId") {
+      setFormData((previousData) => ({
+        ...previousData,
+        departmentId: value,
+        doctorId: "",
+      }));
+    }
   };
 
-  // =====================================================
-  // FILTER DOCTORS BY SELECTED DEPARTMENT
-  // =====================================================
+  // ================= FILTER DOCTORS =================
   const filteredDoctors = doctors.filter((doctor) => {
-    if (!formData.departmentId) {
-      return false;
-    }
+    if (!formData.departmentId) return false;
 
-    // departmentId can be an object because your API
-    // returns populated department information.
     const doctorDepartmentId =
-      typeof doctor.departmentId === "object"
-        ? doctor.departmentId?._id
-        : doctor.departmentId;
+      doctor.departmentId?._id || doctor.departmentId;
 
-    return (
-      String(doctorDepartmentId) ===
-      String(formData.departmentId)
-    );
+    return doctorDepartmentId === formData.departmentId;
   });
 
-  // =====================================================
-  // SUBMIT APPOINTMENT
-  // =====================================================
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -189,46 +107,28 @@ const Appointment = () => {
     setError("");
 
     try {
-      // Backend currently needs these fields.
-      // Email is used in the frontend profile/form,
-      // but is not sent because the current backend
-      // appointment API does not require email.
-      const appointmentData = {
-        patientName: formData.patientName,
-        phone: formData.phone,
-        doctorId: formData.doctorId,
-        departmentId: formData.departmentId,
-        date: formData.date,
-        time: formData.time,
-        reason: formData.reason,
-      };
-
       const response = await api.post(
         "/website/appointments",
-        appointmentData
+        formData
       );
 
       setMessage(
-        response.data?.message ||
+        response.data.message ||
           "Your appointment request has been sent successfully."
       );
 
-      // Clear appointment-specific fields.
-      // Keep user details filled after successful booking.
-      setFormData((previousData) => ({
-        ...previousData,
-
+      setFormData({
+        patientName: user?.name || user?.username || "",
+        email: user?.email || "",
+        phone: user?.phone || user?.phoneNumber || "",
         doctorId: "",
         departmentId: "",
         date: "",
         time: "",
         reason: "",
-      }));
+      });
     } catch (error) {
-      console.error(
-        "Appointment error:",
-        error
-      );
+      console.error("Appointment error:", error);
 
       setError(
         error.response?.data?.message ||
@@ -242,246 +142,288 @@ const Appointment = () => {
   return (
     <main className="w-full">
 
-      {/* =====================================================
-          APPOINTMENT SECTION
-      ====================================================== */}
+      {/* ================= APPOINTMENT SECTION ================= */}
       <section
         id="appointment"
-        className="scroll-mt-[107px] bg-[#eef7fd] py-[65px] md:py-[75px] lg:py-[80px]"
+        className="scroll-mt-[107px] bg-white py-[65px] md:py-[75px] lg:py-[80px]"
       >
         <div className="mx-auto max-w-[1400px] px-6 md:px-8 lg:px-10">
 
-          {/* =================================================
-              SECTION TITLE
-          ================================================== */}
+          {/* ================= SECTION TITLE ================= */}
           <div className="mx-auto max-w-[850px] text-center">
 
             <h2 className="text-[30px] font-semibold leading-[1.2] text-[#294b68] md:text-[32px]">
               Appointment
             </h2>
 
-            {/* Title Divider */}
-            <div className="mx-auto mt-[16px] flex h-[3px] w-[160px] items-center justify-center">
-              <span className="h-[1px] w-[50px] bg-[#bdbdbd]"></span>
+            <div className="mx-auto mt-[15px] flex w-[120px] items-center justify-center">
+              <span className="h-[1px] w-[30px] bg-[#c9c9c9]"></span>
 
-              <span className="h-[3px] w-[60px] bg-[#1976c8]"></span>
+              <span className="h-[3px] w-[52px] bg-[#1976c8]"></span>
 
-              <span className="h-[1px] w-[50px] bg-[#bdbdbd]"></span>
+              <span className="h-[1px] w-[30px] bg-[#c9c9c9]"></span>
             </div>
 
-            <p className="mt-[20px] text-[14px] leading-[1.7] text-[#444] md:text-[15px]">
+            <p className="mt-[18px] text-[14px] leading-[1.7] text-[#444] md:text-[15px]">
               Book an appointment with our doctors and get the
               healthcare you need at a convenient time.
             </p>
 
           </div>
 
-          {/* =================================================
-              APPOINTMENT FORM
-          ================================================== */}
-          <form
-            onSubmit={handleSubmit}
-            className="mx-auto mt-[62px] max-w-[1296px]"
-          >
+          {/* ================= FORM ================= */}
+          <div className="mx-auto mt-[45px] max-w-[1050px]">
 
-            {/* =================================================
-                FIRST ROW
-            ================================================== */}
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <form onSubmit={handleSubmit}>
 
-              {/* ================= NAME ================= */}
-              <div>
-                <input
-                  type="text"
-                  name="patientName"
-                  placeholder="Your Name"
-                  value={formData.patientName}
-                  onChange={handleChange}
-                  required
-                  className="h-[44px] w-full rounded-none border border-[#d8d8d8] bg-white px-[10px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#b8b8b8] focus:border-[#1976c8]"
-                />
-              </div>
+              {/* ================= PATIENT INFORMATION ================= */}
+              <div className="grid grid-cols-1 gap-x-[24px] gap-y-[22px] md:grid-cols-2">
 
-              {/* ================= EMAIL ================= */}
-              <div>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Your Email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="h-[44px] w-full rounded-none border border-[#d8d8d8] bg-white px-[10px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#b8b8b8] focus:border-[#1976c8]"
-                />
-              </div>
+                {/* Full Name */}
+                <div>
+                  <label
+                    htmlFor="patientName"
+                    className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                  >
+                    Full Name
+                  </label>
 
-              {/* ================= PHONE ================= */}
-              <div>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Your Phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="h-[44px] w-full rounded-none border border-[#d8d8d8] bg-white px-[10px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#b8b8b8] focus:border-[#1976c8]"
-                />
-              </div>
+                  <input
+                    type="text"
+                    id="patientName"
+                    name="patientName"
+                    value={formData.patientName}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    required
+                    className="h-[48px] w-full rounded-[4px] border border-[#d9e0e6] bg-white px-[15px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#a7afb7] focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10"
+                  />
+                </div>
 
-            </div>
+                {/* Email */}
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                  >
+                    Email Address
+                  </label>
 
-            {/* =================================================
-                SECOND ROW
-            ================================================== */}
-            <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email address"
+                    required
+                    className="h-[48px] w-full rounded-[4px] border border-[#d9e0e6] bg-white px-[15px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#a7afb7] focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10"
+                  />
+                </div>
 
-              {/* ================= DATE ================= */}
-              <div>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  required
-                  className="h-[44px] w-full rounded-none border border-[#d8d8d8] bg-white px-[10px] text-[14px] text-[#333] outline-none transition-all duration-200 focus:border-[#1976c8]"
-                />
-              </div>
+                {/* Phone */}
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                  >
+                    Phone Number
+                  </label>
 
-              {/* ================= DEPARTMENT ================= */}
-              <div>
-                <select
-                  name="departmentId"
-                  value={formData.departmentId}
-                  onChange={handleChange}
-                  required
-                  className="h-[44px] w-full rounded-none border border-[#d8d8d8] bg-white px-[10px] text-[14px] text-[#333] outline-none transition-all duration-200 focus:border-[#1976c8]"
-                >
-                  <option value="">
-                    Select Department
-                  </option>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Enter your phone number"
+                    required
+                    className="h-[48px] w-full rounded-[4px] border border-[#d9e0e6] bg-white px-[15px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#a7afb7] focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10"
+                  />
+                </div>
 
-                  {departments.map((department) => (
-                    <option
-                      key={department._id}
-                      value={department._id}
-                    >
-                      {department.name}
+                {/* Appointment Date */}
+                <div>
+                  <label
+                    htmlFor="date"
+                    className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                  >
+                    Appointment Date
+                  </label>
+
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleChange}
+                    required
+                    className="h-[48px] w-full rounded-[4px] border border-[#d9e0e6] bg-white px-[15px] text-[14px] text-[#333] outline-none transition-all duration-200 focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10"
+                  />
+                </div>
+
+                {/* Preferred Time */}
+                <div>
+                  <label
+                    htmlFor="time"
+                    className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                  >
+                    Preferred Time
+                  </label>
+
+                  <input
+                    type="time"
+                    id="time"
+                    name="time"
+                    value={formData.time}
+                    onChange={handleChange}
+                    required
+                    className="h-[48px] w-full rounded-[4px] border border-[#d9e0e6] bg-white px-[15px] text-[14px] text-[#333] outline-none transition-all duration-200 focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10"
+                  />
+                </div>
+
+                {/* Department */}
+                <div>
+                  <label
+                    htmlFor="departmentId"
+                    className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                  >
+                    Department
+                  </label>
+
+                  <select
+                    id="departmentId"
+                    name="departmentId"
+                    value={formData.departmentId}
+                    onChange={handleChange}
+                    required
+                    className="h-[48px] w-full rounded-[4px] border border-[#d9e0e6] bg-white px-[15px] text-[14px] text-[#333] outline-none transition-all duration-200 focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10"
+                  >
+                    <option value="">
+                      Select Department
                     </option>
-                  ))}
-                </select>
-              </div>
 
-              {/* ================= DOCTOR ================= */}
-              <div>
-                <select
-                  name="doctorId"
-                  value={formData.doctorId}
-                  onChange={handleChange}
-                  required
-                  disabled={!formData.departmentId}
-                  className={`h-[44px] w-full rounded-none border border-[#d8d8d8] px-[10px] text-[14px] outline-none transition-all duration-200 focus:border-[#1976c8] ${formData.departmentId
-                    ? "bg-white text-[#333]"
-                    : "cursor-not-allowed bg-[#f5f5f5] text-[#999]"
+                    {departments.map((department) => (
+                      <option
+                        key={department._id}
+                        value={department._id}
+                      >
+                        {department.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Doctor */}
+                <div>
+                  <label
+                    htmlFor="doctorId"
+                    className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                  >
+                    Doctor
+                  </label>
+
+                  <select
+                    id="doctorId"
+                    name="doctorId"
+                    value={formData.doctorId}
+                    onChange={handleChange}
+                    required
+                    disabled={!formData.departmentId}
+                    className={`h-[48px] w-full rounded-[4px] border px-[15px] text-[14px] outline-none transition-all duration-200 focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10 ${!formData.departmentId
+                      ? "cursor-not-allowed border-[#e2e6ea] bg-[#f7f9fb] text-[#a7afb7]"
+                      : "border-[#d9e0e6] bg-white text-[#333]"
                     }`}
-                >
-                  <option value="">
-                    {!formData.departmentId
-                      ? "Select Department First"
-                      : filteredDoctors.length === 0
-                        ? "No Doctors Available"
-                        : "Select Doctor"}
-                  </option>
-
-                  {filteredDoctors.map((doctor) => (
-                    <option
-                      key={doctor._id}
-                      value={doctor._id}
-                    >
-                      {doctor.name}
+                  >
+                    <option value="">
+                      {formData.departmentId
+                        ? "Select Doctor"
+                        : "Select Department First"}
                     </option>
-                  ))}
-                </select>
+
+                    {filteredDoctors.map((doctor) => (
+                      <option
+                        key={doctor._id}
+                        value={doctor._id}
+                      >
+                        {doctor.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* No doctors message */}
+                  {formData.departmentId &&
+                    filteredDoctors.length === 0 && (
+                      <p className="mt-[6px] text-[12px] text-[#888]">
+                        No doctors available in this department.
+                      </p>
+                    )}
+                </div>
+
               </div>
 
-            </div>
+              {/* ================= REASON ================= */}
+              <div className="mt-[22px]">
 
-            {/* =================================================
-                TIME
-            ================================================== */}
-            <div className="mt-5">
-              <input
-                type="time"
-                name="time"
-                value={formData.time}
-                onChange={handleChange}
-                required
-                className="h-[44px] w-full rounded-none border border-[#d8d8d8] bg-white px-[10px] text-[14px] text-[#333] outline-none transition-all duration-200 focus:border-[#1976c8] md:w-[32.2%]"
-              />
-            </div>
+                <label
+                  htmlFor="reason"
+                  className="mb-[8px] block text-[14px] font-semibold text-[#294b68]"
+                >
+                  Reason for Appointment
+                  <span className="ml-[4px] font-normal text-[#999]">
+                    (Optional)
+                  </span>
+                </label>
 
-            {/* =================================================
-                REASON
-            ================================================== */}
-            <div className="mt-5">
-              <textarea
-                name="reason"
-                rows="5"
-                placeholder="Message (Optional)"
-                value={formData.reason}
-                onChange={handleChange}
-                className="min-h-[126px] w-full resize-y rounded-none border border-[#d8d8d8] bg-white px-[10px] py-[11px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#b8b8b8] focus:border-[#1976c8]"
-              ></textarea>
-            </div>
+                <textarea
+                  id="reason"
+                  name="reason"
+                  rows="5"
+                  value={formData.reason}
+                  onChange={handleChange}
+                  placeholder="Enter the reason for your appointment"
+                  className="w-full resize-none rounded-[4px] border border-[#d9e0e6] bg-white px-[15px] py-[13px] text-[14px] text-[#333] outline-none transition-all duration-200 placeholder:text-[#a7afb7] focus:border-[#1976c8] focus:ring-2 focus:ring-[#1976c8]/10"
+                ></textarea>
 
-            {/* =================================================
-                SUCCESS MESSAGE
-            ================================================== */}
-            {message && (
-              <div className="mt-5 text-center text-[14px] font-medium text-green-600">
-                {message}
               </div>
-            )}
 
-            {/* =================================================
-                ERROR MESSAGE
-            ================================================== */}
-            {error && (
-              <div className="mt-5 text-center text-[14px] font-medium text-red-500">
-                {error}
+              {/* ================= STATUS ================= */}
+              <div className="mt-[25px] text-center">
+
+                {loading && (
+                  <p className="mb-[15px] text-[14px] font-medium text-[#1976c8]">
+                    Booking your appointment...
+                  </p>
+                )}
+
+                {error && (
+                  <div className="mb-[15px] rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-600">
+                    {error}
+                  </div>
+                )}
+
+                {message && (
+                  <div className="mb-[15px] rounded-[4px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] text-green-600">
+                    {message}
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex h-[46px] min-w-[190px] items-center justify-center !rounded-full border-0 bg-[#1976c8] px-[28px] text-[14px] font-semibold text-white transition-all duration-300 hover:bg-[#105592] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading
+                    ? "Booking..."
+                    : "Make an Appointment"}
+                </button>
+
               </div>
-            )}
 
-            {/* =================================================
-                LOADING
-            ================================================== */}
-            {loading && (
-              <div className="mt-5 flex items-center justify-center gap-2 text-[14px] text-[#666]">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#dbeaf6] border-t-[#1976c8]"></div>
+            </form>
 
-                <span>
-                  Booking your appointment...
-                </span>
-              </div>
-            )}
-
-            {/* =================================================
-                SUBMIT BUTTON
-            ================================================== */}
-            <div className="mt-[25px] flex justify-center">
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="min-w-[227px] !rounded-full border-0 bg-[#1976c8] px-[28px] py-[12px] text-[15px] font-semibold text-white transition-all duration-300 hover:bg-[#105592] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading
-                  ? "Booking..."
-                  : "Make an Appointment"}
-              </button>
-
-            </div>
-
-          </form>
+          </div>
         </div>
       </section>
     </main>

@@ -5,8 +5,10 @@ import Departments from "./Departments";
 import Doctors from "./Doctors";
 import Appointment from "./Appointment";
 import FAQ from "./FAQ";
+import Gallery from "./Gallery";
 import Contact from "./Contact";
 import Stats from "./Stats";
+
 
 
 
@@ -230,10 +232,13 @@ const Home = () => {
           ===================================================== */}
       <Appointment />
 
+
       {/* =====================================================
           FAQ SECTION
           ===================================================== */}
       <FAQ />
+
+      <Gallery />
 
       {/* =====================================================
           CONTACT SECTION
