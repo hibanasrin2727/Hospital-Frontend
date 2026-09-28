@@ -4,15 +4,13 @@ import {
     Building2,
     CalendarCheck,
     ArrowUpRight,
-    Clock3,
-    CheckCircle2,
-    XCircle,
-    Plus,
     Stethoscope,
 } from "lucide-react";
+
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
+
     const stats = [
         {
             title: "Total Patients",
@@ -97,21 +95,21 @@ const Dashboard = () => {
         <div className="space-y-6">
 
             {/* =====================================================
-          WELCOME SECTION
-          ===================================================== */}
+                WELCOME SECTION
+                ===================================================== */}
             <div className="relative overflow-hidden rounded-2xl bg-[#1976c8] p-6 text-white shadow-sm sm:p-8">
 
                 <div className="relative z-10 max-w-2xl">
 
-                    <p className="text-sm font-medium text-blue-100">
+                    <p className="!mb-0 text-sm font-medium text-blue-100">
                         Welcome back
                     </p>
 
-                    <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
+                    <h1 className="!mb-0 mt-1 !text-2xl !font-bold text-white sm:!text-3xl">
                         Hospital Admin
                     </h1>
 
-                    <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
+                    <p className="!mb-0 mt-2 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
                         Monitor hospital activities, manage doctors and departments,
                         and keep track of patient appointments from one place.
                     </p>
@@ -120,9 +118,11 @@ const Dashboard = () => {
 
                 {/* Decorative circles */}
                 <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10" />
+
                 <div className="absolute -bottom-20 right-20 h-48 w-48 rounded-full bg-white/5" />
 
             </div>
+
 
             {/* =====================================================
                 STATISTICS
@@ -139,7 +139,7 @@ const Dashboard = () => {
                         >
 
                             {/* Decorative Background */}
-                            <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#eaf5fb] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"></div>
+                            <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#eaf5fb] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
 
                             {/* Top Row */}
                             <div className="relative flex items-start justify-between">
@@ -174,7 +174,7 @@ const Dashboard = () => {
 
                                     {/* Small decorative line */}
                                     <div className="mb-1 hidden h-1 w-12 overflow-hidden rounded-full bg-[#eaf5fb] sm:block">
-                                        <div className="h-full w-2/3 rounded-full bg-[#1976c8] transition-all duration-500 group-hover:w-full"></div>
+                                        <div className="h-full w-2/3 rounded-full bg-[#1976c8] transition-all duration-500 group-hover:w-full" />
                                     </div>
 
                                 </div>
@@ -187,381 +187,302 @@ const Dashboard = () => {
 
             </div>
 
+
             {/* =====================================================
-          MAIN CONTENT
-          ===================================================== */}
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                RECENT APPOINTMENTS
+                ===================================================== */}
+            <div className="overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_4px_20px_rgba(41,75,104,0.04)]">
 
-                {/* ===================================================
-            RECENT APPOINTMENTS
-            =================================================== */}
-                <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm xl:col-span-2">
+                {/* Section Header */}
+                <div className="flex flex-col gap-3 border-b border-[#edf3f7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
 
-                    <div className="flex items-center justify-between border-b border-gray-100 p-5">
+                    <div>
 
-                        <div>
-                            <h2 className="font-bold text-[#294b68]">
-                                Recent Appointments
-                            </h2>
+                        <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
+                            Recent Appointments
+                        </h2>
 
-                            <p className="mt-1 text-xs text-gray-500">
-                                Latest patient appointments
-                            </p>
-                        </div>
-
-                        <Link
-                            to="/dashboard/appointments"
-                            className="text-sm font-semibold text-[#1976c8] !no-underline hover:underline"
-                        >
-                            View All
-                        </Link>
+                        <p className="!mb-0 mt-1 text-xs text-gray-400">
+                            Latest patient appointments
+                        </p>
 
                     </div>
 
-                    {/* Desktop table */}
-                    <div className="hidden overflow-x-auto md:block">
-
-                        <table className="w-full text-left">
-
-                            <thead className="bg-gray-50">
-
-                                <tr>
-                                    <th className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">
-                                        Patient
-                                    </th>
-
-                                    <th className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">
-                                        Doctor
-                                    </th>
-
-                                    <th className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">
-                                        Date
-                                    </th>
-
-                                    <th className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">
-                                        Status
-                                    </th>
-                                </tr>
-
-                            </thead>
-
-                            <tbody className="divide-y divide-gray-100">
-
-                                {appointments.map((appointment) => (
-                                    <tr
-                                        key={appointment.id}
-                                        className="transition hover:bg-gray-50"
-                                    >
-
-                                        <td className="px-5 py-4">
-
-                                            <p className="text-sm font-semibold text-[#294b68]">
-                                                {appointment.patient}
-                                            </p>
-
-                                            <p className="text-xs text-gray-400">
-                                                {appointment.department}
-                                            </p>
-
-                                        </td>
-
-                                        <td className="px-5 py-4 text-sm text-gray-600">
-                                            {appointment.doctor}
-                                        </td>
-
-                                        <td className="px-5 py-4">
-
-                                            <p className="text-sm text-gray-600">
-                                                {appointment.date}
-                                            </p>
-
-                                            <p className="mt-1 text-xs text-gray-400">
-                                                {appointment.time}
-                                            </p>
-
-                                        </td>
-
-                                        <td className="px-5 py-4">
-
-                                            <span
-                                                className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[appointment.status]
-                                                    }`}
-                                            >
-                                                {appointment.status}
-                                            </span>
-
-                                        </td>
-
-                                    </tr>
-                                ))}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                    {/* Mobile cards */}
-                    <div className="space-y-3 p-4 md:hidden">
-
-                        {appointments.map((appointment) => (
-                            <div
-                                key={appointment.id}
-                                className="rounded-lg border border-gray-100 p-4"
-                            >
-
-                                <div className="flex items-start justify-between">
-
-                                    <div>
-                                        <p className="font-semibold text-[#294b68]">
-                                            {appointment.patient}
-                                        </p>
-
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            {appointment.doctor}
-                                        </p>
-                                    </div>
-
-                                    <span
-                                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[appointment.status]
-                                            }`}
-                                    >
-                                        {appointment.status}
-                                    </span>
-
-                                </div>
-
-                                <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-                                    <Clock3 size={14} />
-                                    {appointment.date} · {appointment.time}
-                                </div>
-
-                            </div>
-                        ))}
-
-                    </div>
+                    <Link
+                        to="/dashboard/appointments"
+                        className="!no-underline text-sm font-semibold text-[#1976c8] transition hover:text-[#145ea8]"
+                    >
+                        View All
+                    </Link>
 
                 </div>
 
-                {/* ===================================================
-            APPOINTMENT SUMMARY
-            =================================================== */}
-                <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
 
-                    <div>
-                        <h2 className="font-bold text-[#294b68]">
-                            Appointment Summary
-                        </h2>
+                {/* =================================================
+                    DESKTOP TABLE
+                    ================================================= */}
+                <div className="hidden overflow-x-auto md:block">
 
-                        <p className="mt-1 text-xs text-gray-500">
-                            Current appointment status
-                        </p>
-                    </div>
+                    <table className="w-full">
 
-                    <div className="mt-6 space-y-5">
+                        <thead>
 
-                        {/* Confirmed */}
-                        <div className="flex items-center justify-between">
+                            <tr className="bg-[#f8fbfd]">
 
-                            <div className="flex items-center gap-3">
+                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#294b68]">
+                                    Patient
+                                </th>
 
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                    <CalendarCheck size={18} />
-                                </div>
+                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#294b68]">
+                                    Doctor
+                                </th>
+
+                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#294b68]">
+                                    Department
+                                </th>
+
+                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#294b68]">
+                                    Date
+                                </th>
+
+                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#294b68]">
+                                    Status
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {appointments.map((appointment) => (
+
+                                <tr
+                                    key={appointment.id}
+                                    className="border-t border-[#edf3f7] transition hover:bg-[#f8fbfd]"
+                                >
+
+                                    <td className="px-5 py-4">
+
+                                        <p className="!mb-0 text-sm font-semibold text-[#294b68]">
+                                            {appointment.patient}
+                                        </p>
+
+                                    </td>
+
+
+                                    <td className="px-5 py-4 text-sm text-gray-500">
+                                        {appointment.doctor}
+                                    </td>
+
+
+                                    <td className="px-5 py-4 text-sm text-gray-500">
+                                        {appointment.department}
+                                    </td>
+
+
+                                    <td className="px-5 py-4">
+
+                                        <p className="!mb-0 text-sm text-gray-500">
+                                            {appointment.date}
+                                        </p>
+
+                                        <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                            {appointment.time}
+                                        </p>
+
+                                    </td>
+
+
+                                    <td className="px-5 py-4">
+
+                                        <span
+                                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[appointment.status]}`}
+                                        >
+                                            {appointment.status}
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+
+                            ))}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                {/* =================================================
+                    MOBILE CARDS
+                    ================================================= */}
+                <div className="divide-y divide-[#edf3f7] md:hidden">
+
+                    {appointments.map((appointment) => (
+
+                        <div
+                            key={appointment.id}
+                            className="p-5"
+                        >
+
+                            <div className="flex items-start justify-between gap-3">
 
                                 <div>
-                                    <p className="text-sm font-semibold text-gray-700">
-                                        Confirmed
+
+                                    <p className="!mb-0 text-sm font-bold text-[#294b68]">
+                                        {appointment.patient}
                                     </p>
 
-                                    <p className="text-xs text-gray-400">
-                                        Ready for consultation
+                                    <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                        {appointment.doctor} • {appointment.department}
                                     </p>
+
+                                    <p className="!mb-0 mt-2 text-xs text-gray-500">
+                                        {appointment.date} • {appointment.time}
+                                    </p>
+
                                 </div>
+
+
+                                <span
+                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[appointment.status]}`}
+                                >
+                                    {appointment.status}
+                                </span>
 
                             </div>
 
-                            <span className="text-lg font-bold text-[#294b68]">
-                                28
-                            </span>
-
                         </div>
 
-                        {/* Pending */}
-                        <div className="flex items-center justify-between">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50 text-yellow-600">
-                                    <Clock3 size={18} />
-                                </div>
-
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-700">
-                                        Pending
-                                    </p>
-
-                                    <p className="text-xs text-gray-400">
-                                        Waiting for confirmation
-                                    </p>
-                                </div>
-
-                            </div>
-
-                            <span className="text-lg font-bold text-[#294b68]">
-                                12
-                            </span>
-
-                        </div>
-
-                        {/* Completed */}
-                        <div className="flex items-center justify-between">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600">
-                                    <CheckCircle2 size={18} />
-                                </div>
-
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-700">
-                                        Completed
-                                    </p>
-
-                                    <p className="text-xs text-gray-400">
-                                        Consultation completed
-                                    </p>
-                                </div>
-
-                            </div>
-
-                            <span className="text-lg font-bold text-[#294b68]">
-                                35
-                            </span>
-
-                        </div>
-
-                        {/* Cancelled */}
-                        <div className="flex items-center justify-between">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-500">
-                                    <XCircle size={18} />
-                                </div>
-
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-700">
-                                        Cancelled
-                                    </p>
-
-                                    <p className="text-xs text-gray-400">
-                                        Cancelled appointments
-                                    </p>
-                                </div>
-
-                            </div>
-
-                            <span className="text-lg font-bold text-[#294b68]">
-                                5
-                            </span>
-
-                        </div>
-
-                    </div>
+                    ))}
 
                 </div>
 
             </div>
 
+
             {/* =====================================================
-          QUICK ACTIONS
-          ===================================================== */}
+                QUICK ACTIONS
+                ===================================================== */}
             <div>
 
-                <h2 className="mb-4  text-lg font-bold text-[#294b68]">
-                    Quick Actions
-                </h2>
+                <div className="mb-4 flex items-center justify-between">
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 ">
+                    <div>
 
+                        <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
+                            Quick Actions
+                        </h2>
+
+                        <p className="!mb-0 mt-1 text-xs text-gray-400">
+                            Quickly access important management sections
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+                    {/* Manage Doctors */}
                     <Link
                         to="/dashboard/doctors"
-                        className="group !no-underline flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                        className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
                     >
-                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-[#1976c8]">
+
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1976c8] transition-all duration-300 group-hover:bg-[#1976c8] group-hover:text-white">
                             <Stethoscope size={21} />
                         </div>
 
                         <div>
+
                             <p className="!mb-0 font-semibold text-[#294b68]">
                                 Manage Doctors
                             </p>
 
-                            <p className="!mb-0 text-xs text-gray-500">
+                            <p className="!mb-0 mt-1 text-xs text-gray-500">
                                 View doctors
                             </p>
+
                         </div>
+
                     </Link>
+
+
+                    {/* Departments */}
                     <Link
                         to="/dashboard/departments"
-                        className="group !no-underline flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                        className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
                     >
 
-                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-50 text-green-600">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600 transition-all duration-300 group-hover:bg-green-600 group-hover:text-white">
                             <Building2 size={21} />
                         </div>
 
                         <div>
+
                             <p className="!mb-0 font-semibold text-[#294b68]">
                                 Departments
                             </p>
 
-                            <p className="!mb-0 text-xs text-gray-500">
+                            <p className="!mb-0 mt-1 text-xs text-gray-500">
                                 Manage departments
                             </p>
+
                         </div>
 
                     </Link>
 
+
+                    {/* Appointments */}
                     <Link
                         to="/dashboard/appointments"
-                        className="group !no-underline flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                        className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
                     >
 
-                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 transition-all duration-300 group-hover:bg-purple-600 group-hover:text-white">
                             <CalendarCheck size={21} />
                         </div>
 
                         <div>
+
                             <p className="!mb-0 font-semibold text-[#294b68]">
                                 Appointments
                             </p>
 
-                            <p className="!mb-0 text-xs text-gray-500">
+                            <p className="!mb-0 mt-1 text-xs text-gray-500">
                                 Manage appointments
                             </p>
+
                         </div>
 
                     </Link>
 
+
+                    {/* Users */}
                     <Link
                         to="/dashboard/users"
-                        className="group !no-underline flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                        className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
                     >
 
-                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 transition-all duration-300 group-hover:bg-cyan-600 group-hover:text-white">
                             <Users size={21} />
                         </div>
 
                         <div>
+
                             <p className="!mb-0 font-semibold text-[#294b68]">
                                 Users
                             </p>
 
-                            <p className="!mb-0 text-xs text-gray-500">
+                            <p className="!mb-0 mt-1 text-xs text-gray-500">
                                 Manage patients
                             </p>
+
                         </div>
 
                     </Link>

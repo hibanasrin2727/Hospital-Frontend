@@ -1,3 +1,12 @@
+import {
+  LayoutDashboard,
+  Stethoscope,
+  Building2,
+  HeartPulse,
+  CalendarCheck,
+  Users,
+} from "lucide-react";
+
 import { NavLink, useNavigate } from "react-router-dom";
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -7,32 +16,32 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     {
       name: "Dashboard",
       path: "/dashboard",
-      icon: "📊",
+      icon: LayoutDashboard,
     },
     {
       name: "Doctors",
       path: "/dashboard/doctors",
-      icon: "👨‍⚕️",
+      icon: Stethoscope,
     },
     {
       name: "Departments",
       path: "/dashboard/departments",
-      icon: "🏥",
+      icon: Building2,
     },
     {
       name: "Services",
       path: "/dashboard/services",
-      icon: "🩺",
+      icon: HeartPulse,
     },
     {
       name: "Appointments",
       path: "/dashboard/appointments",
-      icon: "📅",
+      icon: CalendarCheck,
     },
     {
       name: "Users",
       path: "/dashboard/users",
-      icon: "👥",
+      icon: Users,
     },
   ];
 
@@ -63,25 +72,21 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ===================================================== */}
       <aside
         className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col overflow-hidden border-r border-[#dcebf5] bg-white/95 shadow-[8px_0_35px_rgba(25,118,200,0.08)] backdrop-blur-xl transition-all duration-500 ${
-          isOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
+          isOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
         {/* =================================================
             DECORATIVE BACKGROUND
             ================================================= */}
-        <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#eaf5fb] opacity-70 blur-3xl"></div>
+        <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 !rounded-full bg-[#eaf5fb] opacity-70 blur-3xl"></div>
 
-        <div className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 rounded-full bg-[#eaf5fb] opacity-50 blur-3xl"></div>
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 !rounded-full bg-[#eaf5fb] opacity-50 blur-3xl"></div>
 
         {/* =================================================
             LOGO
             ================================================= */}
         <div className="relative flex h-24 items-center border-b border-[#edf3f7] px-6">
           <div className="flex items-center gap-3">
-            
-
             {/* Brand */}
             <div>
               <h1 className="!text-[25px] !font-extrabold !tracking-tight !text-[#294b68]">
@@ -89,8 +94,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               </h1>
 
               <div className="mt-0.5 flex items-center gap-1.5">
-              
-
                 <p className="text-[11px] font-medium tracking-wide text-gray-400">
                   ADMIN PORTAL
                 </p>
@@ -133,51 +136,50 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   `group relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3.5 !no-underline transition-all duration-300 ${
                     isActive
                       ? "bg-gradient-to-r from-[#eaf5fb] to-[#f4faff] text-[#1976c8] shadow-sm"
-                      : "!text-[#00325e] hover:bg-[#f7fafc] !hover:text-[#1976c8]"
+                    : "!text-[#294b68] hover:bg-[#f7fafc] hover:!text-[#1976c8]"
                   }`
                 }
               >
-                {({ isActive }) => (
-                  <>
-                    {/* Active Indicator */}
-                    <span
-                      className={`absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-[#1976c8] transition-all duration-300 ${
-                        isActive
-                          ? "opacity-100"
-                          : "opacity-0"
-                      }`}
-                    ></span>
+                {({ isActive }) => {
+                  const Icon = item.icon;
 
-                    {/* Icon Container */}
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[18px] transition-all duration-300 ${
-                        isActive
-                          ? "bg-white shadow-sm"
-                          : "bg-gray-50 group-hover:bg-white group-hover:shadow-sm"
-                      }`}
-                    >
-                      {item.icon}
-                    </span>
+                  return (
+                    <>
+                      {/* Active Indicator */}
+                      <span
+                        className={`absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-[#1976c8] transition-all duration-300 ${
+                          isActive ? "opacity-100" : "opacity-0"
+                          }`}
+                      ></span>
 
-                    {/* Name */}
-                    <span
-                      className={`!no-underline text-[16px] tracking-wide transition-all duration-300 ${
-                        isActive
-                          ? "font-bold"
-                          : "font-medium"
-                      }`}
-                    >
-                      {item.name}
-                    </span>
-
-                    {/* Active Arrow */}
-                    {isActive && (
-                      <span className="ml-auto text-[#001b33] transition-transform duration-300">
-                        ›
+                      {/* Icon Container */}
+                      <span
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${isActive
+                            ? "bg-white text-[#1976c8] shadow-sm"
+                            : "bg-gray-50 text-[#294b68] group-hover:bg-white group-hover:text-[#1976c8] group-hover:shadow-sm"
+                          }`}
+                      >
+                        <Icon size={20} strokeWidth={2} />
                       </span>
-                    )}
-                  </>
-                )}
+
+                      {/* Name */}
+                      <span
+                        className={`!no-underline text-[16px] tracking-wide transition-all duration-300 ${
+                          isActive ? "font-bold" : "font-medium"
+                          }`}
+                      >
+                        {item.name}
+                      </span>
+
+                      {/* Active Arrow */}
+                      {isActive && (
+                        <span className="ml-auto text-[#001b33] transition-transform duration-300">
+                          ›
+                        </span>
+                      )}
+                    </>
+                  );
+                }}
               </NavLink>
             ))}
           </div>
@@ -187,8 +189,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             BOTTOM SECTION
             ================================================= */}
         <div className="relative border-t border-[#edf3f7] bg-gradient-to-b from-white to-[#f8fbfd] p-4">
-          
-
           {/* Logout */}
           <button
             type="button"
