@@ -69,6 +69,14 @@ const Doctors = () => {
     });
 
     // =====================================================
+    // CONFIRMATION STATES
+    // =====================================================
+
+    const [statusDoctor, setStatusDoctor] = useState(null);
+
+    const [deleteDoctor, setDeleteDoctor] = useState(null);
+
+    // =====================================================
     // CLOSE ACTION MENU WHEN CLICKING OUTSIDE
     // =====================================================
 
@@ -155,9 +163,15 @@ const Doctors = () => {
         const search = searchTerm.toLowerCase();
 
         const matchesSearch =
-            doctor.name.toLowerCase().includes(search) ||
-            doctor.specialty.toLowerCase().includes(search) ||
-            doctor.department.toLowerCase().includes(search);
+            doctor.name
+                .toLowerCase()
+                .includes(search) ||
+            doctor.specialty
+                .toLowerCase()
+                .includes(search) ||
+            doctor.department
+                .toLowerCase()
+                .includes(search);
 
         const matchesDepartment =
             departmentFilter === "All Departments" ||
@@ -170,7 +184,10 @@ const Doctors = () => {
     // OPEN ACTION DROPDOWN
     // =====================================================
 
-    const handleActionMenu = (doctorId, event) => {
+    const handleActionMenu = (
+        doctorId,
+        event
+    ) => {
         if (openMenu === doctorId) {
             setOpenMenu(null);
             return;
@@ -184,43 +201,36 @@ const Doctors = () => {
         const gap = 8;
         const screenPadding = 8;
 
-        // Space available below the button
         const spaceBelow =
-            window.innerHeight - buttonRect.bottom;
+            window.innerHeight -
+            buttonRect.bottom;
 
-        // Space available above the button
-        const spaceAbove = buttonRect.top;
+        const spaceAbove =
+            buttonRect.top;
 
         let top;
 
-        // =================================================
-        // OPEN BELOW IF THERE IS ENOUGH SPACE
-        // =================================================
-
-        if (spaceBelow >= menuHeight + gap) {
-            top = buttonRect.bottom + gap;
-        }
-
-        // =================================================
-        // OTHERWISE OPEN ABOVE
-        // =================================================
-
-        else if (spaceAbove >= menuHeight + gap) {
+        if (
+            spaceBelow >=
+            menuHeight + gap
+        ) {
+            top =
+                buttonRect.bottom +
+                gap;
+        } else if (
+            spaceAbove >=
+            menuHeight + gap
+        ) {
             top =
                 buttonRect.top -
                 menuHeight -
                 gap;
-        }
-
-        // =================================================
-        // FALLBACK - KEEP INSIDE SCREEN
-        // =================================================
-
-        else {
+        } else {
             top = Math.max(
                 screenPadding,
                 Math.min(
-                    buttonRect.bottom + gap,
+                    buttonRect.bottom +
+                    gap,
                     window.innerHeight -
                     menuHeight -
                     screenPadding
@@ -228,17 +238,14 @@ const Doctors = () => {
             );
         }
 
-        // =================================================
-        // KEEP DROPDOWN INSIDE RIGHT SIDE OF SCREEN
-        // =================================================
-
         let right =
             window.innerWidth -
             buttonRect.right;
 
         if (
             right + menuWidth >
-            window.innerWidth - screenPadding
+            window.innerWidth -
+            screenPadding
         ) {
             right = screenPadding;
         }
@@ -296,7 +303,10 @@ const Doctors = () => {
     // =====================================================
 
     const handleInputChange = (event) => {
-        const { name, value } = event.target;
+        const {
+            name,
+            value,
+        } = event.target;
 
         setFormData((previous) => ({
             ...previous,
@@ -326,12 +336,16 @@ const Doctors = () => {
         if (editingDoctor) {
             setDoctors((previous) =>
                 previous.map((doctor) =>
-                    doctor.id === editingDoctor.id
+                    doctor.id ===
+                        editingDoctor.id
                         ? {
                             ...doctor,
-                            name: formData.name,
-                            specialty: formData.specialty,
-                            department: formData.department,
+                            name:
+                                formData.name,
+                            specialty:
+                                formData.specialty,
+                            department:
+                                formData.department,
                         }
                         : doctor
                 )
@@ -348,16 +362,19 @@ const Doctors = () => {
                     doctors.length > 0
                         ? Math.max(
                             ...doctors.map(
-                                (doctor) => doctor.id
+                                (doctor) =>
+                                    doctor.id
                             )
                         ) + 1
                         : 1,
 
                 name: formData.name,
 
-                specialty: formData.specialty,
+                specialty:
+                    formData.specialty,
 
-                department: formData.department,
+                department:
+                    formData.department,
 
                 status: "Active",
             };
@@ -380,73 +397,89 @@ const Doctors = () => {
     };
 
     // =====================================================
-    // TOGGLE STATUS WITH CONFIRMATION
+    // OPEN STATUS CONFIRMATION
     // =====================================================
 
     const handleToggleStatus = (doctorId) => {
         const doctor = doctors.find(
-            (item) => item.id === doctorId
+            (item) =>
+                item.id === doctorId
         );
 
         if (!doctor) {
+            return;
+        }
+
+        setOpenMenu(null);
+
+        setStatusDoctor(doctor);
+    };
+
+    // =====================================================
+    // CONFIRM STATUS CHANGE
+    // =====================================================
+
+    const handleStatusChange = () => {
+        if (!statusDoctor) {
             return;
         }
 
         const newStatus =
-            doctor.status === "Active"
+            statusDoctor.status === "Active"
                 ? "Inactive"
                 : "Active";
 
-        const confirmChange = window.confirm(
-            `Are you sure you want to set ${doctor.name} as ${newStatus}?`
-        );
-
-        if (!confirmChange) {
-            return;
-        }
-
         setDoctors((previous) =>
-            previous.map((item) =>
-                item.id === doctorId
+            previous.map((doctor) =>
+                doctor.id === statusDoctor.id
                     ? {
-                        ...item,
+                        ...doctor,
                         status: newStatus,
                     }
-                    : item
+                    : doctor
             )
         );
 
-        setOpenMenu(null);
+        setStatusDoctor(null);
     };
 
     // =====================================================
-    // DELETE DOCTOR WITH CONFIRMATION
+    // OPEN DELETE CONFIRMATION
     // =====================================================
 
     const handleDeleteDoctor = (doctorId) => {
         const doctor = doctors.find(
-            (item) => item.id === doctorId
+            (item) =>
+                item.id === doctorId
         );
 
         if (!doctor) {
             return;
         }
 
-        const confirmDelete = window.confirm(
-            `Are you sure you want to delete ${doctor.name}?`
-        );
+        setOpenMenu(null);
 
-        if (!confirmDelete) {
+        setDeleteDoctor(doctor);
+    };
+
+    // =====================================================
+    // CONFIRM DELETE
+    // =====================================================
+
+    const handleDelete = () => {
+        if (!deleteDoctor) {
             return;
         }
 
         setDoctors((previous) =>
             previous.filter(
-                (item) => item.id !== doctorId
+                (doctor) =>
+                    doctor.id !==
+                    deleteDoctor.id
             )
         );
 
-        setOpenMenu(null);
+        setDeleteDoctor(null);
     };
 
     // =====================================================
@@ -470,7 +503,10 @@ const Doctors = () => {
     // =====================================================
 
     const ActionDropdown = ({ doctor }) => {
-        if (openMenu !== doctor.id) {
+        if (
+            !doctor ||
+            openMenu !== doctor.id
+        ) {
             return null;
         }
 
@@ -488,7 +524,9 @@ const Doctors = () => {
                 className="z-[99999] w-44 overflow-hidden rounded-xl border border-[#dcebf5] bg-white py-1 shadow-[0_15px_40px_rgba(41,75,104,0.20)]"
             >
 
-                {/* EDIT */}
+                {/* =================================================
+                    EDIT
+                    ================================================= */}
 
                 <button
                     type="button"
@@ -497,7 +535,9 @@ const Doctors = () => {
                         event.stopPropagation()
                     }
                     onClick={() =>
-                        handleEditDoctor(doctor)
+                        handleEditDoctor(
+                            doctor
+                        )
                     }
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-[#294b68] transition hover:bg-[#f8fbfd] hover:text-[#1976c8]"
                 >
@@ -506,7 +546,9 @@ const Doctors = () => {
                     Edit
                 </button>
 
-                {/* TOGGLE STATUS */}
+                {/* =================================================
+                    TOGGLE STATUS
+                    ================================================= */}
 
                 <button
                     type="button"
@@ -515,18 +557,23 @@ const Doctors = () => {
                         event.stopPropagation()
                     }
                     onClick={() =>
-                        handleToggleStatus(doctor.id)
+                        handleToggleStatus(
+                            doctor.id
+                        )
                     }
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-[#294b68] transition hover:bg-[#f8fbfd] hover:text-[#1976c8]"
                 >
                     <Power size={16} />
 
-                    {doctor.status === "Active"
+                    {doctor.status ===
+                        "Active"
                         ? "Set Inactive"
                         : "Set Active"}
                 </button>
 
-                {/* DELETE */}
+                {/* =================================================
+                    DELETE
+                    ================================================= */}
 
                 <button
                     type="button"
@@ -535,7 +582,9 @@ const Doctors = () => {
                         event.stopPropagation()
                     }
                     onClick={() =>
-                        handleDeleteDoctor(doctor.id)
+                        handleDeleteDoctor(
+                            doctor.id
+                        )
                     }
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-500 transition hover:bg-red-50"
                 >
@@ -566,7 +615,8 @@ const Doctors = () => {
                     </h1>
 
                     <p className="!mb-0 mt-1.5 text-sm text-gray-500">
-                        Manage hospital doctors and their departments.
+                        Manage hospital doctors
+                        and their departments.
                     </p>
 
                 </div>
@@ -576,14 +626,12 @@ const Doctors = () => {
                     onClick={handleAddDoctor}
                     className="flex items-center justify-center gap-2 !rounded-xl bg-[#1976c8] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1565a8] hover:shadow-md"
                 >
-
                     <Plus
                         size={18}
                         strokeWidth={2.2}
                     />
 
                     Add Doctor
-
                 </button>
 
             </div>
@@ -636,14 +684,16 @@ const Doctors = () => {
                             All Departments
                         </option>
 
-                        {departments.map((department) => (
-                            <option
-                                key={department}
-                                value={department}
-                            >
-                                {department}
-                            </option>
-                        ))}
+                        {departments.map(
+                            (department) => (
+                                <option
+                                    key={department}
+                                    value={department}
+                                >
+                                    {department}
+                                </option>
+                            )
+                        )}
 
                     </select>
 
@@ -664,8 +714,6 @@ const Doctors = () => {
                 <div className="hidden h-[610px] overflow-auto md:block">
 
                     <table className="w-full min-w-[800px] text-left">
-
-                        {/* STICKY TABLE HEADER */}
 
                         <thead className="sticky top-0 z-20">
 
@@ -699,138 +747,143 @@ const Doctors = () => {
 
                             {filteredDoctors.length > 0 ? (
 
-                                filteredDoctors.map((doctor) => (
+                                filteredDoctors.map(
+                                    (doctor) => (
 
-                                    <tr
-                                        key={doctor.id}
-                                        className="border-b border-[#edf3f7] transition-all duration-200 last:border-b-0 hover:bg-[#f8fbfd]"
-                                    >
+                                        <tr
+                                            key={doctor.id}
+                                            className="border-b border-[#edf3f7] transition-all duration-200 last:border-b-0 hover:bg-[#f8fbfd]"
+                                        >
 
-                                        {/* DOCTOR */}
+                                            {/* DOCTOR */}
 
-                                        <td className="px-6 py-5">
+                                            <td className="px-6 py-5">
 
-                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-3">
 
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] shadow-sm">
+                                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] shadow-sm">
 
-                                                    <Stethoscope
-                                                        size={20}
-                                                        strokeWidth={2}
-                                                    />
+                                                        <Stethoscope
+                                                            size={20}
+                                                            strokeWidth={2}
+                                                        />
+
+                                                    </div>
+
+                                                    <div>
+
+                                                        <p className="!mb-0 text-sm font-bold text-[#294b68]">
+                                                            {doctor.name}
+                                                        </p>
+
+                                                        <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                                            Doctor ID: DOC-
+                                                            {doctor.id
+                                                                .toString()
+                                                                .padStart(
+                                                                    3,
+                                                                    "0"
+                                                                )}
+                                                        </p>
+
+                                                    </div>
 
                                                 </div>
 
-                                                <div>
+                                            </td>
 
-                                                    <p className="!mb-0 text-sm font-bold text-[#294b68]">
-                                                        {doctor.name}
-                                                    </p>
+                                            {/* SPECIALTY */}
 
-                                                    <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                                        Doctor ID: DOC-
-                                                        {doctor.id
-                                                            .toString()
-                                                            .padStart(3, "0")}
-                                                    </p>
+                                            <td className="px-6 py-5">
 
-                                                </div>
+                                                <span className="text-sm font-medium text-gray-600">
+                                                    {doctor.specialty}
+                                                </span>
 
-                                            </div>
+                                            </td>
 
-                                        </td>
+                                            {/* DEPARTMENT */}
 
-                                        {/* SPECIALTY */}
+                                            <td className="px-6 py-5">
 
-                                        <td className="px-6 py-5">
+                                                <span className="text-sm text-gray-500">
+                                                    {doctor.department}
+                                                </span>
 
-                                            <span className="text-sm font-medium text-gray-600">
-                                                {doctor.specialty}
-                                            </span>
+                                            </td>
 
-                                        </td>
+                                            {/* STATUS */}
 
-                                        {/* DEPARTMENT */}
-
-                                        <td className="px-6 py-5">
-
-                                            <span className="text-sm text-gray-500">
-                                                {doctor.department}
-                                            </span>
-
-                                        </td>
-
-                                        {/* STATUS */}
-
-                                        <td className="px-6 py-5">
-
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    handleToggleStatus(
-                                                        doctor.id
-                                                    )
-                                                }
-                                                className={`inline-flex items-center gap-1.5 !rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
-                                                    "Active"
-                                                    ? "bg-green-50 text-green-600 hover:bg-green-100"
-                                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                                    }`}
-                                            >
-
-                                                <span
-                                                    className={`h-1.5 w-1.5 rounded-full ${doctor.status ===
-                                                        "Active"
-                                                        ? "bg-green-500"
-                                                        : "bg-gray-400"
-                                                        }`}
-                                                ></span>
-
-                                                {doctor.status}
-
-                                            </button>
-
-                                        </td>
-
-                                        {/* ACTION */}
-
-                                        <td className="px-6 py-5">
-
-                                            <div
-                                                data-doctor-action
-                                                className="relative inline-block"
-                                            >
+                                            <td className="px-6 py-5">
 
                                                 <button
                                                     type="button"
-                                                    data-doctor-action
-                                                    onClick={(event) =>
-                                                        handleActionMenu(
-                                                            doctor.id,
-                                                            event
+                                                    onClick={() =>
+                                                        handleToggleStatus(
+                                                            doctor.id
                                                         )
                                                     }
-                                                    className={`relative z-50 flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
-                                                        doctor.id
-                                                        ? "bg-[#eaf5fb] text-[#1976c8]"
-                                                        : "hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                                        }`}
+                                                    className={`inline-flex items-center gap-1.5 !rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
+                                                        "Active"
+                                                        ? "bg-green-50 text-green-600 hover:bg-green-100"
+                                                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                                    }`}
                                                 >
 
-                                                    <MoreVertical
-                                                        size={19}
-                                                        strokeWidth={2}
-                                                    />
+                                                    <span
+                                                        className={`h-1.5 w-1.5 rounded-full ${doctor.status ===
+                                                            "Active"
+                                                            ? "bg-green-500"
+                                                            : "bg-gray-400"
+                                                        }`}
+                                                    ></span>
+
+                                                    {doctor.status}
 
                                                 </button>
 
-                                            </div>
+                                            </td>
 
-                                        </td>
+                                            {/* ACTION */}
 
-                                    </tr>
+                                            <td className="px-6 py-5">
 
-                                ))
+                                                <div
+                                                    data-doctor-action
+                                                    className="relative inline-block"
+                                                >
+
+                                                    <button
+                                                        type="button"
+                                                        data-doctor-action
+                                                        onClick={(event) =>
+                                                            handleActionMenu(
+                                                                doctor.id,
+                                                                event
+                                                            )
+                                                        }
+                                                        className={`relative z-50 flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
+                                                            doctor.id
+                                                            ? "bg-[#eaf5fb] text-[#1976c8]"
+                                                            : "hover:bg-[#eaf5fb] hover:text-[#1976c8]"
+                                                        }`}
+                                                    >
+
+                                                        <MoreVertical
+                                                            size={19}
+                                                            strokeWidth={2}
+                                                        />
+
+                                                    </button>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+
+                                    )
+                                )
 
                             ) : (
 
@@ -845,7 +898,9 @@ const Doctors = () => {
 
                                             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf5fb] text-[#1976c8]">
 
-                                                <Stethoscope size={25} />
+                                                    <Stethoscope
+                                                        size={25}
+                                                    />
 
                                             </div>
 
@@ -854,7 +909,8 @@ const Doctors = () => {
                                             </p>
 
                                             <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                                Try changing your search or filter.
+                                                    Try changing your
+                                                    search or filter.
                                             </p>
 
                                         </div>
@@ -879,69 +935,133 @@ const Doctors = () => {
 
                     {filteredDoctors.length > 0 ? (
 
-                        filteredDoctors.map((doctor) => (
+                        filteredDoctors.map(
+                            (doctor) => (
 
-                            <div
-                                key={doctor.id}
-                                className="relative p-5 transition-all duration-200 hover:bg-[#f8fbfd]"
-                            >
+                                <div
+                                    key={doctor.id}
+                                    className="relative p-5 transition-all duration-200 hover:bg-[#f8fbfd]"
+                                >
 
-                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start justify-between gap-3">
 
-                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3">
 
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] shadow-sm">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] shadow-sm">
 
-                                            <Stethoscope
-                                                size={20}
-                                                strokeWidth={2}
-                                            />
+                                                <Stethoscope
+                                                    size={20}
+                                                    strokeWidth={2}
+                                                />
+
+                                            </div>
+
+                                            <div>
+
+                                                <p className="!mb-0 text-sm font-bold text-[#294b68]">
+                                                    {doctor.name}
+                                                </p>
+
+                                                <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                                    DOC-
+                                                    {doctor.id
+                                                        .toString()
+                                                        .padStart(
+                                                            3,
+                                                            "0"
+                                                        )}
+                                                </p>
+
+                                            </div>
+
+                                        </div>
+
+                                        {/* MOBILE ACTION */}
+
+                                        <div
+                                            data-doctor-action
+                                            className="relative"
+                                        >
+
+                                            <button
+                                                type="button"
+                                                data-doctor-action
+                                                onClick={(event) =>
+                                                    handleActionMenu(
+                                                        doctor.id,
+                                                        event
+                                                    )
+                                                }
+                                                className={`relative z-50 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
+                                                    doctor.id
+                                                    ? "bg-[#eaf5fb] text-[#1976c8]"
+                                                    : "hover:bg-[#eaf5fb] hover:text-[#1976c8]"
+                                                }`}
+                                            >
+
+                                                <MoreVertical
+                                                    size={19}
+                                                />
+
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                                        <div>
+
+                                            <p className="!mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                                Specialty
+                                            </p>
+
+                                            <p className="!mb-0 text-sm font-medium text-gray-600">
+                                                {doctor.specialty}
+                                            </p>
 
                                         </div>
 
                                         <div>
 
-                                            <p className="!mb-0 text-sm font-bold text-[#294b68]">
-                                                {doctor.name}
+                                            <p className="!mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                                Department
                                             </p>
 
-                                            <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                                DOC-
-                                                {doctor.id
-                                                    .toString()
-                                                    .padStart(3, "0")}
+                                            <p className="!mb-0 text-sm text-gray-500">
+                                                {doctor.department}
                                             </p>
 
                                         </div>
 
                                     </div>
 
-                                    {/* MOBILE ACTION */}
-
-                                    <div
-                                        data-doctor-action
-                                        className="relative"
-                                    >
+                                    <div className="mt-4">
 
                                         <button
                                             type="button"
-                                            data-doctor-action
-                                            onClick={(event) =>
-                                                handleActionMenu(
-                                                    doctor.id,
-                                                    event
+                                            onClick={() =>
+                                                handleToggleStatus(
+                                                    doctor.id
                                                 )
                                             }
-                                            className={`relative z-50 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
-                                                doctor.id
-                                                ? "bg-[#eaf5fb] text-[#1976c8]"
-                                                : "hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                                }`}
+                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
+                                                "Active"
+                                                ? "bg-green-50 text-green-600 hover:bg-green-100"
+                                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                            }`}
                                         >
 
-                                            <MoreVertical
-                                                size={19}
-                                            />
+                                            <span
+                                                className={`h-1.5 w-1.5 rounded-full ${doctor.status ===
+                                                    "Active"
+                                                    ? "bg-green-500"
+                                                    : "bg-gray-400"
+                                                }`}
+                                            ></span>
+
+                                            {doctor.status}
 
                                         </button>
 
@@ -949,67 +1069,8 @@ const Doctors = () => {
 
                                 </div>
 
-                                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-
-                                    <div>
-
-                                        <p className="!mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                                            Specialty
-                                        </p>
-
-                                        <p className="!mb-0 text-sm font-medium text-gray-600">
-                                            {doctor.specialty}
-                                        </p>
-
-                                    </div>
-
-                                    <div>
-
-                                        <p className="!mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                                            Department
-                                        </p>
-
-                                        <p className="!mb-0 text-sm text-gray-500">
-                                            {doctor.department}
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                                <div className="mt-4">
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleToggleStatus(
-                                                doctor.id
-                                            )
-                                        }
-                                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
-                                            "Active"
-                                            ? "bg-green-50 text-green-600 hover:bg-green-100"
-                                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                            }`}
-                                    >
-
-                                        <span
-                                            className={`h-1.5 w-1.5 rounded-full ${doctor.status ===
-                                                "Active"
-                                                ? "bg-green-500"
-                                                : "bg-gray-400"
-                                                }`}
-                                        ></span>
-
-                                        {doctor.status}
-
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-                        ))
+                            )
+                        )
 
                     ) : (
 
@@ -1019,7 +1080,9 @@ const Doctors = () => {
 
                                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf5fb] text-[#1976c8]">
 
-                                    <Stethoscope size={25} />
+                                        <Stethoscope
+                                            size={25}
+                                        />
 
                                 </div>
 
@@ -1028,7 +1091,8 @@ const Doctors = () => {
                                 </p>
 
                                 <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                    Try changing your search or filter.
+                                        Try changing your
+                                        search or filter.
                                 </p>
 
                             </div>
@@ -1043,14 +1107,14 @@ const Doctors = () => {
 
             {/* =====================================================
                 ACTION DROPDOWN
-                RENDERED OUTSIDE TABLE USING PORTAL
                 ===================================================== */}
 
             {openMenu !== null && (
                 <ActionDropdown
                     doctor={doctors.find(
                         (doctor) =>
-                            doctor.id === openMenu
+                            doctor.id ===
+                            openMenu
                     )}
                 />
             )}
@@ -1087,7 +1151,9 @@ const Doctors = () => {
 
                             <button
                                 type="button"
-                                onClick={handleCloseModal}
+                                onClick={
+                                    handleCloseModal
+                                }
                                 className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
                             >
 
@@ -1100,7 +1166,9 @@ const Doctors = () => {
                         {/* FORM */}
 
                         <form
-                            onSubmit={handleSaveDoctor}
+                            onSubmit={
+                                handleSaveDoctor
+                            }
                             className="space-y-5 p-6"
                         >
 
@@ -1115,8 +1183,12 @@ const Doctors = () => {
                                 <input
                                     type="text"
                                     name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.name
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                     placeholder="Enter doctor name"
                                     className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                 />
@@ -1134,8 +1206,12 @@ const Doctors = () => {
                                 <input
                                     type="text"
                                     name="specialty"
-                                    value={formData.specialty}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.specialty
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                     placeholder="Enter specialty"
                                     className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                 />
@@ -1152,8 +1228,12 @@ const Doctors = () => {
 
                                 <select
                                     name="department"
-                                    value={formData.department}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.department
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                     className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm font-medium text-[#294b68] outline-none transition focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                 >
 
@@ -1162,12 +1242,20 @@ const Doctors = () => {
                                     </option>
 
                                     {departments.map(
-                                        (department) => (
+                                        (
+                                            department
+                                        ) => (
                                             <option
-                                                key={department}
-                                                value={department}
+                                                key={
+                                                    department
+                                                }
+                                                value={
+                                                    department
+                                                }
                                             >
-                                                {department}
+                                                {
+                                                    department
+                                                }
                                             </option>
                                         )
                                     )}
@@ -1182,7 +1270,9 @@ const Doctors = () => {
 
                                 <button
                                     type="button"
-                                    onClick={handleCloseModal}
+                                    onClick={
+                                        handleCloseModal
+                                    }
                                     className="!rounded-xl border border-[#dcebf5] px-5 py-3 text-sm font-semibold text-[#294b68] transition hover:bg-[#f8fbfd]"
                                 >
                                     Cancel
@@ -1200,6 +1290,137 @@ const Doctors = () => {
                             </div>
 
                         </form>
+
+                    </div>
+
+                </div>
+
+            )}
+
+            {/* =====================================================
+                STATUS CONFIRMATION
+                ===================================================== */}
+
+            {statusDoctor && (
+
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
+
+                    <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+                            <Power size={22} />
+                        </div>
+
+                        <h2 className="!mb-0 mt-4 !text-lg !font-bold !text-[#294b68]">
+                            Change Doctor Status?
+                        </h2>
+
+                        <p className="!mb-0 mt-2 text-sm leading-6 text-gray-500">
+
+                            Are you sure you want to set{" "}
+
+                            <span className="font-semibold text-[#294b68]">
+                                {statusDoctor.name}
+                            </span>{" "}
+
+                            to{" "}
+
+                            {statusDoctor.status ===
+                                "Active"
+                                ? "Inactive"
+                                : "Active"}
+
+                            ?
+
+                        </p>
+
+                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setStatusDoctor(
+                                        null
+                                    )
+                                }
+                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleStatusChange
+                                }
+                                className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
+                            >
+                                Confirm
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
+
+            {/* =====================================================
+                DELETE CONFIRMATION
+                ===================================================== */}
+
+            {deleteDoctor && (
+
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
+
+                    <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
+                            <Trash2 size={22} />
+                        </div>
+
+                        <h2 className="!mb-0 mt-4 !text-lg !font-bold !text-[#294b68]">
+                            Delete Doctor?
+                        </h2>
+
+                        <p className="!mb-0 mt-2 text-sm leading-6 text-gray-500">
+
+                            Are you sure you want to delete{" "}
+
+                            <span className="font-semibold text-[#294b68]">
+                                {deleteDoctor.name}
+                            </span>
+
+                            ? This action cannot be undone.
+
+                        </p>
+
+                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setDeleteDoctor(
+                                        null
+                                    )
+                                }
+                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleDelete
+                                }
+                                className="!rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
+                            >
+                                Delete Doctor
+                            </button>
+
+                        </div>
 
                     </div>
 

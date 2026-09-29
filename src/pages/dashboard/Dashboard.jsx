@@ -5,11 +5,19 @@ import {
     CalendarCheck,
     ArrowUpRight,
     Stethoscope,
+    Clock3,
+    CheckCircle2,
+    CircleAlert,
+    CalendarDays,
 } from "lucide-react";
 
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
+
+    // =====================================================
+    // STATISTICS
+    // =====================================================
 
     const stats = [
         {
@@ -45,6 +53,11 @@ const Dashboard = () => {
             iconColor: "text-cyan-600",
         },
     ];
+
+
+    // =====================================================
+    // APPOINTMENTS
+    // =====================================================
 
     const appointments = [
         {
@@ -85,11 +98,60 @@ const Dashboard = () => {
         },
     ];
 
+
+    // =====================================================
+    // STATUS STYLES
+    // =====================================================
+
     const statusStyle = {
         Pending: "bg-yellow-50 text-yellow-600",
         Confirmed: "bg-blue-50 text-blue-600",
         Completed: "bg-green-50 text-green-600",
     };
+
+
+    // =====================================================
+    // DASHBOARD OVERVIEW
+    // =====================================================
+
+    const appointmentOverview = [
+        {
+            title: "Pending",
+            value: "2",
+            description: "Need attention",
+            icon: CircleAlert,
+            iconBg: "bg-yellow-50",
+            iconColor: "text-yellow-600",
+        },
+        {
+            title: "Confirmed",
+            value: "1",
+            description: "Scheduled appointments",
+            icon: CheckCircle2,
+            iconBg: "bg-blue-50",
+            iconColor: "text-[#1976c8]",
+        },
+        {
+            title: "Completed",
+            value: "1",
+            description: "Successfully completed",
+            icon: CheckCircle2,
+            iconBg: "bg-green-50",
+            iconColor: "text-green-600",
+        },
+    ];
+
+
+    // =====================================================
+    // UPCOMING APPOINTMENTS
+    // =====================================================
+
+    const upcomingAppointments = appointments.filter(
+        (appointment) =>
+            appointment.status === "Pending" ||
+            appointment.status === "Confirmed"
+    );
+
 
     return (
         <div className="space-y-6">
@@ -97,6 +159,7 @@ const Dashboard = () => {
             {/* =====================================================
                 WELCOME SECTION
                 ===================================================== */}
+
             <div className="relative overflow-hidden rounded-2xl bg-[#1976c8] p-6 text-white shadow-sm sm:p-8">
 
                 <div className="relative z-10 max-w-2xl">
@@ -117,6 +180,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Decorative circles */}
+
                 <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10" />
 
                 <div className="absolute -bottom-20 right-20 h-48 w-48 rounded-full bg-white/5" />
@@ -127,9 +191,11 @@ const Dashboard = () => {
             {/* =====================================================
                 STATISTICS
                 ===================================================== */}
+
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
                 {stats.map((stat) => {
+
                     const Icon = stat.icon;
 
                     return (
@@ -139,12 +205,15 @@ const Dashboard = () => {
                         >
 
                             {/* Decorative Background */}
+
                             <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#eaf5fb] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
 
                             {/* Top Row */}
+
                             <div className="relative flex items-start justify-between">
 
                                 {/* Icon */}
+
                                 <div
                                     className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} shadow-sm transition-all duration-300 group-hover:scale-105`}
                                 >
@@ -152,6 +221,7 @@ const Dashboard = () => {
                                 </div>
 
                                 {/* Percentage */}
+
                                 <div className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-600">
                                     <ArrowUpRight size={13} strokeWidth={2.5} />
                                     <span>{stat.change}</span>
@@ -160,6 +230,7 @@ const Dashboard = () => {
                             </div>
 
                             {/* Content */}
+
                             <div className="relative mt-6">
 
                                 <p className="!mb-1 text-sm font-medium text-gray-400">
@@ -173,6 +244,7 @@ const Dashboard = () => {
                                     </h2>
 
                                     {/* Small decorative line */}
+
                                     <div className="mb-1 hidden h-1 w-12 overflow-hidden rounded-full bg-[#eaf5fb] sm:block">
                                         <div className="h-full w-2/3 rounded-full bg-[#1976c8] transition-all duration-500 group-hover:w-full" />
                                     </div>
@@ -189,11 +261,79 @@ const Dashboard = () => {
 
 
             {/* =====================================================
+                APPOINTMENT OVERVIEW
+                ===================================================== */}
+
+            <div>
+
+                <div className="mb-4">
+
+                    <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
+                        Appointment Overview
+                    </h2>
+
+                    <p className="!mb-0 mt-1 text-xs text-gray-400">
+                        Current appointment status summary
+                    </p>
+
+                </div>
+
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+                    {appointmentOverview.map((item) => {
+
+                        const Icon = item.icon;
+
+                        return (
+                            <div
+                                key={item.title}
+                                className="group rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
+                            >
+
+                                <div className="flex items-center justify-between">
+
+                                    <div
+                                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.iconBg} ${item.iconColor} transition-all duration-300 group-hover:scale-105`}
+                                    >
+                                        <Icon size={21} />
+                                    </div>
+
+                                    <span className="text-2xl font-extrabold text-[#294b68]">
+                                        {item.value}
+                                    </span>
+
+                                </div>
+
+                                <div className="mt-4">
+
+                                    <p className="!mb-0 text-sm font-bold text-[#294b68]">
+                                        {item.title}
+                                    </p>
+
+                                    <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                        {item.description}
+                                    </p>
+
+                                </div>
+
+                            </div>
+                        );
+                    })}
+
+                </div>
+
+            </div>
+
+
+            {/* =====================================================
                 RECENT APPOINTMENTS
                 ===================================================== */}
+
             <div className="overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_4px_20px_rgba(41,75,104,0.04)]">
 
                 {/* Section Header */}
+
                 <div className="flex flex-col gap-3 border-b border-[#edf3f7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
@@ -221,6 +361,7 @@ const Dashboard = () => {
                 {/* =================================================
                     DESKTOP TABLE
                     ================================================= */}
+
                 <div className="hidden overflow-x-auto md:block">
 
                     <table className="w-full">
@@ -319,6 +460,7 @@ const Dashboard = () => {
                 {/* =================================================
                     MOBILE CARDS
                     ================================================= */}
+
                 <div className="divide-y divide-[#edf3f7] md:hidden">
 
                     {appointments.map((appointment) => (
@@ -365,8 +507,9 @@ const Dashboard = () => {
 
 
             {/* =====================================================
-                QUICK ACTIONS
+                UPCOMING APPOINTMENTS
                 ===================================================== */}
+
             <div>
 
                 <div className="mb-4 flex items-center justify-between">
@@ -374,14 +517,116 @@ const Dashboard = () => {
                     <div>
 
                         <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
-                            Quick Actions
+                            Upcoming Appointments
                         </h2>
 
                         <p className="!mb-0 mt-1 text-xs text-gray-400">
-                            Quickly access important management sections
+                            Patients scheduled for upcoming visits
                         </p>
 
                     </div>
+
+                    <CalendarDays
+                        size={21}
+                        className="text-[#1976c8]"
+                    />
+
+                </div>
+
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+                    {upcomingAppointments.map((appointment) => (
+
+                        <div
+                            key={appointment.id}
+                            className="group rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
+                        >
+
+                            <div className="flex items-start justify-between gap-4">
+
+                                <div className="flex items-start gap-3">
+
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+                                        <CalendarCheck size={20} />
+                                    </div>
+
+                                    <div>
+
+                                        <p className="!mb-0 text-sm font-bold text-[#294b68]">
+                                            {appointment.patient}
+                                        </p>
+
+                                        <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                            {appointment.doctor}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <span
+                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[appointment.status]}`}
+                                >
+                                    {appointment.status}
+                                </span>
+
+                            </div>
+
+
+                            <div className="mt-4 flex flex-wrap gap-3 border-t border-[#edf3f7] pt-4">
+
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <CalendarDays
+                                        size={15}
+                                        className="text-[#1976c8]"
+                                    />
+                                    {appointment.date}
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <Clock3
+                                        size={15}
+                                        className="text-[#1976c8]"
+                                    />
+                                    {appointment.time}
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <Stethoscope
+                                        size={15}
+                                        className="text-[#1976c8]"
+                                    />
+                                    {appointment.department}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    ))}
+
+                </div>
+
+            </div>
+
+
+            {/* =====================================================
+                QUICK ACTIONS
+                ===================================================== */}
+
+            <div>
+
+                <div className="mb-4">
+
+                    <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
+                        Quick Actions
+                    </h2>
+
+                    <p className="!mb-0 mt-1 text-xs text-gray-400">
+                        Quickly access important management sections
+                    </p>
 
                 </div>
 
@@ -389,6 +634,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
                     {/* Manage Doctors */}
+
                     <Link
                         to="/dashboard/doctors"
                         className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
@@ -414,6 +660,7 @@ const Dashboard = () => {
 
 
                     {/* Departments */}
+
                     <Link
                         to="/dashboard/departments"
                         className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
@@ -439,6 +686,7 @@ const Dashboard = () => {
 
 
                     {/* Appointments */}
+
                     <Link
                         to="/dashboard/appointments"
                         className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
@@ -464,6 +712,7 @@ const Dashboard = () => {
 
 
                     {/* Users */}
+
                     <Link
                         to="/dashboard/users"
                         className="group !no-underline flex items-center gap-4 rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
