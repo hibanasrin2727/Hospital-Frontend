@@ -18,43 +18,125 @@ import { createPortal } from "react-dom";
 const Users = () => {
 
     /* =====================================================
+       API
+    ===================================================== */
+
+    const API_URL =
+        "http://localhost:5000/api/dashboard/users";
+
+
+    /* =====================================================
        USERS
     ===================================================== */
 
-    const [users, setUsers] = useState([
-        {
-            id: 1,
-            name: "Arjun Kumar",
-            email: "arjun@example.com",
-            phone: "+91 98765 43210",
-            role: "Patient",
-            status: "Active",
-        },
-        {
-            id: 2,
-            name: "Anjali Nair",
-            email: "anjali@example.com",
-            phone: "+91 98765 12345",
-            role: "Patient",
-            status: "Active",
-        },
-        {
-            id: 3,
-            name: "Muhammed Shamil",
-            email: "shamil@example.com",
-            phone: "+91 98765 67890",
-            role: "Patient",
-            status: "Active",
-        },
-        {
-            id: 4,
-            name: "Sneha Thomas",
-            email: "sneha@example.com",
-            phone: "+91 98765 24680",
-            role: "Patient",
-            status: "Inactive",
-        },
-    ]);
+    const [users, setUsers] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+
+
+    /* =====================================================
+       TOKEN
+    ===================================================== */
+
+    const getToken = () => {
+        return localStorage.getItem("token");
+    };
+
+
+    /* =====================================================
+       FETCH USERS
+    ===================================================== */
+
+    const fetchUsers = async () => {
+        try {
+
+            setLoading(true);
+
+            const token = getToken();
+
+            if (!token) {
+                console.error("Admin token not found");
+                setUsers([]);
+                return;
+            }
+
+            const response = await fetch(
+                API_URL,
+                {
+                    method: "GET",
+
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to fetch users"
+                );
+            }
+
+            const formattedUsers =
+                (data.users || []).map(
+                    (user) => ({
+                        id: user._id,
+
+                        name:
+                            user.name ||
+                            "Unknown User",
+
+                        email:
+                            user.email ||
+                            "No email",
+
+                        phone:
+                            user.phone ||
+                            "No phone",
+
+                        role:
+                            user.role === "admin"
+                                ? "Admin"
+                                : "Patient",
+
+                        status:
+                            user.status === "active"
+                                ? "Active"
+                                : "Inactive",
+                    })
+                );
+
+            setUsers(formattedUsers);
+
+        } catch (error) {
+
+            console.error(
+                "Fetch users error:",
+                error
+            );
+
+            setUsers([]);
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    };
+
+
+    /* =====================================================
+       FETCH ON PAGE LOAD
+    ===================================================== */
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
 
     /* =====================================================
        SEARCH + FILTER
@@ -65,16 +147,20 @@ const Users = () => {
     const [statusFilter, setStatusFilter] =
         useState("All Status");
 
+
     /* =====================================================
        ACTION MENU
     ===================================================== */
 
-    const [openMenu, setOpenMenu] = useState(null);
+    const [openMenu, setOpenMenu] =
+        useState(null);
 
-    const [menuPosition, setMenuPosition] = useState({
-        top: 0,
-        left: 0,
-    });
+    const [menuPosition, setMenuPosition] =
+        useState({
+            top: 0,
+            left: 0,
+        });
+
 
     /* =====================================================
        MODALS
@@ -92,49 +178,62 @@ const Users = () => {
     const [deleteUser, setDeleteUser] =
         useState(null);
 
+
     /* =====================================================
        FILTER USERS
     ===================================================== */
 
-    const filteredUsers = users.filter((user) => {
+    const filteredUsers =
+        users.filter((user) => {
 
-        const searchValue =
-            search.toLowerCase().trim();
+            const searchValue =
+                search
+                    .toLowerCase()
+                    .trim();
 
-        const matchesSearch =
-            user.name
-                .toLowerCase()
-                .includes(searchValue) ||
-            user.email
-                .toLowerCase()
-                .includes(searchValue) ||
-            user.phone
-                .toLowerCase()
-                .includes(searchValue);
+            const matchesSearch =
+                user.name
+                    .toLowerCase()
+                    .includes(searchValue) ||
+                user.email
+                    .toLowerCase()
+                    .includes(searchValue) ||
+                user.phone
+                    .toLowerCase()
+                    .includes(searchValue);
 
-        const matchesStatus =
-            statusFilter === "All Status" ||
-            user.status === statusFilter;
+            const matchesStatus =
+                statusFilter ===
+                "All Status" ||
+                user.status ===
+                statusFilter;
 
-        return (
-            matchesSearch &&
-            matchesStatus
-        );
-    });
+            return (
+                matchesSearch &&
+                matchesStatus
+            );
+        });
+
 
     /* =====================================================
        SUMMARY COUNTS
     ===================================================== */
 
-    const totalUsers = users.length;
+    const totalUsers =
+        users.length;
 
-    const activeUsers = users.filter(
-        (user) => user.status === "Active"
-    ).length;
+    const activeUsers =
+        users.filter(
+            (user) =>
+                user.status === "Active"
+        ).length;
 
-    const inactiveUsers = users.filter(
-        (user) => user.status === "Inactive"
-    ).length;
+    const inactiveUsers =
+        users.filter(
+            (user) =>
+                user.status === "Inactive"
+        ).length;
+
 
     /* =====================================================
        OPEN ACTION MENU
@@ -148,13 +247,15 @@ const Users = () => {
         event.stopPropagation();
 
         const rect =
-            event.currentTarget.getBoundingClientRect();
+            event.currentTarget
+                .getBoundingClientRect();
 
         const menuWidth = 185;
         const menuHeight = 160;
 
         let left =
-            rect.right - menuWidth;
+            rect.right -
+            menuWidth;
 
         let top =
             rect.bottom + 6;
@@ -195,11 +296,14 @@ const Users = () => {
         );
     };
 
+
     /* =====================================================
        VIEW USER
     ===================================================== */
 
-    const handleViewUser = (user) => {
+    const handleViewUser = (
+        user
+    ) => {
 
         setSelectedUser(user);
 
@@ -208,54 +312,146 @@ const Users = () => {
         setOpenMenu(null);
     };
 
+
     /* =====================================================
        CHANGE USER STATUS
     ===================================================== */
 
-    const handleChangeStatus = () => {
+    const handleChangeStatus =
+        async () => {
 
-        if (!statusUser) {
-            return;
-        }
+            if (!statusUser) {
+                return;
+            }
 
-        const newStatus =
-            statusUser.status === "Active"
-                ? "Inactive"
-                : "Active";
+            try {
 
-        setUsers((prev) =>
-            prev.map((user) =>
-                user.id === statusUser.id
-                    ? {
-                        ...user,
-                        status: newStatus,
-                    }
-                    : user
-            )
-        );
+                const token =
+                    getToken();
 
-        setStatusUser(null);
-    };
+                if (!token) {
+                    alert(
+                        "Admin token not found"
+                    );
+                    return;
+                }
+
+                const newStatus =
+                    statusUser.status ===
+                        "Active"
+                        ? "inactive"
+                        : "active";
+
+                const response =
+                    await fetch(
+                        `${API_URL}/${statusUser.id}`,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    status:
+                                        newStatus,
+                                }),
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Failed to change user status"
+                    );
+                }
+
+                await fetchUsers();
+
+                setStatusUser(null);
+
+            } catch (error) {
+
+                console.error(
+                    "Change user status error:",
+                    error
+                );
+
+                alert(error.message);
+            }
+        };
+
 
     /* =====================================================
        DELETE USER
     ===================================================== */
 
-    const handleDeleteUser = () => {
+    const handleDeleteUser =
+        async () => {
 
-        if (!deleteUser) {
-            return;
-        }
+            if (!deleteUser) {
+                return;
+            }
 
-        setUsers((prev) =>
-            prev.filter(
-                (user) =>
-                    user.id !== deleteUser.id
-            )
-        );
+            try {
 
-        setDeleteUser(null);
-    };
+                const token =
+                    getToken();
+
+                if (!token) {
+                    alert(
+                        "Admin token not found"
+                    );
+                    return;
+                }
+
+                const response =
+                    await fetch(
+                        `${API_URL}/${deleteUser.id}`,
+                        {
+                            method: "DELETE",
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+                                "Content-Type":
+                                    "application/json",
+                            },
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Failed to delete user"
+                    );
+                }
+
+                await fetchUsers();
+
+                setDeleteUser(null);
+
+            } catch (error) {
+
+                console.error(
+                    "Delete user error:",
+                    error
+                );
+
+                alert(error.message);
+            }
+        };
+
 
     /* =====================================================
        CLOSE MENU
@@ -263,18 +459,17 @@ const Users = () => {
 
     useEffect(() => {
 
-        const handleOutsideClick = (
-            event
-        ) => {
+        const handleOutsideClick =
+            (event) => {
 
-            if (
-                !event.target.closest(
-                    "[data-user-menu]"
-                )
-            ) {
-                setOpenMenu(null);
-            }
-        };
+                if (
+                    !event.target.closest(
+                        "[data-user-menu]"
+                    )
+                ) {
+                    setOpenMenu(null);
+                }
+            };
 
         const handleScroll = () => {
             setOpenMenu(null);
@@ -321,6 +516,7 @@ const Users = () => {
 
     }, []);
 
+
     return (
         <div className="space-y-6">
 
@@ -329,6 +525,7 @@ const Users = () => {
             ===================================================== */}
 
             <div>
+
                 <h1 className="text-2xl font-bold text-[#294b68]">
                     Users
                 </h1>
@@ -336,7 +533,9 @@ const Users = () => {
                 <p className="mt-1 text-sm text-gray-500">
                     Manage registered patients and user accounts.
                 </p>
+
             </div>
+
 
             {/* =====================================================
                 SUMMARY CARDS
@@ -346,7 +545,7 @@ const Users = () => {
 
                 {/* TOTAL */}
 
-                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(41,75,104,0.10)]">
+                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
 
                     <div className="flex items-center justify-between">
 
@@ -366,8 +565,12 @@ const Users = () => {
 
                         </div>
 
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
-                            <UsersRound size={23} />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#1976c8] group-hover:text-white">
+
+                            <UsersRound
+                                size={23}
+                            />
+
                         </div>
 
                     </div>
@@ -376,9 +579,10 @@ const Users = () => {
 
                 </div>
 
+
                 {/* ACTIVE */}
 
-                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(41,75,104,0.10)]">
+                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
 
                     <div className="flex items-center justify-between">
 
@@ -398,8 +602,12 @@ const Users = () => {
 
                         </div>
 
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600">
-                            <CheckCircle2 size={23} />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600 transition-all duration-300 group-hover:scale-105">
+
+                            <CheckCircle2
+                                size={23}
+                            />
+
                         </div>
 
                     </div>
@@ -408,9 +616,10 @@ const Users = () => {
 
                 </div>
 
+
                 {/* INACTIVE */}
 
-                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(41,75,104,0.10)]">
+                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
 
                     <div className="flex items-center justify-between">
 
@@ -430,8 +639,12 @@ const Users = () => {
 
                         </div>
 
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
-                            <Power size={23} />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-500 transition-all duration-300 group-hover:scale-105">
+
+                            <Power
+                                size={23}
+                            />
+
                         </div>
 
                     </div>
@@ -441,6 +654,7 @@ const Users = () => {
                 </div>
 
             </div>
+
 
             {/* =====================================================
                 SEARCH + FILTER
@@ -473,6 +687,7 @@ const Users = () => {
 
                     </div>
 
+
                     {/* FILTER */}
 
                     <select
@@ -502,6 +717,7 @@ const Users = () => {
                 </div>
 
             </div>
+
 
             {/* =====================================================
                 DESKTOP TABLE
@@ -541,136 +757,176 @@ const Users = () => {
 
                         </thead>
 
+
                         <tbody className="divide-y divide-gray-100">
 
-                            {filteredUsers.map((user) => (
+                            {loading ? (
 
-                                <tr
-                                    key={user.id}
-                                    className="group transition hover:bg-[#f9fcfe]"
-                                >
+                                <tr>
 
-                                    {/* USER */}
+                                    <td
+                                        colSpan="5"
+                                        className="px-6 py-14 text-center"
+                                    >
 
-                                    <td className="px-6 py-5">
+                                        <div className="flex flex-col items-center justify-center">
 
-                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
 
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition group-hover:bg-[#1976c8] group-hover:text-white">
-                                                <UserRound size={19} />
-                                            </div>
-
-                                            <div>
-
-                                                <p className="font-semibold text-[#294b68]">
-                                                    {user.name}
-                                                </p>
-
-                                                <p className="mt-0.5 text-xs text-gray-400">
-                                                    User ID: USR-
-                                                    {user.id
-                                                        .toString()
-                                                        .padStart(
-                                                            3,
-                                                            "0"
-                                                        )}
-                                                </p>
-
-                                            </div>
+                                            <p className="mt-3 text-sm text-gray-500">
+                                                Loading users...
+                                            </p>
 
                                         </div>
-
-                                    </td>
-
-                                    {/* CONTACT */}
-
-                                    <td className="px-6 py-5">
-
-                                        <div className="space-y-1.5">
-
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-
-                                                <Mail
-                                                    size={14}
-                                                    className="text-[#1976c8]"
-                                                />
-
-                                                {user.email}
-
-                                            </div>
-
-                                            <div className="flex items-center gap-2 text-xs text-gray-400">
-
-                                                <Phone size={14} />
-
-                                                {user.phone}
-
-                                            </div>
-
-                                        </div>
-
-                                    </td>
-
-                                    {/* ROLE */}
-
-                                    <td className="px-6 py-5">
-
-                                        <span className="rounded-full bg-[#eaf5fb] px-3 py-1.5 text-xs font-semibold text-[#1976c8]">
-                                            {user.role}
-                                        </span>
-
-                                    </td>
-
-                                    {/* STATUS */}
-
-                                    <td className="px-6 py-5">
-
-                                        <span
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${user.status === "Active"
-                                                ? "bg-green-50 text-green-600"
-                                                : "bg-gray-100 text-gray-500"
-                                                }`}
-                                        >
-
-                                            <span
-                                                className={`h-1.5 w-1.5 rounded-full ${user.status ===
-                                                    "Active"
-                                                    ? "bg-green-500"
-                                                    : "bg-gray-400"
-                                                    }`}
-                                            />
-
-                                            {user.status}
-
-                                        </span>
-
-                                    </td>
-
-                                    {/* ACTION */}
-
-                                    <td className="px-6 py-5">
-
-                                        <button
-                                            type="button"
-                                            data-user-menu
-                                            onClick={(event) =>
-                                                handleMenuClick(
-                                                    event,
-                                                    user.id
-                                                )
-                                            }
-                                            className="rounded-lg p-2 text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                        >
-                                            <MoreVertical
-                                                size={18}
-                                            />
-                                        </button>
 
                                     </td>
 
                                 </tr>
 
-                            ))}
+                            ) : (
+
+                                filteredUsers.map(
+                                    (user) => (
+
+                                        <tr
+                                            key={user.id}
+                                            className="group transition hover:bg-[#f9fcfe]"
+                                        >
+
+                                            {/* USER */}
+
+                                            <td className="px-6 py-5">
+
+                                                <div className="flex items-center gap-3">
+
+                                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition group-hover:bg-[#1976c8] group-hover:text-white">
+
+                                                        <UserRound
+                                                            size={19}
+                                                        />
+
+                                                    </div>
+
+                                                    <div>
+
+                                                        <p className="font-semibold text-[#294b68]">
+                                                            {user.name}
+                                                        </p>
+
+                                                        <p className="mt-0.5 text-xs text-gray-400">
+                                                            User ID:{" "}
+                                                            {user.id}
+                                                        </p>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            {/* CONTACT */}
+
+                                            <td className="px-6 py-5">
+
+                                                <div className="space-y-1.5">
+
+                                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+
+                                                        <Mail
+                                                            size={14}
+                                                            className="text-[#1976c8]"
+                                                        />
+
+                                                        {user.email}
+
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+
+                                                        <Phone
+                                                            size={14}
+                                                        />
+
+                                                        {user.phone}
+
+                                                    </div>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            {/* ROLE */}
+
+                                            <td className="px-6 py-5">
+
+                                                <span className="rounded-full bg-[#eaf5fb] px-3 py-1.5 text-xs font-semibold text-[#1976c8]">
+                                                    {user.role}
+                                                </span>
+
+                                            </td>
+
+
+                                            {/* STATUS */}
+
+                                            <td className="px-6 py-5">
+
+                                                <span
+                                                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${user.status ===
+                                                            "Active"
+                                                            ? "bg-green-50 text-green-600"
+                                                            : "bg-gray-100 text-gray-500"
+                                                        }`}
+                                                >
+
+                                                    <span
+                                                        className={`h-1.5 w-1.5 rounded-full ${user.status ===
+                                                                "Active"
+                                                                ? "bg-green-500"
+                                                                : "bg-gray-400"
+                                                            }`}
+                                                    />
+
+                                                    {user.status}
+
+                                                </span>
+
+                                            </td>
+
+
+                                            {/* ACTION */}
+
+                                            <td className="px-6 py-5">
+
+                                                <button
+                                                    type="button"
+                                                    data-user-menu
+                                                    onClick={(
+                                                        event
+                                                    ) =>
+                                                        handleMenuClick(
+                                                            event,
+                                                            user.id
+                                                        )
+                                                    }
+                                                    className="rounded-lg p-2 text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
+                                                >
+
+                                                    <MoreVertical
+                                                        size={18}
+                                                    />
+
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+
+                                    )
+                                )
+
+                            )}
 
                         </tbody>
 
@@ -680,11 +936,13 @@ const Users = () => {
 
             </div>
 
+
             {/* =====================================================
                 EMPTY DESKTOP STATE
             ===================================================== */}
 
-            {filteredUsers.length === 0 && (
+            {!loading &&
+                filteredUsers.length === 0 && (
 
                 <div className="hidden rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm lg:block">
 
@@ -703,7 +961,8 @@ const Users = () => {
 
                 </div>
 
-            )}
+                )}
+
 
             {/* =====================================================
                 MOBILE CARDS
@@ -711,151 +970,188 @@ const Users = () => {
 
             <div className="space-y-4 lg:hidden">
 
-                {filteredUsers.map((user) => (
+                {loading ? (
 
-                    <div
-                        key={user.id}
-                        className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md"
-                    >
+                    <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
 
-                        {/* TOP */}
+                        <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
 
-                        <div className="flex items-start justify-between">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
-                                    <UserRound size={19} />
-                                </div>
-
-                                <div>
-
-                                    <h2 className="font-bold text-[#294b68]">
-                                        {user.name}
-                                    </h2>
-
-                                    <p className="mt-0.5 text-xs text-gray-400">
-                                        User ID: USR-
-                                        {user.id
-                                            .toString()
-                                            .padStart(
-                                                3,
-                                                "0"
-                                            )}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                            <button
-                                type="button"
-                                data-user-menu
-                                onClick={(event) =>
-                                    handleMenuClick(
-                                        event,
-                                        user.id
-                                    )
-                                }
-                                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
-                            >
-                                <MoreVertical
-                                    size={18}
-                                />
-                            </button>
-
-                        </div>
-
-                        {/* CONTACT */}
-
-                        <div className="mt-5 space-y-3">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
-                                    <Mail size={15} />
-                                </div>
-
-                                <div>
-
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                        Email
-                                    </p>
-
-                                    <p className="mt-0.5 text-sm text-gray-600">
-                                        {user.email}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
-                                    <Phone size={15} />
-                                </div>
-
-                                <div>
-
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                        Phone
-                                    </p>
-
-                                    <p className="mt-0.5 text-sm text-gray-600">
-                                        {user.phone}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        {/* ROLE + STATUS */}
-
-                        <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-
-                            <span className="rounded-full bg-[#eaf5fb] px-3 py-1.5 text-xs font-semibold text-[#1976c8]">
-                                {user.role}
-                            </span>
-
-                            <span
-                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${user.status === "Active"
-                                    ? "bg-green-50 text-green-600"
-                                    : "bg-gray-100 text-gray-500"
-                                    }`}
-                            >
-
-                                <span
-                                    className={`h-1.5 w-1.5 rounded-full ${user.status ===
-                                        "Active"
-                                        ? "bg-green-500"
-                                        : "bg-gray-400"
-                                        }`}
-                                />
-
-                                {user.status}
-
-                            </span>
-
-                        </div>
-
-                        {/* BOTTOM ACCENT */}
-
-                        <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+                        <p className="mt-3 text-sm text-gray-500">
+                            Loading users...
+                        </p>
 
                     </div>
 
-                ))}
+                ) : (
+
+                    filteredUsers.map(
+                        (user) => (
+
+                            <div
+                                key={user.id}
+                                className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]"
+                            >
+
+                                {/* TOP */}
+
+                                <div className="flex items-start justify-between">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:bg-[#1976c8] group-hover:text-white">
+
+                                            <UserRound
+                                                size={19}
+                                            />
+
+                                        </div>
+
+                                        <div>
+
+                                            <h2 className="font-bold text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
+                                                {user.name}
+                                            </h2>
+
+                                            <p className="mt-0.5 text-xs text-gray-400">
+                                                User ID:{" "}
+                                                {user.id}
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <button
+                                        type="button"
+                                        data-user-menu
+                                        onClick={(
+                                            event
+                                        ) =>
+                                            handleMenuClick(
+                                                event,
+                                                user.id
+                                            )
+                                        }
+                                        className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
+                                    >
+
+                                        <MoreVertical
+                                            size={18}
+                                        />
+
+                                    </button>
+
+                                </div>
+
+
+                                {/* CONTACT */}
+
+                                <div className="mt-5 space-y-3">
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
+
+                                            <Mail
+                                                size={15}
+                                            />
+
+                                        </div>
+
+                                        <div>
+
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                                                Email
+                                            </p>
+
+                                            <p className="mt-0.5 break-all text-sm text-gray-600">
+                                                {user.email}
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div className="flex items-center gap-3">
+
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
+
+                                            <Phone
+                                                size={15}
+                                            />
+
+                                        </div>
+
+                                        <div>
+
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                                                Phone
+                                            </p>
+
+                                            <p className="mt-0.5 text-sm text-gray-600">
+                                                {user.phone}
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* ROLE + STATUS */}
+
+                                <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
+
+                                    <span className="rounded-full bg-[#eaf5fb] px-3 py-1.5 text-xs font-semibold text-[#1976c8]">
+                                        {user.role}
+                                    </span>
+
+                                    <span
+                                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${user.status ===
+                                                "Active"
+                                                ? "bg-green-50 text-green-600"
+                                                : "bg-gray-100 text-gray-500"
+                                            }`}
+                                    >
+
+                                        <span
+                                            className={`h-1.5 w-1.5 rounded-full ${user.status ===
+                                                    "Active"
+                                                    ? "bg-green-500"
+                                                    : "bg-gray-400"
+                                                }`}
+                                        />
+
+                                        {user.status}
+
+                                    </span>
+
+                                </div>
+
+
+                                {/* BOTTOM ACCENT */}
+
+                                <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+
+                            </div>
+
+                        )
+                    )
+
+                )}
 
             </div>
+
 
             {/* =====================================================
                 EMPTY MOBILE STATE
             ===================================================== */}
 
-            {filteredUsers.length === 0 && (
+            {!loading &&
+                filteredUsers.length === 0 && (
 
                 <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm lg:hidden">
 
@@ -874,7 +1170,8 @@ const Users = () => {
 
                 </div>
 
-            )}
+                )}
+
 
             {/* =====================================================
                 ACTION MENU
@@ -908,6 +1205,7 @@ const Users = () => {
 
                             return (
                                 <>
+
                                     {/* VIEW */}
 
                                     <button
@@ -919,10 +1217,15 @@ const Users = () => {
                                         }
                                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
                                     >
-                                        <Eye size={16} />
+
+                                        <Eye
+                                            size={16}
+                                        />
 
                                         View Details
+
                                     </button>
+
 
                                     {/* STATUS */}
 
@@ -942,7 +1245,9 @@ const Users = () => {
                                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-green-50 hover:text-green-600"
                                     >
 
-                                        <Power size={16} />
+                                        <Power
+                                            size={16}
+                                        />
 
                                         {user.status ===
                                             "Active"
@@ -950,6 +1255,7 @@ const Users = () => {
                                             : "Set Active"}
 
                                     </button>
+
 
                                     {/* DELETE */}
 
@@ -987,6 +1293,7 @@ const Users = () => {
                     document.body
                 )}
 
+
             {/* =====================================================
                 VIEW DETAILS MODAL
             ===================================================== */}
@@ -1009,13 +1316,10 @@ const Users = () => {
                                     </h2>
 
                                     <p className="mt-1 text-sm text-gray-500">
-                                        User ID: USR-
-                                        {selectedUser.id
-                                            .toString()
-                                            .padStart(
-                                                3,
-                                                "0"
-                                            )}
+                                    User ID:{" "}
+                                    {
+                                        selectedUser.id
+                                    }
                                     </p>
 
                                 </div>
@@ -1029,19 +1333,26 @@ const Users = () => {
                                     }
                                     className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#294b68]"
                                 >
-                                    <X size={19} />
+
+                                <X
+                                    size={19}
+                                />
+
                                 </button>
 
                             </div>
+
 
                             {/* USER PROFILE */}
 
                             <div className="mt-6 flex items-center gap-4 rounded-xl bg-[#f6f9fc] p-4">
 
                                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+
                                     <UserRound
                                         size={24}
                                     />
+
                                 </div>
 
                                 <div>
@@ -1062,6 +1373,7 @@ const Users = () => {
 
                             </div>
 
+
                             {/* DETAILS */}
 
                             <div className="mt-5 space-y-4">
@@ -1072,13 +1384,14 @@ const Users = () => {
                                         Email
                                     </p>
 
-                                    <p className="mt-1 text-sm text-gray-600">
+                                <p className="mt-1 break-all text-sm text-gray-600">
                                         {
                                             selectedUser.email
                                         }
                                     </p>
 
                                 </div>
+
 
                                 <div>
 
@@ -1094,6 +1407,7 @@ const Users = () => {
 
                                 </div>
 
+
                                 <div>
 
                                     <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -1101,19 +1415,19 @@ const Users = () => {
                                     </p>
 
                                     <span
-                                        className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${selectedUser.status ===
+                                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${selectedUser.status ===
                                             "Active"
                                             ? "bg-green-50 text-green-600"
                                             : "bg-gray-100 text-gray-500"
-                                            }`}
+                                        }`}
                                     >
 
                                         <span
-                                            className={`h-1.5 w-1.5 rounded-full ${selectedUser.status ===
+                                        className={`h-1.5 w-1.5 rounded-full ${selectedUser.status ===
                                                 "Active"
                                                 ? "bg-green-500"
                                                 : "bg-gray-400"
-                                                }`}
+                                            }`}
                                         />
 
                                         {
@@ -1125,6 +1439,7 @@ const Users = () => {
                                 </div>
 
                             </div>
+
 
                             {/* CLOSE */}
 
@@ -1150,6 +1465,7 @@ const Users = () => {
 
                 )}
 
+
             {/* =====================================================
                 CHANGE STATUS MODAL
             ===================================================== */}
@@ -1163,14 +1479,20 @@ const Users = () => {
                         {/* ICON */}
 
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
-                            <Power size={22} />
+
+                            <Power
+                                size={22}
+                            />
+
                         </div>
+
 
                         {/* TITLE */}
 
                         <h2 className="mt-4 !text-lg font-bold text-[#294b68]">
                             Change User Status?
                         </h2>
+
 
                         {/* MESSAGE */}
 
@@ -1179,7 +1501,9 @@ const Users = () => {
                             Are you sure you want to set{" "}
 
                             <span className="font-semibold text-[#294b68]">
-                                {statusUser.name}
+                                {
+                                    statusUser.name
+                                }
                             </span>{" "}
 
                             to{" "}
@@ -1193,6 +1517,7 @@ const Users = () => {
                             ?
 
                         </p>
+
 
                         {/* BUTTONS */}
 
@@ -1228,6 +1553,7 @@ const Users = () => {
 
             )}
 
+
             {/* =====================================================
                 DELETE CONFIRMATION MODAL
             ===================================================== */}
@@ -1241,14 +1567,20 @@ const Users = () => {
                         {/* ICON */}
 
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
-                            <Trash2 size={22} />
+
+                            <Trash2
+                                size={22}
+                            />
+
                         </div>
+
 
                         {/* TITLE */}
 
                         <h2 className="mt-4 !text-lg font-bold text-[#294b68]">
                             Delete User?
                         </h2>
+
 
                         {/* MESSAGE */}
 
@@ -1257,7 +1589,9 @@ const Users = () => {
                             Are you sure you want to delete{" "}
 
                             <span className="font-semibold text-[#294b68]">
-                                {deleteUser.name}
+                                {
+                                    deleteUser.name
+                                }
                             </span>
                             ?
 
@@ -1266,6 +1600,7 @@ const Users = () => {
                             This action cannot be undone.
 
                         </p>
+
 
                         {/* BUTTONS */}
 

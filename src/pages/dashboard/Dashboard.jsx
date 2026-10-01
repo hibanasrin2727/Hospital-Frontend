@@ -12,8 +12,124 @@ import {
 } from "lucide-react";
 
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const Dashboard = () => {
+
+    // =====================================================
+    // API
+    // =====================================================
+
+    const API_URL = "http://localhost:5000/api/dashboard/stats";
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    const [dashboardData, setDashboardData] = useState({
+        totalPatients: 0,
+        totalDoctors: 0,
+        totalDepartments: 0,
+        totalServices: 0,
+        totalAppointments: 0,
+        pendingAppointments: 0,
+        confirmedAppointments: 0,
+        completedAppointments: 0,
+        rescheduledAppointments: 0,
+        cancelledAppointments: 0,
+    });
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    // =====================================================
+    // GET TOKEN
+    // =====================================================
+
+    const getToken = () => {
+        return localStorage.getItem("token");
+    };
+
+    // =====================================================
+    // FETCH DASHBOARD DATA
+    // =====================================================
+
+    const fetchDashboardData = async () => {
+
+        try {
+
+            setLoading(true);
+            setError("");
+
+            const token = getToken();
+
+            if (!token) {
+                throw new Error(
+                    "Admin token not found. Please login again."
+                );
+            }
+
+            const response = await fetch(API_URL, {
+                method: "GET",
+
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Failed to fetch dashboard data"
+                );
+            }
+
+            setDashboardData({
+                totalPatients: data.totalPatients || 0,
+                totalDoctors: data.totalDoctors || 0,
+                totalDepartments: data.totalDepartments || 0,
+                totalServices: data.totalServices || 0,
+                totalAppointments: data.totalAppointments || 0,
+                pendingAppointments: data.pendingAppointments || 0,
+                confirmedAppointments: data.confirmedAppointments || 0,
+                completedAppointments: data.completedAppointments || 0,
+                rescheduledAppointments:
+                    data.rescheduledAppointments || 0,
+                cancelledAppointments:
+                    data.cancelledAppointments || 0,
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Dashboard fetch error:",
+                error
+            );
+
+            setError(
+                error.message ||
+                "Failed to load dashboard data"
+            );
+
+        } finally {
+
+            setLoading(false);
+
+        }
+
+    };
+
+    // =====================================================
+    // LOAD DATA
+    // =====================================================
+
+    useEffect(() => {
+
+        fetchDashboardData();
+
+    }, []);
 
     // =====================================================
     // STATISTICS
@@ -22,7 +138,7 @@ const Dashboard = () => {
     const stats = [
         {
             title: "Total Patients",
-            value: "120",
+            value: dashboardData.totalPatients,
             change: "+12%",
             icon: Users,
             iconBg: "bg-blue-50",
@@ -30,7 +146,7 @@ const Dashboard = () => {
         },
         {
             title: "Total Doctors",
-            value: "25",
+            value: dashboardData.totalDoctors,
             change: "+4%",
             icon: UserRound,
             iconBg: "bg-purple-50",
@@ -38,7 +154,7 @@ const Dashboard = () => {
         },
         {
             title: "Departments",
-            value: "8",
+            value: dashboardData.totalDepartments,
             change: "+2%",
             icon: Building2,
             iconBg: "bg-green-50",
@@ -46,7 +162,7 @@ const Dashboard = () => {
         },
         {
             title: "Appointments",
-            value: "45",
+            value: dashboardData.totalAppointments,
             change: "+18%",
             icon: CalendarCheck,
             iconBg: "bg-cyan-50",
@@ -54,70 +170,14 @@ const Dashboard = () => {
         },
     ];
 
-
     // =====================================================
-    // APPOINTMENTS
-    // =====================================================
-
-    const appointments = [
-        {
-            id: 1,
-            patient: "Arjun Kumar",
-            doctor: "Dr. Meera",
-            department: "Cardiology",
-            date: "24 Sep 2026",
-            time: "10:00 AM",
-            status: "Pending",
-        },
-        {
-            id: 2,
-            patient: "Anjali Nair",
-            doctor: "Dr. Rahul",
-            department: "Orthopedics",
-            date: "24 Sep 2026",
-            time: "11:30 AM",
-            status: "Confirmed",
-        },
-        {
-            id: 3,
-            patient: "Muhammed Shamil",
-            doctor: "Dr. Anjali",
-            department: "Dermatology",
-            date: "24 Sep 2026",
-            time: "01:00 PM",
-            status: "Completed",
-        },
-        {
-            id: 4,
-            patient: "Sneha Thomas",
-            doctor: "Dr. Meera",
-            department: "Cardiology",
-            date: "25 Sep 2026",
-            time: "09:30 AM",
-            status: "Pending",
-        },
-    ];
-
-
-    // =====================================================
-    // STATUS STYLES
-    // =====================================================
-
-    const statusStyle = {
-        Pending: "bg-yellow-50 text-yellow-600",
-        Confirmed: "bg-blue-50 text-blue-600",
-        Completed: "bg-green-50 text-green-600",
-    };
-
-
-    // =====================================================
-    // DASHBOARD OVERVIEW
+    // APPOINTMENT OVERVIEW
     // =====================================================
 
     const appointmentOverview = [
         {
             title: "Pending",
-            value: "2",
+            value: dashboardData.pendingAppointments,
             description: "Need attention",
             icon: CircleAlert,
             iconBg: "bg-yellow-50",
@@ -125,7 +185,7 @@ const Dashboard = () => {
         },
         {
             title: "Confirmed",
-            value: "1",
+            value: dashboardData.confirmedAppointments,
             description: "Scheduled appointments",
             icon: CheckCircle2,
             iconBg: "bg-blue-50",
@@ -133,25 +193,13 @@ const Dashboard = () => {
         },
         {
             title: "Completed",
-            value: "1",
+            value: dashboardData.completedAppointments,
             description: "Successfully completed",
             icon: CheckCircle2,
             iconBg: "bg-green-50",
             iconColor: "text-green-600",
         },
     ];
-
-
-    // =====================================================
-    // UPCOMING APPOINTMENTS
-    // =====================================================
-
-    const upcomingAppointments = appointments.filter(
-        (appointment) =>
-            appointment.status === "Pending" ||
-            appointment.status === "Confirmed"
-    );
-
 
     return (
         <div className="space-y-6">
@@ -179,13 +227,35 @@ const Dashboard = () => {
 
                 </div>
 
-                {/* Decorative circles */}
-
                 <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10" />
 
                 <div className="absolute -bottom-20 right-20 h-48 w-48 rounded-full bg-white/5" />
 
             </div>
+
+
+            {/* =====================================================
+                ERROR MESSAGE
+                ===================================================== */}
+
+            {error && (
+
+                <div className="flex flex-col gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+
+                    <p className="!mb-0 text-sm font-medium text-red-600">
+                        {error}
+                    </p>
+
+                    <button
+                        onClick={fetchDashboardData}
+                        className="w-fit rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                    >
+                        Retry
+                    </button>
+
+                </div>
+
+            )}
 
 
             {/* =====================================================
@@ -204,15 +274,9 @@ const Dashboard = () => {
                             className="group relative overflow-hidden rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[#c9e1f0] hover:shadow-[0_14px_35px_rgba(41,75,104,0.10)]"
                         >
 
-                            {/* Decorative Background */}
-
                             <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#eaf5fb] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
 
-                            {/* Top Row */}
-
                             <div className="relative flex items-start justify-between">
-
-                                {/* Icon */}
 
                                 <div
                                     className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} shadow-sm transition-all duration-300 group-hover:scale-105`}
@@ -220,16 +284,12 @@ const Dashboard = () => {
                                     <Icon size={22} strokeWidth={2} />
                                 </div>
 
-                                {/* Percentage */}
-
                                 <div className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-600">
                                     <ArrowUpRight size={13} strokeWidth={2.5} />
                                     <span>{stat.change}</span>
                                 </div>
 
                             </div>
-
-                            {/* Content */}
 
                             <div className="relative mt-6">
 
@@ -240,10 +300,8 @@ const Dashboard = () => {
                                 <div className="flex items-end justify-between">
 
                                     <h2 className="!m-0 !text-3xl !font-extrabold !tracking-tight text-[#294b68]">
-                                        {stat.value}
+                                        {loading ? "..." : stat.value}
                                     </h2>
-
-                                    {/* Small decorative line */}
 
                                     <div className="mb-1 hidden h-1 w-12 overflow-hidden rounded-full bg-[#eaf5fb] sm:block">
                                         <div className="h-full w-2/3 rounded-full bg-[#1976c8] transition-all duration-500 group-hover:w-full" />
@@ -255,6 +313,7 @@ const Dashboard = () => {
 
                         </div>
                     );
+
                 })}
 
             </div>
@@ -300,7 +359,7 @@ const Dashboard = () => {
                                     </div>
 
                                     <span className="text-2xl font-extrabold text-[#294b68]">
-                                        {item.value}
+                                        {loading ? "..." : item.value}
                                     </span>
 
                                 </div>
@@ -319,6 +378,7 @@ const Dashboard = () => {
 
                             </div>
                         );
+
                     })}
 
                 </div>
@@ -331,8 +391,6 @@ const Dashboard = () => {
                 ===================================================== */}
 
             <div className="overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_4px_20px_rgba(41,75,104,0.04)]">
-
-                {/* Section Header */}
 
                 <div className="flex flex-col gap-3 border-b border-[#edf3f7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
 
@@ -359,7 +417,7 @@ const Dashboard = () => {
 
 
                 {/* =================================================
-                    DESKTOP TABLE
+                    DESKTOP
                     ================================================= */}
 
                 <div className="hidden overflow-x-auto md:block">
@@ -394,61 +452,59 @@ const Dashboard = () => {
 
                         </thead>
 
-
                         <tbody>
 
-                            {appointments.map((appointment) => (
+                            {loading ? (
 
-                                <tr
-                                    key={appointment.id}
-                                    className="border-t border-[#edf3f7] transition hover:bg-[#f8fbfd]"
-                                >
+                                <tr>
 
-                                    <td className="px-5 py-4">
-
-                                        <p className="!mb-0 text-sm font-semibold text-[#294b68]">
-                                            {appointment.patient}
-                                        </p>
-
+                                    <td
+                                        colSpan="5"
+                                        className="px-5 py-10 text-center text-sm text-gray-400"
+                                    >
+                                        Loading appointments...
                                     </td>
 
+                                </tr>
 
-                                    <td className="px-5 py-4 text-sm text-gray-500">
-                                        {appointment.doctor}
-                                    </td>
+                            ) : (
 
+                                    <tr>
 
-                                    <td className="px-5 py-4 text-sm text-gray-500">
-                                        {appointment.department}
-                                    </td>
-
-
-                                    <td className="px-5 py-4">
-
-                                        <p className="!mb-0 text-sm text-gray-500">
-                                            {appointment.date}
-                                        </p>
-
-                                        <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                            {appointment.time}
-                                        </p>
-
-                                    </td>
-
-
-                                    <td className="px-5 py-4">
-
-                                        <span
-                                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[appointment.status]}`}
+                                        <td
+                                            colSpan="5"
+                                            className="px-5 py-10 text-center"
                                         >
-                                            {appointment.status}
-                                        </span>
+
+                                            <div className="flex flex-col items-center justify-center">
+
+                                                <CalendarCheck
+                                                    size={30}
+                                                    className="text-[#1976c8]"
+                                                />
+
+                                                <p className="!mb-0 mt-3 text-sm font-semibold text-[#294b68]">
+                                                    Appointment statistics loaded
+                                                </p>
+
+                                                <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                                    View all appointments for complete patient details.
+                                                </p>
+
+                                                <Link
+                                                    to="/dashboard/appointments"
+                                                    className="!no-underline mt-3 rounded-lg bg-[#1976c8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#145ea8]"
+                                                >
+                                                    View Appointments
+                                                </Link>
+
+                                            </div>
 
                                     </td>
 
                                 </tr>
 
-                            ))}
+                            )}
 
                         </tbody>
 
@@ -458,48 +514,44 @@ const Dashboard = () => {
 
 
                 {/* =================================================
-                    MOBILE CARDS
+                    MOBILE
                     ================================================= */}
 
-                <div className="divide-y divide-[#edf3f7] md:hidden">
+                <div className="p-5 md:hidden">
 
-                    {appointments.map((appointment) => (
+                    {loading ? (
 
-                        <div
-                            key={appointment.id}
-                            className="p-5"
-                        >
+                        <div className="py-6 text-center text-sm text-gray-400">
+                            Loading appointments...
+                        </div>
 
-                            <div className="flex items-start justify-between gap-3">
+                    ) : (
 
-                                <div>
+                            <div className="rounded-xl bg-[#f8fbfd] p-5 text-center">
 
-                                    <p className="!mb-0 text-sm font-bold text-[#294b68]">
-                                        {appointment.patient}
-                                    </p>
+                                <CalendarCheck
+                                    size={30}
+                                    className="mx-auto text-[#1976c8]"
+                                />
 
-                                    <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                        {appointment.doctor} • {appointment.department}
-                                    </p>
+                                <p className="!mb-0 mt-3 text-sm font-semibold text-[#294b68]">
+                                    Appointment statistics loaded
+                                </p>
 
-                                    <p className="!mb-0 mt-2 text-xs text-gray-500">
-                                        {appointment.date} • {appointment.time}
-                                    </p>
+                                <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                    View all appointments for complete details.
+                                </p>
 
-                                </div>
-
-
-                                <span
-                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[appointment.status]}`}
+                                <Link
+                                    to="/dashboard/appointments"
+                                    className="!no-underline mt-3 inline-block rounded-lg bg-[#1976c8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#145ea8]"
                                 >
-                                    {appointment.status}
-                                </span>
+                                    View Appointments
+                                </Link>
 
                             </div>
 
-                        </div>
-
-                    ))}
+                    )}
 
                 </div>
 
@@ -536,76 +588,29 @@ const Dashboard = () => {
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
-                    {upcomingAppointments.map((appointment) => (
+                    <div className="rounded-2xl border border-[#dcebf5] bg-white p-6 text-center shadow-[0_4px_20px_rgba(41,75,104,0.04)]">
 
-                        <div
-                            key={appointment.id}
-                            className="group rounded-2xl border border-[#dcebf5] bg-white p-5 shadow-[0_4px_20px_rgba(41,75,104,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9e1f0] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
+                        <CalendarDays
+                            size={32}
+                            className="mx-auto text-[#1976c8]"
+                        />
+
+                        <p className="!mb-0 mt-3 text-sm font-semibold text-[#294b68]">
+                            Upcoming appointments
+                        </p>
+
+                        <p className="!mb-0 mt-1 text-xs text-gray-400">
+                            Open the appointments section to view upcoming patient visits.
+                        </p>
+
+                        <Link
+                            to="/dashboard/appointments"
+                            className="!no-underline mt-4 inline-flex rounded-lg bg-[#1976c8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#145ea8]"
                         >
+                            View Appointments
+                        </Link>
 
-                            <div className="flex items-start justify-between gap-4">
-
-                                <div className="flex items-start gap-3">
-
-                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
-                                        <CalendarCheck size={20} />
-                                    </div>
-
-                                    <div>
-
-                                        <p className="!mb-0 text-sm font-bold text-[#294b68]">
-                                            {appointment.patient}
-                                        </p>
-
-                                        <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                            {appointment.doctor}
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
-                                <span
-                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[appointment.status]}`}
-                                >
-                                    {appointment.status}
-                                </span>
-
-                            </div>
-
-
-                            <div className="mt-4 flex flex-wrap gap-3 border-t border-[#edf3f7] pt-4">
-
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <CalendarDays
-                                        size={15}
-                                        className="text-[#1976c8]"
-                                    />
-                                    {appointment.date}
-                                </div>
-
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <Clock3
-                                        size={15}
-                                        className="text-[#1976c8]"
-                                    />
-                                    {appointment.time}
-                                </div>
-
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <Stethoscope
-                                        size={15}
-                                        className="text-[#1976c8]"
-                                    />
-                                    {appointment.department}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    ))}
+                    </div>
 
                 </div>
 

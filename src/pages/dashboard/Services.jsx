@@ -1,3 +1,4 @@
+
 import {
     Search,
     Plus,
@@ -12,73 +13,16 @@ import {
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+const API_URL =
+    "http://localhost:5000/api/dashboard/services";
+
 const Services = () => {
+
     /* =====================================================
        SERVICES DATA
     ===================================================== */
 
-    const [services, setServices] = useState([
-        {
-            id: 1,
-            name: "Cardiology",
-            description:
-                "Complete heart and cardiovascular services.",
-            image: "",
-            icon: "",
-            price: 500,
-            status: "active",
-        },
-        {
-            id: 2,
-            name: "Orthopedic Care",
-            description:
-                "Diagnosis and treatment of bone and joint conditions.",
-            image: "",
-            icon: "",
-            price: 400,
-            status: "active",
-        },
-        {
-            id: 3,
-            name: "Dermatology",
-            description:
-                "Medical care for skin, hair and nail conditions.",
-            image: "",
-            icon: "",
-            price: 350,
-            status: "active",
-        },
-        {
-            id: 4,
-            name: "General Consultation",
-            description:
-                "General medical consultation and health checkups.",
-            image: "",
-            icon: "",
-            price: 300,
-            status: "active",
-        },
-        {
-            id: 5,
-            name: "Emergency Care",
-            description:
-                "Immediate medical attention for emergency cases.",
-            image: "",
-            icon: "",
-            price: 1000,
-            status: "active",
-        },
-        {
-            id: 6,
-            name: "Health Checkup",
-            description:
-                "Routine health screening and preventive care.",
-            image: "",
-            icon: "",
-            price: 750,
-            status: "active",
-        },
-    ]);
+    const [services, setServices] = useState([]);
 
     /* =====================================================
        STATES
@@ -110,6 +54,15 @@ const Services = () => {
     const [deleteService, setDeleteService] =
         useState(null);
 
+    const [loading, setLoading] =
+        useState(true);
+
+    const [saving, setSaving] =
+        useState(false);
+
+    const [error, setError] =
+        useState("");
+
     const [formData, setFormData] =
         useState({
             name: "",
@@ -120,19 +73,105 @@ const Services = () => {
         });
 
     /* =====================================================
+       GET TOKEN
+    ===================================================== */
+
+    const getToken = () => {
+        return localStorage.getItem("token");
+    };
+
+    /* =====================================================
+       FETCH SERVICES
+    ===================================================== */
+
+    const fetchServices = async () => {
+
+        try {
+
+            setLoading(true);
+            setError("");
+
+            const token = getToken();
+
+            if (!token) {
+                setError(
+                    "Authentication token not found."
+                );
+                return;
+            }
+
+            const response = await fetch(
+                API_URL,
+                {
+                    method: "GET",
+
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`,
+                        "Content-Type":
+                            "application/json",
+                    },
+                }
+            );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to fetch services"
+                );
+            }
+
+            setServices(
+                data.services || []
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Fetch services error:",
+                error
+            );
+
+            setError(
+                error.message ||
+                "Failed to load services."
+            );
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    };
+
+    /* =====================================================
+       LOAD SERVICES
+    ===================================================== */
+
+    useEffect(() => {
+        fetchServices();
+    }, []);
+
+    /* =====================================================
        CLOSE ACTION MENU
     ===================================================== */
 
     useEffect(() => {
-        const handleOutsideClick = (event) => {
-            if (
-                !event.target.closest(
-                    "[data-service-menu]"
-                )
-            ) {
-                setOpenMenu(null);
-            }
-        };
+
+        const handleOutsideClick =
+            (event) => {
+
+                if (
+                    !event.target.closest(
+                        "[data-service-menu]"
+                    )
+                ) {
+                    setOpenMenu(null);
+                }
+            };
 
         const handleScroll = () => {
             setOpenMenu(null);
@@ -159,6 +198,7 @@ const Services = () => {
         );
 
         return () => {
+
             document.removeEventListener(
                 "mousedown",
                 handleOutsideClick
@@ -175,41 +215,60 @@ const Services = () => {
                 handleResize
             );
         };
+
     }, []);
 
     /* =====================================================
        FILTER SERVICES
     ===================================================== */
 
-    const filteredServices = services.filter(
-        (service) => {
-            const searchValue =
-                search.toLowerCase().trim();
+    const filteredServices =
+        services.filter(
+            (service) => {
 
-            const matchesSearch =
-                service.name
-                    .toLowerCase()
-                    .includes(searchValue) ||
-                service.description
-                    .toLowerCase()
-                    .includes(searchValue);
+                const searchValue =
+                    search
+                        .toLowerCase()
+                        .trim();
 
-            const matchesStatus =
-                statusFilter === "all" ||
-                service.status === statusFilter;
+                const serviceName =
+                    service.name ||
+                    "";
 
-            return (
-                matchesSearch &&
-                matchesStatus
-            );
-        }
-    );
+                const serviceDescription =
+                    service.description ||
+                    "";
+
+                const matchesSearch =
+                    serviceName
+                        .toLowerCase()
+                        .includes(
+                            searchValue
+                        ) ||
+                    serviceDescription
+                        .toLowerCase()
+                        .includes(
+                            searchValue
+                        );
+
+                const matchesStatus =
+                    statusFilter === "all" ||
+                    service.status ===
+                    statusFilter;
+
+                return (
+                    matchesSearch &&
+                    matchesStatus
+                );
+            }
+        );
 
     /* =====================================================
        OPEN ADD MODAL
     ===================================================== */
 
     const openAddModal = () => {
+
         setEditingService(null);
 
         setFormData({
@@ -227,15 +286,28 @@ const Services = () => {
        OPEN EDIT MODAL
     ===================================================== */
 
-    const openEditModal = (service) => {
+    const openEditModal = (
+        service
+    ) => {
+
         setEditingService(service);
 
         setFormData({
-            name: service.name,
-            description: service.description,
-            image: service.image || "",
-            icon: service.icon || "",
-            price: service.price || "",
+            name:
+                service.name || "",
+
+            description:
+                service.description ||
+                "",
+
+            image:
+                service.image || "",
+
+            icon:
+                service.icon || "",
+
+            price:
+                service.price ?? "",
         });
 
         setOpenMenu(null);
@@ -246,81 +318,169 @@ const Services = () => {
        FORM CHANGE
     ===================================================== */
 
-    const handleFormChange = (event) => {
+    const handleFormChange = (
+        event
+    ) => {
+
         const {
             name,
             value,
         } = event.target;
 
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        setFormData(
+            (prev) => ({
+                ...prev,
+                [name]: value,
+            })
+        );
     };
 
     /* =====================================================
        ADD / EDIT SERVICE
     ===================================================== */
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (
+        event
+    ) => {
+
         event.preventDefault();
 
-        if (!formData.name.trim()) {
+        if (
+            !formData.name.trim()
+        ) {
             return;
         }
 
-        if (!formData.description.trim()) {
+        if (
+            !formData.description.trim()
+        ) {
             return;
         }
 
-        if (editingService) {
-            setServices((prev) =>
-                prev.map((service) =>
-                    service.id ===
-                        editingService.id
-                        ? {
-                            ...service,
-                            name:
-                                formData.name,
-                            description:
-                                formData.description,
-                            image:
-                                formData.image,
-                            icon:
-                                formData.icon,
-                            price:
-                                Number(
-                                    formData.price
-                                ) || 0,
-                        }
-                        : service
-                )
-            );
-        } else {
-            const newService = {
-                id: Date.now(),
-                name: formData.name,
+        try {
+
+            setSaving(true);
+            setError("");
+
+            const token = getToken();
+
+            if (!token) {
+                setError(
+                    "Authentication token not found."
+                );
+                return;
+            }
+
+            const requestBody = {
+                name:
+                    formData.name.trim(),
+
                 description:
-                    formData.description,
+                    formData.description.trim(),
+
                 image:
-                    formData.image,
+                    formData.image.trim(),
+
                 icon:
-                    formData.icon,
+                    formData.icon.trim(),
+
                 price:
                     Number(
                         formData.price
                     ) || 0,
-                status: "active",
             };
 
-            setServices((prev) => [
-                ...prev,
-                newService,
-            ]);
-        }
+            let response;
 
-        setShowModal(false);
-        setEditingService(null);
+            if (editingService) {
+
+                response =
+                    await fetch(
+                        `${API_URL}/${editingService._id}`,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    requestBody
+                                ),
+                        }
+                    );
+
+            } else {
+
+                response =
+                    await fetch(
+                        API_URL,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    requestBody
+                                ),
+                        }
+                    );
+            }
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to save service"
+                );
+            }
+
+            /* Refresh from database */
+
+            await fetchServices();
+
+            setShowModal(false);
+            setEditingService(null);
+
+            setFormData({
+                name: "",
+                description: "",
+                image: "",
+                icon: "",
+                price: "",
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Save service error:",
+                error
+            );
+
+            setError(
+                error.message ||
+                "Failed to save service."
+            );
+
+        } finally {
+
+            setSaving(false);
+
+        }
     };
 
     /* =====================================================
@@ -330,10 +490,13 @@ const Services = () => {
     const handleToggleStatus = (
         serviceId
     ) => {
-        const service = services.find(
-            (item) =>
-                item.id === serviceId
-        );
+
+        const service =
+            services.find(
+                (item) =>
+                    item._id ===
+                    serviceId
+            );
 
         if (!service) {
             return;
@@ -347,29 +510,88 @@ const Services = () => {
        CHANGE STATUS
     ===================================================== */
 
-    const handleStatusChange = () => {
-        if (!statusService) {
-            return;
-        }
+    const handleStatusChange =
+        async () => {
 
-        setServices((prev) =>
-            prev.map((service) =>
-                service.id ===
-                    statusService.id
-                    ? {
-                        ...service,
-                        status:
-                            service.status ===
-                                "active"
-                                ? "inactive"
-                                : "active",
-                    }
-                    : service
-            )
-        );
+            if (!statusService) {
+                return;
+            }
 
-        setStatusService(null);
-    };
+            try {
+
+                setSaving(true);
+                setError("");
+
+                const token =
+                    getToken();
+
+                if (!token) {
+                    setError(
+                        "Authentication token not found."
+                    );
+                    return;
+                }
+
+                const newStatus =
+                    statusService.status ===
+                        "active"
+                        ? "inactive"
+                        : "active";
+
+                const response =
+                    await fetch(
+                        `${API_URL}/${statusService._id}`,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    status:
+                                        newStatus,
+                                }),
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Failed to change service status"
+                    );
+                }
+
+                await fetchServices();
+
+                setStatusService(null);
+
+            } catch (error) {
+
+                console.error(
+                    "Status change error:",
+                    error
+                );
+
+                setError(
+                    error.message ||
+                    "Failed to change service status."
+                );
+
+            } finally {
+
+                setSaving(false);
+
+            }
+        };
 
     /* =====================================================
        DELETE CONFIRMATION
@@ -378,10 +600,13 @@ const Services = () => {
     const handleDeleteService = (
         serviceId
     ) => {
-        const service = services.find(
-            (item) =>
-                item.id === serviceId
-        );
+
+        const service =
+            services.find(
+                (item) =>
+                    item._id ===
+                    serviceId
+            );
 
         if (!service) {
             return;
@@ -395,21 +620,76 @@ const Services = () => {
        DELETE SERVICE
     ===================================================== */
 
-    const handleDelete = () => {
-        if (!deleteService) {
-            return;
-        }
+    const handleDelete =
+        async () => {
 
-        setServices((prev) =>
-            prev.filter(
-                (service) =>
-                    service.id !==
-                    deleteService.id
-            )
-        );
+            if (!deleteService) {
+                return;
+            }
 
-        setDeleteService(null);
-    };
+            try {
+
+                setSaving(true);
+                setError("");
+
+                const token =
+                    getToken();
+
+                if (!token) {
+                    setError(
+                        "Authentication token not found."
+                    );
+                    return;
+                }
+
+                const response =
+                    await fetch(
+                        `${API_URL}/${deleteService._id}`,
+                        {
+                            method: "DELETE",
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+
+                                "Content-Type":
+                                    "application/json",
+                            },
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Failed to delete service"
+                    );
+                }
+
+                await fetchServices();
+
+                setDeleteService(null);
+
+            } catch (error) {
+
+                console.error(
+                    "Delete service error:",
+                    error
+                );
+
+                setError(
+                    error.message ||
+                    "Failed to delete service."
+                );
+
+            } finally {
+
+                setSaving(false);
+
+            }
+        };
 
     /* =====================================================
        ACTION MENU POSITION
@@ -419,16 +699,19 @@ const Services = () => {
         event,
         serviceId
     ) => {
+
         event.stopPropagation();
 
         const rect =
-            event.currentTarget.getBoundingClientRect();
+            event.currentTarget
+                .getBoundingClientRect();
 
         const menuWidth = 170;
         const menuHeight = 125;
 
         let left =
-            rect.right - menuWidth;
+            rect.right -
+            menuWidth;
 
         let top =
             rect.bottom + 6;
@@ -441,6 +724,7 @@ const Services = () => {
             left + menuWidth >
             window.innerWidth - 10
         ) {
+
             left =
                 window.innerWidth -
                 menuWidth -
@@ -451,6 +735,7 @@ const Services = () => {
             top + menuHeight >
             window.innerHeight - 10
         ) {
+
             top =
                 rect.top -
                 menuHeight -
@@ -473,11 +758,20 @@ const Services = () => {
        FORMAT PRICE
     ===================================================== */
 
-    const formatPrice = (price) => {
+    const formatPrice = (
+        price
+    ) => {
+
         return Number(
             price || 0
-        ).toLocaleString("en-IN");
+        ).toLocaleString(
+            "en-IN"
+        );
     };
+
+    /* =====================================================
+       RETURN
+    ===================================================== */
 
     return (
         <div className="space-y-6">
@@ -489,6 +783,7 @@ const Services = () => {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                 <div>
+
                     <h1 className="text-2xl font-bold text-[#294b68]">
                         Services
                     </h1>
@@ -497,6 +792,7 @@ const Services = () => {
                         Manage hospital services,
                         pricing and availability.
                     </p>
+
                 </div>
 
                 <button
@@ -509,6 +805,16 @@ const Services = () => {
                 </button>
 
             </div>
+
+            {/* =================================================
+                ERROR
+            ================================================= */}
+
+            {error && (
+                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+                    {error}
+                </div>
+            )}
 
             {/* =================================================
                 SEARCH + FILTER
@@ -575,139 +881,167 @@ const Services = () => {
     SERVICES GRID
 ================================================= */}
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {loading ? (
 
-                {filteredServices.map((service) => (
-                    <div
-                        key={service.id}
-                        className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#c9dfed] hover:shadow-[0_12px_30px_rgba(41,75,104,0.12)]"
-                    >
+                <div className="rounded-xl border border-gray-100 bg-white px-6 py-16 text-center shadow-sm">
 
-                        {/* =========================================
-                TOP SECTION
-            ========================================= */}
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
 
-                        <div className="flex items-start justify-between">
+                    <p className="mt-4 text-sm text-gray-500">
+                        Loading services...
+                    </p>
 
-                            {/* ICON */}
+                </div>
 
-                            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:bg-[#1976c8] group-hover:text-white">
+            ) : (
 
-                                {service.icon ? (
-                                    <img
-                                        src={service.icon}
-                                        alt={service.name}
-                                        className="h-full w-full object-contain p-2.5"
-                                    />
-                                ) : (
-                                    <Stethoscope size={26} />
-                                )}
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
 
-                            </div>
+                    {filteredServices.map(
+                        (service) => (
 
-                            {/* STATUS + MENU */}
+                <div
+                    key={service._id}
+                    className="group relative rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-[#dcebf5] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
+                >
 
-                            <div className="flex items-center gap-1">
+                    {/* =================================================
+                        TOP
+                    ================================================= */}
 
-                                <span
-                                    className={
-                                        service.status === "active"
-                                            ? "rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-600"
-                                            : "rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500"
-                                    }
-                                >
-                                    {service.status === "active"
-                                        ? "Active"
-                                        : "Inactive"}
-                                </span>
+                    <div className="flex items-start justify-between">
 
-                                <button
-                                    type="button"
-                                    data-service-menu
-                                    onClick={(event) =>
-                                        handleMenuClick(
-                                            event,
-                                            service.id
-                                        )
-                                    }
-                                    className="rounded-lg p-1.5 text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                >
-                                    <MoreVertical size={18} />
-                                </button>
+                        {/* SERVICE ICON */}
 
-                            </div>
+                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-[#eaf5fb] text-[#1976c8] transition group-hover:scale-105">
+
+                            {service.icon ? (
+
+                                <img
+                                    src={service.icon}
+                                    alt={service.name}
+                                    className="h-full w-full object-contain p-2.5"
+                                />
+
+                            ) : (
+
+                                <Stethoscope
+                                    size={23}
+                                />
+
+                            )}
 
                         </div>
 
-                        {/* =========================================
-                SERVICE INFORMATION
-            ========================================= */}
 
-                        <div className="mt-5">
+                        {/* ACTION MENU */}
 
-                            <h2 className="truncate text-[17px] font-bold text-[#294b68]">
-                                {service.name}
-                            </h2>
+                        <div
+                            data-service-menu
+                            className="relative"
+                        >
 
-                            <p className="mt-2 min-h-[48px] line-clamp-2 text-[13px] leading-6 text-gray-500">
-                                {service.description}
+                            <button
+                                type="button"
+                                onClick={(event) =>
+                                    handleMenuClick(
+                                        event,
+                                        service._id
+                                    )
+                                }
+                                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
+                            >
+
+                                <MoreVertical
+                                    size={19}
+                                />
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* =================================================
+                        SERVICE NAME
+                    ================================================= */}
+
+                    <div className="mt-5">
+
+                        <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
+                            {service.name}
+                        </h2>
+
+                        <p className="!mb-0 mt-1 line-clamp-2 text-sm leading-6 text-gray-500">
+                            {service.description}
+                        </p>
+
+                    </div>
+
+
+                    {/* =================================================
+                        DETAILS
+                    ================================================= */}
+
+                    <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
+
+                        {/* PRICE */}
+
+                        <div>
+
+                            <p className="!mb-0 text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                                Price
+                            </p>
+
+                            <p className="!mb-0 mt-1 text-base font-bold text-[#294b68]">
+                                ₹{formatPrice(service.price)}
                             </p>
 
                         </div>
 
-                        {/* =========================================
-                PRICE SECTION
-            ========================================= */}
 
-                        <div className="mt-5 border-t border-gray-100 pt-4">
+                        {/* STATUS */}
 
-                            <div className="flex items-end justify-between">
+                        <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${service.status === "active"
+                                    ? "bg-green-50 text-green-600"
+                                    : "bg-gray-100 text-gray-500"
+                                }`}
+                        >
 
-                                {/* PRICE */}
+                            {service.status === "active"
+                                ? "Active"
+                                : "Inactive"}
 
-                                <div>
-
-                                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
-                                        Service Price
-                                    </p>
-
-                                    <p className="mt-1 text-xl font-bold text-[#294b68]">
-                                        ₹{formatPrice(service.price)}
-                                    </p>
-
-                                </div>
-
-                                {/* SERVICE LABEL */}
-
-                                <div className="flex h-8 items-center rounded-lg bg-[#f6f9fc] px-2.5">
-
-                                    <span className="text-[10px] font-semibold text-[#1976c8]">
-                                        Medical
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        {/* =========================================
-                BOTTOM HOVER LINE
-            ========================================= */}
-
-                        <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+                        </span>
 
                     </div>
-                ))}
 
-            </div>
+
+                    {/* =================================================
+                        BLUE HOVER LINE
+                    ================================================= */}
+
+                    <div className="absolute bottom-0 left-0 h-[3px] w-0 rounded-b-xl bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+
+                </div>
+
+            )
+        )}
+
+                    </div>
+
+            )}
 
             {/* =================================================
                 EMPTY STATE
             ================================================= */}
 
-            {filteredServices.length ===
+            {!loading &&
+                filteredServices.length ===
                 0 && (
+
                     <div className="rounded-xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
 
                         <Stethoscope
@@ -734,22 +1068,28 @@ const Services = () => {
 
             {openMenu &&
                 createPortal(
+
                     <div
                         data-service-menu
                         style={{
                             position:
                                 "fixed",
-                            top: menuPosition.top,
-                            left: menuPosition.left,
+
+                            top:
+                                menuPosition.top,
+
+                            left:
+                                menuPosition.left,
                         }}
                         className="z-[100] w-[170px] overflow-hidden rounded-xl border border-gray-100 bg-white p-1.5 shadow-[0_12px_35px_rgba(41,75,104,0.18)]"
                     >
 
                         {(() => {
+
                             const service =
                                 services.find(
                                     (item) =>
-                                        item.id ===
+                                        item._id ===
                                         openMenu
                                 );
 
@@ -759,6 +1099,7 @@ const Services = () => {
 
                             return (
                                 <>
+
                                     {/* EDIT */}
 
                                     <button
@@ -785,7 +1126,7 @@ const Services = () => {
                                         type="button"
                                         onClick={() =>
                                             handleToggleStatus(
-                                                service.id
+                                                service._id
                                             )
                                         }
                                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
@@ -808,7 +1149,7 @@ const Services = () => {
                                         type="button"
                                         onClick={() =>
                                             handleDeleteService(
-                                                service.id
+                                                service._id
                                             )
                                         }
                                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50"
@@ -821,11 +1162,14 @@ const Services = () => {
 
                                         Delete
                                     </button>
+
                                 </>
                             );
+
                         })()}
 
                     </div>,
+
                     document.body
                 )}
 
@@ -834,6 +1178,7 @@ const Services = () => {
             ================================================= */}
 
             {showModal && (
+
                 <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
                     <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
@@ -1018,16 +1363,24 @@ const Services = () => {
                                             false
                                         )
                                     }
-                                    className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50"
+                                    disabled={
+                                        saving
+                                    }
+                                    className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
 
                                 <button
                                     type="submit"
-                                    className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
+                                    disabled={
+                                        saving
+                                    }
+                                    className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {editingService
+                                    {saving
+                                        ? "Saving..."
+                                        : editingService
                                         ? "Save Changes"
                                         : "Add Service"}
                                 </button>
@@ -1046,6 +1399,7 @@ const Services = () => {
             ================================================= */}
 
             {statusService && (
+
                 <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
                     <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
@@ -1088,7 +1442,10 @@ const Services = () => {
                                         null
                                     )
                                 }
-                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50"
+                                disabled={
+                                    saving
+                                }
+                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:opacity-50"
                             >
                                 Cancel
                             </button>
@@ -1098,9 +1455,14 @@ const Services = () => {
                                 onClick={
                                     handleStatusChange
                                 }
-                                className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
+                                disabled={
+                                    saving
+                                }
+                                className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Confirm
+                                {saving
+                                    ? "Updating..."
+                                    : "Confirm"}
                             </button>
 
                         </div>
@@ -1115,6 +1477,7 @@ const Services = () => {
             ================================================= */}
 
             {deleteService && (
+
                 <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
                     <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
@@ -1152,7 +1515,10 @@ const Services = () => {
                                         null
                                     )
                                 }
-                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50"
+                                disabled={
+                                    saving
+                                }
+                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:opacity-50"
                             >
                                 Cancel
                             </button>
@@ -1162,9 +1528,14 @@ const Services = () => {
                                 onClick={
                                     handleDelete
                                 }
-                                className="!rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
+                                disabled={
+                                    saving
+                                }
+                                className="!rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Delete Service
+                                {saving
+                                    ? "Deleting..."
+                                    : "Delete Service"}
                             </button>
 
                         </div>

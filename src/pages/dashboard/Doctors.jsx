@@ -18,29 +18,139 @@ const Doctors = () => {
     // DOCTORS DATA
     // =====================================================
 
-    const [doctors, setDoctors] = useState([
-        {
-            id: 1,
-            name: "Dr. Meera",
-            specialty: "Cardiologist",
-            department: "Cardiology & Heart Care",
-            status: "Active",
-        },
-        {
-            id: 2,
-            name: "Dr. Rahul",
-            specialty: "Orthopedic",
-            department: "Orthopedics",
-            status: "Active",
-        },
-        {
-            id: 3,
-            name: "Dr. Anjali",
-            specialty: "Dermatologist",
-            department: "Dermatology",
-            status: "Active",
-        },
-    ]);
+    const [doctors, setDoctors] = useState([]);
+
+    const [departments, setDepartments] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+
+    const [errorMessage, setErrorMessage] = useState("");
+
+    // =====================================================
+    // API CONFIGURATION
+    // =====================================================
+
+    const API_URL = "http://localhost:5000/api/dashboard";
+
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem("token");
+
+        return {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        };
+    };
+
+    // =====================================================
+    // CONVERT BACKEND DOCTOR TO FRONTEND FORMAT
+    // =====================================================
+
+    const formatDoctor = (doctor) => ({
+        ...doctor,
+
+        id: doctor._id,
+
+        specialty: doctor.specialization || "",
+
+        department:
+            doctor.departmentId?.name ||
+            doctor.departmentId?.departmentName ||
+            "",
+
+        status:
+            doctor.status === "active"
+                ? "Active"
+                : "Inactive",
+    });
+
+    // =====================================================
+    // LOAD DOCTORS
+    // =====================================================
+
+    const fetchDoctors = async () => {
+        try {
+            setLoading(true);
+            setErrorMessage("");
+
+            const response = await fetch(
+                `${API_URL}/doctors`,
+                {
+                    method: "GET",
+                    headers: getAuthHeaders(),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to load doctors."
+                );
+            }
+
+            setDoctors(
+                (data.doctors || []).map(
+                    formatDoctor
+                )
+            );
+        } catch (error) {
+            console.error(
+                "Error loading doctors:",
+                error
+            );
+
+            setErrorMessage(
+                error.message ||
+                "Failed to load doctors."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // =====================================================
+    // LOAD DEPARTMENTS
+    // =====================================================
+
+    const fetchDepartments = async () => {
+        try {
+            const response = await fetch(
+                `${API_URL}/departments`,
+                {
+                    method: "GET",
+                    headers: getAuthHeaders(),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to load departments."
+                );
+            }
+
+            setDepartments(
+                data.departments || []
+            );
+        } catch (error) {
+            console.error(
+                "Error loading departments:",
+                error
+            );
+        }
+    };
+
+    // =====================================================
+    // LOAD DATA ON PAGE OPEN
+    // =====================================================
+
+    useEffect(() => {
+        fetchDoctors();
+        fetchDepartments();
+    }, []);
 
     // =====================================================
     // STATES
@@ -65,8 +175,29 @@ const Doctors = () => {
     const [formData, setFormData] = useState({
         name: "",
         specialty: "",
-        department: "",
+        departmentId: "",
+        qualification: "",
+        experience: "",
+        phone: "",
+        email: "",
+        schedule: "",
     });
+
+    const [saving, setSaving] = useState(false);
+
+    // =====================================================
+    // SEARCHABLE DEPARTMENT / SPECIALTY STATES
+    // =====================================================
+
+    const [departmentSearch, setDepartmentSearch] = useState("");
+
+    const [showDepartmentOptions, setShowDepartmentOptions] =
+        useState(false);
+
+    const [specialtySearch, setSpecialtySearch] = useState("");
+
+    const [showSpecialtyOptions, setShowSpecialtyOptions] =
+        useState(false);
 
     // =====================================================
     // CONFIRMATION STATES
@@ -77,13 +208,137 @@ const Doctors = () => {
     const [deleteDoctor, setDeleteDoctor] = useState(null);
 
     // =====================================================
+    // DEPARTMENT OPTIONS
+    // =====================================================
+
+    const defaultDepartments = [
+        "Cardiology",
+        "Neurology",
+        "Orthopedics",
+        "Dermatology",
+        "Pediatrics",
+        "Gynecology",
+        "Obstetrics",
+        "General Medicine",
+        "General Surgery",
+        "ENT",
+        "Ophthalmology",
+        "Urology",
+        "Nephrology",
+        "Gastroenterology",
+        "Pulmonology",
+        "Oncology",
+        "Psychiatry",
+        "Radiology",
+        "Anesthesiology",
+        "Emergency Medicine",
+        "Dentistry",
+        "Endocrinology",
+        "Rheumatology",
+        "Pathology",
+        "Physiotherapy",
+        "Internal Medicine",
+        "Neurosurgery",
+        "Plastic Surgery",
+        "Cardiothoracic Surgery",
+    ];
+
+    // =====================================================
+    // SPECIALTY OPTIONS
+    // =====================================================
+
+    const specialtyOptions = [
+        "Cardiologist",
+        "Neurologist",
+        "Orthopedic Surgeon",
+        "Dermatologist",
+        "Pediatrician",
+        "Gynecologist",
+        "Obstetrician",
+        "General Physician",
+        "General Surgeon",
+        "ENT Specialist",
+        "Ophthalmologist",
+        "Urologist",
+        "Nephrologist",
+        "Gastroenterologist",
+        "Pulmonologist",
+        "Oncologist",
+        "Psychiatrist",
+        "Radiologist",
+        "Anesthesiologist",
+        "Emergency Medicine Specialist",
+        "Dentist",
+        "Endocrinologist",
+        "Rheumatologist",
+        "Pathologist",
+        "Physiotherapist",
+        "Neurosurgeon",
+        "Plastic Surgeon",
+        "Cardiothoracic Surgeon",
+    ];
+
+    // =====================================================
+    // COMBINE BACKEND + DEFAULT DEPARTMENTS
+    // =====================================================
+
+    const availableDepartments = [
+        ...departments.map((department) => ({
+            id: department._id,
+            name: department.name,
+            isBackend: true,
+        })),
+
+        ...defaultDepartments.map((name) => ({
+            id: `default-${name}`,
+            name,
+            isBackend: false,
+        })),
+    ].filter(
+        (department, index, array) =>
+            array.findIndex(
+                (item) =>
+                    item.name.toLowerCase() ===
+                    department.name.toLowerCase()
+            ) === index
+    );
+
+    // =====================================================
+    // FILTER DEPARTMENT OPTIONS
+    // =====================================================
+
+    const filteredDepartmentOptions =
+        availableDepartments.filter((department) =>
+            department.name
+                .toLowerCase()
+                .includes(
+                    departmentSearch.toLowerCase()
+                )
+        );
+
+    // =====================================================
+    // FILTER SPECIALTY OPTIONS
+    // =====================================================
+
+    const filteredSpecialtyOptions =
+        specialtyOptions.filter((specialty) =>
+            specialty
+                .toLowerCase()
+                .includes(
+                    specialtySearch.toLowerCase()
+                )
+        );
+
+    // =====================================================
     // CLOSE ACTION MENU WHEN CLICKING OUTSIDE
     // =====================================================
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             const clickedInsideAction =
-                event.target.closest("[data-doctor-action]");
+                event.target.closest(
+                    "[data-doctor-action]"
+                );
 
             if (!clickedInsideAction) {
                 setOpenMenu(null);
@@ -144,16 +399,6 @@ const Doctors = () => {
             );
         };
     }, [openMenu]);
-
-    // =====================================================
-    // DEPARTMENTS
-    // =====================================================
-
-    const departments = [
-        "Cardiology & Heart Care",
-        "Orthopedics",
-        "Dermatology",
-    ];
 
     // =====================================================
     // SEARCH + FILTER
@@ -263,6 +508,31 @@ const Doctors = () => {
     };
 
     // =====================================================
+    // RESET FORM
+    // =====================================================
+
+    const resetForm = () => {
+        setFormData({
+            name: "",
+            specialty: "",
+            departmentId: "",
+            qualification: "",
+            experience: "",
+            phone: "",
+            email: "",
+            schedule: "",
+        });
+
+        setDepartmentSearch("");
+
+        setSpecialtySearch("");
+
+        setShowDepartmentOptions(false);
+
+        setShowSpecialtyOptions(false);
+    };
+
+    // =====================================================
     // OPEN ADD DOCTOR
     // =====================================================
 
@@ -271,11 +541,7 @@ const Doctors = () => {
 
         setEditingDoctor(null);
 
-        setFormData({
-            name: "",
-            specialty: "",
-            department: "",
-        });
+        resetForm();
 
         setShowModal(true);
     };
@@ -287,11 +553,55 @@ const Doctors = () => {
     const handleEditDoctor = (doctor) => {
         setEditingDoctor(doctor);
 
+        const departmentId =
+            doctor.departmentId?._id ||
+            doctor.departmentId ||
+            "";
+
+        const specialty =
+            doctor.specialization ||
+            doctor.specialty ||
+            "";
+
+        const departmentName =
+            doctor.departmentId?.name ||
+            doctor.department ||
+            "";
+
         setFormData({
-            name: doctor.name,
-            specialty: doctor.specialty,
-            department: doctor.department,
+            name: doctor.name || "",
+
+            specialty: specialty,
+
+            departmentId: departmentId,
+
+            qualification:
+                doctor.qualification || "",
+
+            experience:
+                doctor.experience ?? "",
+
+            phone:
+                doctor.phone || "",
+
+            email:
+                doctor.email || "",
+
+            schedule:
+                doctor.schedule || "",
         });
+
+        setDepartmentSearch(
+            departmentName
+        );
+
+        setSpecialtySearch(
+            specialty
+        );
+
+        setShowDepartmentOptions(false);
+
+        setShowSpecialtyOptions(false);
 
         setOpenMenu(null);
 
@@ -315,85 +625,180 @@ const Doctors = () => {
     };
 
     // =====================================================
+    // SELECT DEPARTMENT
+    // =====================================================
+
+    const handleSelectDepartment = (
+        department
+    ) => {
+        if (!department.isBackend) {
+            return;
+        }
+
+        setFormData((previous) => ({
+            ...previous,
+            departmentId:
+                department.id,
+        }));
+
+        setDepartmentSearch(
+            department.name
+        );
+
+        setShowDepartmentOptions(
+            false
+        );
+    };
+
+    // =====================================================
+    // SELECT SPECIALTY
+    // =====================================================
+
+    const handleSelectSpecialty = (
+        specialty
+    ) => {
+        setFormData((previous) => ({
+            ...previous,
+            specialty,
+        }));
+
+        setSpecialtySearch(
+            specialty
+        );
+
+        setShowSpecialtyOptions(
+            false
+        );
+    };
+
+    // =====================================================
     // SAVE DOCTOR
     // =====================================================
 
-    const handleSaveDoctor = (event) => {
+    const handleSaveDoctor = async (event) => {
         event.preventDefault();
 
         if (
             !formData.name.trim() ||
             !formData.specialty.trim() ||
-            !formData.department
+            !formData.departmentId ||
+            !formData.qualification.trim() ||
+            formData.experience === "" ||
+            !formData.phone.trim() ||
+            !formData.email.trim() ||
+            !formData.schedule.trim()
         ) {
+            setErrorMessage(
+                "Please fill in all doctor details."
+            );
+
             return;
         }
 
-        // =================================================
-        // EDIT DOCTOR
-        // =================================================
+        try {
+            setSaving(true);
+            setErrorMessage("");
 
-        if (editingDoctor) {
-            setDoctors((previous) =>
-                previous.map((doctor) =>
-                    doctor.id ===
-                        editingDoctor.id
-                        ? {
-                            ...doctor,
-                            name:
-                                formData.name,
-                            specialty:
-                                formData.specialty,
-                            department:
-                                formData.department,
-                        }
-                        : doctor
-                )
-            );
-        }
+            const payload = {
+                name: formData.name.trim(),
 
-        // =================================================
-        // ADD DOCTOR
-        // =================================================
+                specialization:
+                    formData.specialty.trim(),
 
-        else {
-            const newDoctor = {
-                id:
-                    doctors.length > 0
-                        ? Math.max(
-                            ...doctors.map(
-                                (doctor) =>
-                                    doctor.id
-                            )
-                        ) + 1
-                        : 1,
+                departmentId:
+                    formData.departmentId,
 
-                name: formData.name,
+                qualification:
+                    formData.qualification.trim(),
 
-                specialty:
-                    formData.specialty,
+                experience:
+                    Number(formData.experience),
 
-                department:
-                    formData.department,
+                phone:
+                    formData.phone.trim(),
 
-                status: "Active",
+                email:
+                    formData.email.trim(),
+
+                schedule:
+                    formData.schedule.trim(),
             };
 
-            setDoctors((previous) => [
-                ...previous,
-                newDoctor,
-            ]);
+            // =================================================
+            // EDIT DOCTOR
+            // =================================================
+
+            if (editingDoctor) {
+                const response = await fetch(
+                    `${API_URL}/doctors/${editingDoctor.id}`,
+                    {
+                        method: "PUT",
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(
+                            payload
+                        ),
+                    }
+                );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Failed to update doctor."
+                    );
+                }
+            }
+
+                // =================================================
+                // ADD DOCTOR
+                // =================================================
+
+            else {
+                const response = await fetch(
+                    `${API_URL}/doctors`,
+                    {
+                        method: "POST",
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(
+                            payload
+                        ),
+                    }
+                );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Failed to add doctor."
+                    );
+                }
+            }
+
+            await fetchDoctors();
+
+            setShowModal(false);
+
+            setEditingDoctor(null);
+
+            resetForm();
+
+        } catch (error) {
+            console.error(
+                "Error saving doctor:",
+                error
+            );
+
+            setErrorMessage(
+                error.message ||
+                "Failed to save doctor."
+            );
+        } finally {
+            setSaving(false);
         }
-
-        setShowModal(false);
-
-        setEditingDoctor(null);
-
-        setFormData({
-            name: "",
-            specialty: "",
-            department: "",
-        });
     };
 
     // =====================================================
@@ -419,28 +824,66 @@ const Doctors = () => {
     // CONFIRM STATUS CHANGE
     // =====================================================
 
-    const handleStatusChange = () => {
+    const handleStatusChange = async () => {
         if (!statusDoctor) {
             return;
         }
 
         const newStatus =
             statusDoctor.status === "Active"
-                ? "Inactive"
-                : "Active";
+                ? "inactive"
+                : "active";
 
-        setDoctors((previous) =>
-            previous.map((doctor) =>
-                doctor.id === statusDoctor.id
-                    ? {
-                        ...doctor,
+        try {
+            const response = await fetch(
+                `${API_URL}/doctors/${statusDoctor.id}`,
+                {
+                    method: "PUT",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
                         status: newStatus,
-                    }
-                    : doctor
-            )
-        );
+                    }),
+                }
+            );
 
-        setStatusDoctor(null);
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to change doctor status."
+                );
+            }
+
+            setDoctors((previous) =>
+                previous.map((doctor) =>
+                    doctor.id ===
+                        statusDoctor.id
+                        ? {
+                            ...doctor,
+                            status:
+                                newStatus ===
+                                    "active"
+                                    ? "Active"
+                                    : "Inactive",
+                        }
+                        : doctor
+                )
+            );
+
+            setStatusDoctor(null);
+        } catch (error) {
+            console.error(
+                "Error changing doctor status:",
+                error
+            );
+
+            setErrorMessage(
+                error.message ||
+                "Failed to change doctor status."
+            );
+        }
     };
 
     // =====================================================
@@ -466,20 +909,51 @@ const Doctors = () => {
     // CONFIRM DELETE
     // =====================================================
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!deleteDoctor) {
             return;
         }
 
-        setDoctors((previous) =>
-            previous.filter(
-                (doctor) =>
-                    doctor.id !==
-                    deleteDoctor.id
-            )
-        );
+        try {
+            const response = await fetch(
+                `${API_URL}/doctors/${deleteDoctor.id}`,
+                {
+                    method: "DELETE",
+                    headers: getAuthHeaders(),
+                }
+            );
 
-        setDeleteDoctor(null);
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to delete doctor."
+                );
+            }
+
+            setDoctors((previous) =>
+                previous.filter(
+                    (doctor) =>
+                        doctor.id !==
+                        deleteDoctor.id
+                )
+            );
+
+            setDeleteDoctor(null);
+
+        } catch (error) {
+            console.error(
+                "Error deleting doctor:",
+                error
+            );
+
+            setErrorMessage(
+                error.message ||
+                "Failed to delete doctor."
+            );
+        }
     };
 
     // =====================================================
@@ -491,11 +965,7 @@ const Doctors = () => {
 
         setEditingDoctor(null);
 
-        setFormData({
-            name: "",
-            specialty: "",
-            department: "",
-        });
+        resetForm();
     };
 
     // =====================================================
@@ -524,9 +994,7 @@ const Doctors = () => {
                 className="z-[99999] w-44 overflow-hidden rounded-xl border border-[#dcebf5] bg-white py-1 shadow-[0_15px_40px_rgba(41,75,104,0.20)]"
             >
 
-                {/* =================================================
-                    EDIT
-                    ================================================= */}
+                {/* EDIT */}
 
                 <button
                     type="button"
@@ -546,9 +1014,7 @@ const Doctors = () => {
                     Edit
                 </button>
 
-                {/* =================================================
-                    TOGGLE STATUS
-                    ================================================= */}
+                {/* TOGGLE STATUS */}
 
                 <button
                     type="button"
@@ -571,9 +1037,7 @@ const Doctors = () => {
                         : "Set Active"}
                 </button>
 
-                {/* =================================================
-                    DELETE
-                    ================================================= */}
+                {/* DELETE */}
 
                 <button
                     type="button"
@@ -598,6 +1062,10 @@ const Doctors = () => {
             document.body
         );
     };
+
+    // =====================================================
+    // RETURN
+    // =====================================================
 
     return (
         <div className="space-y-6">
@@ -635,6 +1103,32 @@ const Doctors = () => {
                 </button>
 
             </div>
+
+            {/* =====================================================
+                ERROR MESSAGE
+                ===================================================== */}
+
+            {errorMessage && (
+
+                <div className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+
+                    <span>
+                        {errorMessage}
+                    </span>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setErrorMessage("")
+                        }
+                        className="ml-4 text-red-400 hover:text-red-600"
+                    >
+                        <X size={17} />
+                    </button>
+
+                </div>
+
+            )}
 
             {/* =====================================================
                 SEARCH & FILTER
@@ -687,10 +1181,10 @@ const Doctors = () => {
                         {departments.map(
                             (department) => (
                                 <option
-                                    key={department}
-                                    value={department}
+                                    key={department._id}
+                                    value={department.name}
                                 >
-                                    {department}
+                                    {department.name}
                                 </option>
                             )
                         )}
@@ -707,9 +1201,7 @@ const Doctors = () => {
 
             <div className="relative z-10 overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_4px_20px_rgba(41,75,104,0.04)]">
 
-                {/* =================================================
-                    DESKTOP TABLE
-                    ================================================= */}
+                {/* DESKTOP TABLE */}
 
                 <div className="hidden h-[610px] overflow-auto md:block">
 
@@ -745,7 +1237,20 @@ const Doctors = () => {
 
                         <tbody>
 
-                            {filteredDoctors.length > 0 ? (
+                            {loading ? (
+
+                                <tr>
+
+                                    <td
+                                        colSpan="5"
+                                        className="px-6 py-16 text-center text-sm text-gray-400"
+                                    >
+                                        Loading doctors...
+                                    </td>
+
+                                </tr>
+
+                            ) : filteredDoctors.length > 0 ? (
 
                                 filteredDoctors.map(
                                     (doctor) => (
@@ -780,10 +1285,10 @@ const Doctors = () => {
                                                             Doctor ID: DOC-
                                                             {doctor.id
                                                                 .toString()
-                                                                .padStart(
-                                                                    3,
-                                                                    "0"
-                                                                )}
+                                                                .slice(
+                                                                    -6
+                                                                )
+                                                                .toUpperCase()}
                                                         </p>
 
                                                     </div>
@@ -898,9 +1403,9 @@ const Doctors = () => {
 
                                             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf5fb] text-[#1976c8]">
 
-                                                    <Stethoscope
-                                                        size={25}
-                                                    />
+                                                        <Stethoscope
+                                                            size={25}
+                                                        />
 
                                             </div>
 
@@ -909,8 +1414,8 @@ const Doctors = () => {
                                             </p>
 
                                             <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                                    Try changing your
-                                                    search or filter.
+                                                        Try changing your
+                                                        search or filter.
                                             </p>
 
                                         </div>
@@ -933,7 +1438,13 @@ const Doctors = () => {
 
                 <div className="divide-y divide-[#edf3f7] md:hidden">
 
-                    {filteredDoctors.length > 0 ? (
+                    {loading ? (
+
+                        <div className="px-5 py-12 text-center text-sm text-gray-400">
+                            Loading doctors...
+                        </div>
+
+                    ) : filteredDoctors.length > 0 ? (
 
                         filteredDoctors.map(
                             (doctor) => (
@@ -966,10 +1477,10 @@ const Doctors = () => {
                                                     DOC-
                                                     {doctor.id
                                                         .toString()
-                                                        .padStart(
-                                                            3,
-                                                            "0"
-                                                        )}
+                                                        .slice(
+                                                            -6
+                                                        )
+                                                        .toUpperCase()}
                                                 </p>
 
                                             </div>
@@ -1080,9 +1591,9 @@ const Doctors = () => {
 
                                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf5fb] text-[#1976c8]">
 
-                                        <Stethoscope
-                                            size={25}
-                                        />
+                                            <Stethoscope
+                                                size={25}
+                                            />
 
                                 </div>
 
@@ -1091,8 +1602,8 @@ const Doctors = () => {
                                 </p>
 
                                 <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                        Try changing your
-                                        search or filter.
+                                            Try changing your
+                                            search or filter.
                                 </p>
 
                             </div>
@@ -1127,7 +1638,7 @@ const Doctors = () => {
 
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#102a43]/40 px-4 backdrop-blur-sm">
 
-                    <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+                    <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
 
                         {/* MODAL HEADER */}
 
@@ -1151,14 +1662,10 @@ const Doctors = () => {
 
                             <button
                                 type="button"
-                                onClick={
-                                    handleCloseModal
-                                }
+                                onClick={handleCloseModal}
                                 className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
                             >
-
                                 <X size={19} />
-
                             </button>
 
                         </div>
@@ -1166,125 +1673,421 @@ const Doctors = () => {
                         {/* FORM */}
 
                         <form
-                            onSubmit={
-                                handleSaveDoctor
-                            }
-                            className="space-y-5 p-6"
+                            onSubmit={handleSaveDoctor}
+                            className="max-h-[75vh] overflow-y-auto p-6"
                         >
 
-                            {/* NAME */}
+                            <div className="space-y-4">
 
-                            <div>
+                                {/* =================================================
+                                    DOCTOR NAME
+                                    ================================================= */}
 
-                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
-                                    Doctor Name
-                                </label>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={
-                                        formData.name
-                                    }
-                                    onChange={
-                                        handleInputChange
-                                    }
-                                    placeholder="Enter doctor name"
-                                    className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
-                                />
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Doctor Name
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter doctor name"
+                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                    />
+
+                                </div>
+
+                                {/* =================================================
+                                    SPECIALTY
+                                    ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Specialty
+                                    </label>
+
+                                    <div className="relative w-full">
+
+                                        <input
+                                            type="text"
+                                            name="specialty"
+                                            value={formData.specialty}
+                                            onChange={(event) => {
+
+                                                handleInputChange(
+                                                    event
+                                                );
+
+                                                setSpecialtySearch(
+                                                    event.target.value
+                                                );
+
+                                                setShowSpecialtyOptions(
+                                                    true
+                                                );
+                                            }}
+                                            onFocus={() => {
+
+                                                setSpecialtySearch(
+                                                    formData.specialty
+                                                );
+
+                                                setShowSpecialtyOptions(
+                                                    true
+                                                );
+                                            }}
+                                            onBlur={() => {
+
+                                                setTimeout(() => {
+
+                                                    setShowSpecialtyOptions(
+                                                        false
+                                                    );
+
+                                                }, 150);
+                                            }}
+                                            placeholder="Search or enter specialty"
+                                            className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                        />
+
+                                        {showSpecialtyOptions &&
+                                            filteredSpecialtyOptions.length >
+                                            0 && (
+
+                                                <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[1000] max-h-56 overflow-y-auto rounded-xl border border-[#dcebf5] bg-white py-1 shadow-[0_15px_40px_rgba(41,75,104,0.15)]">
+
+                                                    {filteredSpecialtyOptions.map(
+                                                        (
+                                                            specialty
+                                                        ) => (
+
+                                                            <button
+                                                                key={
+                                                                    specialty
+                                                                }
+                                                                type="button"
+                                                                onMouseDown={() =>
+                                                                    handleSelectSpecialty(
+                                                                        specialty
+                                                                    )
+                                                                }
+                                                                className="flex w-full items-center px-4 py-3 text-left text-sm text-[#294b68] transition hover:bg-[#f8fbfd] hover:text-[#1976c8]"
+                                                            >
+
+                                                                <Stethoscope
+                                                                    size={
+                                                                        16
+                                                                    }
+                                                                    className="mr-3 text-[#1976c8]"
+                                                                />
+
+                                                                {
+                                                                    specialty
+                                                                }
+
+                                                            </button>
+
+                                                        )
+                                                    )}
+
+                                                </div>
+                                            )}
+
+                                    </div>
+
+                                </div>
+
+                                {/* =================================================
+                                    DEPARTMENT
+                                    ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Department
+                                    </label>
+
+                                    <div className="relative w-full">
+
+                                        <input
+                                            type="text"
+                                            value={
+                                                departmentSearch
+                                            }
+                                            onChange={(event) => {
+
+                                                const value =
+                                                    event.target
+                                                        .value;
+
+                                                setDepartmentSearch(
+                                                    value
+                                                );
+
+                                                setShowDepartmentOptions(
+                                                    true
+                                                );
+
+                                                setFormData(
+                                                    (previous) => ({
+                                                        ...previous,
+                                                        departmentId:
+                                                            "",
+                                                    })
+                                                );
+                                            }}
+                                            onFocus={() => {
+
+                                                setShowDepartmentOptions(
+                                                    true
+                                                );
+                                            }}
+                                            onBlur={() => {
+
+                                                setTimeout(() => {
+
+                                                    setShowDepartmentOptions(
+                                                        false
+                                                    );
+
+                                                }, 150);
+                                            }}
+                                            placeholder="Search department..."
+                                            className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 pr-10 text-sm font-medium text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                        />
+
+                                        <Search
+                                            size={17}
+                                            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                        />
+
+                                        {showDepartmentOptions && (
+
+                                            <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[1000] max-h-60 overflow-y-auto rounded-xl border border-[#dcebf5] bg-white py-1 shadow-[0_15px_40px_rgba(41,75,104,0.15)]">
+
+                                                {filteredDepartmentOptions.length >
+                                                    0 ? (
+
+                                                        filteredDepartmentOptions.map(
+                                                            (
+                                                                department
+                                                            ) => (
+
+                                                            <button
+                                                                key={
+                                                                    department.id
+                                                                }
+                                                                type="button"
+                                                                disabled={
+                                                                    !department.isBackend
+                                                                }
+                                                                onMouseDown={() =>
+                                                                    handleSelectDepartment(
+                                                                        department
+                                                                    )
+                                                                }
+                                                                className={`flex w-full items-center px-4 py-3 text-left text-sm transition ${department.isBackend
+                                                                        ? "text-[#294b68] hover:bg-[#f8fbfd] hover:text-[#1976c8]"
+                                                                        : "cursor-default text-gray-400"
+                                                                    }`}
+                                                            >
+
+                                                                <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eaf5fb] text-[#1976c8]">
+
+                                                                    <Stethoscope
+                                                                        size={
+                                                                            15
+                                                                        }
+                                                                    />
+
+                                                                </div>
+
+                                                                <div className="flex flex-1 items-center justify-between">
+
+                                                                    <span>
+                                                                        {
+                                                                            department.name
+                                                                        }
+                                                                    </span>
+
+                                                                    {!department.isBackend && (
+
+                                                                        <span className="ml-3 text-[10px] font-medium uppercase tracking-wide text-gray-300">
+                                                                            Add in Departments
+                                                                        </span>
+
+                                                                    )}
+
+                                                                </div>
+
+                                                            </button>
+
+                                                        )
+                                                    )
+
+                                                ) : (
+
+                                                    <div className="px-4 py-3 text-sm text-gray-400">
+                                                        No department found
+                                                    </div>
+
+                                                )}
+
+                                            </div>
+
+                                        )}
+
+                                    </div>
+
+                                </div>
+
+                                {/* =================================================
+                                    QUALIFICATION
+                                    ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Qualification
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="qualification"
+                                        value={formData.qualification}
+                                        onChange={handleInputChange}
+                                        placeholder="e.g. MBBS, MD Cardiology"
+                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                    />
+
+                                </div>
+
+                                {/* =================================================
+                                    EXPERIENCE
+                                    ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Experience
+                                    </label>
+
+                                    <div className="relative w-full">
+
+                                        <input
+                                            type="number"
+                                            name="experience"
+                                            min="0"
+                                            value={formData.experience}
+                                            onChange={handleInputChange}
+                                            placeholder="Years of experience"
+                                            className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 pr-16 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                        />
+
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400">
+                                            Years
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                {/* =================================================
+                                    PHONE
+                                    ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Phone
+                                    </label>
+
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter phone number"
+                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                    />
+
+                                </div>
+
+                                {/* =================================================
+                                    EMAIL
+                                    ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Email
+                                    </label>
+
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter email address"
+                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                    />
+
+                                </div>
+
+                                {/* =================================================
+                                    SCHEDULE
+                                    ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+                                    <label className="w-full shrink-0 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Schedule
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="schedule"
+                                        value={formData.schedule}
+                                        onChange={handleInputChange}
+                                        placeholder="e.g. Monday - Friday, 9:00 AM - 2:00 PM"
+                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                    />
+
+                                </div>
 
                             </div>
 
-                            {/* SPECIALTY */}
+                            {/* =================================================
+                                BUTTONS
+                                ================================================= */}
 
-                            <div>
-
-                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
-                                    Specialty
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="specialty"
-                                    value={
-                                        formData.specialty
-                                    }
-                                    onChange={
-                                        handleInputChange
-                                    }
-                                    placeholder="Enter specialty"
-                                    className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
-                                />
-
-                            </div>
-
-                            {/* DEPARTMENT */}
-
-                            <div>
-
-                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
-                                    Department
-                                </label>
-
-                                <select
-                                    name="department"
-                                    value={
-                                        formData.department
-                                    }
-                                    onChange={
-                                        handleInputChange
-                                    }
-                                    className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm font-medium text-[#294b68] outline-none transition focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
-                                >
-
-                                    <option value="">
-                                        Select Department
-                                    </option>
-
-                                    {departments.map(
-                                        (
-                                            department
-                                        ) => (
-                                            <option
-                                                key={
-                                                    department
-                                                }
-                                                value={
-                                                    department
-                                                }
-                                            >
-                                                {
-                                                    department
-                                                }
-                                            </option>
-                                        )
-                                    )}
-
-                                </select>
-
-                            </div>
-
-                            {/* BUTTONS */}
-
-                            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                            <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[#edf3f7] pt-5 sm:flex-row sm:justify-end">
 
                                 <button
                                     type="button"
-                                    onClick={
-                                        handleCloseModal
-                                    }
-                                    className="!rounded-xl border border-[#dcebf5] px-5 py-3 text-sm font-semibold text-[#294b68] transition hover:bg-[#f8fbfd]"
+                                    onClick={handleCloseModal}
+                                    disabled={saving}
+                                    className="!rounded-lg border border-[#dcebf5] px-6 py-3 text-sm font-semibold text-[#294b68] transition hover:bg-[#f8fbfd] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     Cancel
                                 </button>
 
                                 <button
                                     type="submit"
-                                    className="!rounded-xl bg-[#1976c8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
+                                    disabled={saving}
+                                    className="!rounded-lg bg-[#1976c8] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#1565a8] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {editingDoctor
-                                        ? "Update Doctor"
-                                        : "Add Doctor"}
+                                    {saving
+                                        ? editingDoctor
+                                            ? "Updating..."
+                                            : "Adding..."
+                                        : editingDoctor
+                                            ? "Update Doctor"
+                                            : "Add Doctor"}
                                 </button>
 
                             </div>

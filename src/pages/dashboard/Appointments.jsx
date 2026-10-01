@@ -19,47 +19,122 @@ import { createPortal } from "react-dom";
 
 const Appointments = () => {
   /* =====================================================
+     API
+  ===================================================== */
+
+  const API_URL =
+    "http://localhost:5000/api/dashboard/appointments";
+
+  /* =====================================================
      APPOINTMENTS
   ===================================================== */
 
-  const [appointments, setAppointments] = useState([
-    {
-      id: 1,
-      patient: "Arjun Kumar",
-      doctor: "Dr. Meera",
-      department: "Cardiology & Heart Care",
-      date: "24 Sep 2026",
-      time: "10:00 AM",
-      status: "Pending",
-    },
-    {
-      id: 2,
-      patient: "Anjali Nair",
-      doctor: "Dr. Rahul",
-      department: "Orthopedics",
-      date: "24 Sep 2026",
-      time: "11:30 AM",
-      status: "Confirmed",
-    },
-    {
-      id: 3,
-      patient: "Muhammed Shamil",
-      doctor: "Dr. Anjali",
-      department: "Dermatology",
-      date: "24 Sep 2026",
-      time: "01:00 PM",
-      status: "Completed",
-    },
-    {
-      id: 4,
-      patient: "Sneha Thomas",
-      doctor: "Dr. Meera",
-      department: "Cardiology & Heart Care",
-      date: "25 Sep 2026",
-      time: "09:30 AM",
-      status: "Pending",
-    },
-  ]);
+  const [appointments, setAppointments] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+
+  /* =====================================================
+     TOKEN
+  ===================================================== */
+
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
+
+  /* =====================================================
+     FETCH APPOINTMENTS
+  ===================================================== */
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+
+      const token = getToken();
+
+      if (!token) {
+        console.error("Admin token not found");
+        setAppointments([]);
+        return;
+      }
+
+      const response = await fetch(API_URL, {
+        method: "GET",
+
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Failed to fetch appointments"
+        );
+      }
+
+      const formattedAppointments =
+        (data.appointments || []).map(
+          (appointment) => ({
+            id: appointment._id,
+
+            patient:
+              appointment.patientName ||
+              appointment.patientId?.name ||
+              "Unknown Patient",
+
+            doctor:
+              appointment.doctorId?.name ||
+              "Unknown Doctor",
+
+            department:
+              appointment.departmentId?.name ||
+              "Unknown Department",
+
+            date: appointment.date,
+
+            time: appointment.time,
+
+            status:
+              appointment.status
+                ?.charAt(0)
+                .toUpperCase() +
+              appointment.status?.slice(1),
+
+            phone: appointment.phone || "",
+
+            reason:
+              appointment.reason || "",
+
+            notes:
+              appointment.notes || "",
+          })
+        );
+
+      setAppointments(formattedAppointments);
+
+    } catch (error) {
+      console.error(
+        "Fetch appointments error:",
+        error
+      );
+
+      setAppointments([]);
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =====================================================
+     FETCH ON PAGE LOAD
+  ===================================================== */
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
   /* =====================================================
      SEARCH + FILTER
@@ -110,6 +185,16 @@ const Appointments = () => {
     Confirmed: {
       badge: "bg-blue-50 text-[#1976c8]",
       dot: "bg-[#1976c8]",
+    },
+
+    Rescheduled: {
+      badge: "bg-purple-50 text-purple-600",
+      dot: "bg-purple-500",
+    },
+
+    Cancelled: {
+      badge: "bg-red-50 text-red-600",
+      dot: "bg-red-500",
     },
 
     Completed: {
@@ -184,7 +269,7 @@ const Appointments = () => {
     const rect =
       event.currentTarget.getBoundingClientRect();
 
-    const menuWidth = 185;
+    const menuWidth = 195;
     const menuHeight = 175;
 
     let left =
@@ -241,6 +326,7 @@ const Appointments = () => {
     );
 
     setShowDetails(true);
+
     setOpenMenu(null);
   };
 
@@ -248,63 +334,163 @@ const Appointments = () => {
      CONFIRM APPOINTMENT
   ===================================================== */
 
-  const handleConfirmAppointment = (
+  const handleConfirmAppointment = async (
     appointmentId
   ) => {
-    setAppointments((prev) =>
-      prev.map((appointment) =>
-        appointment.id === appointmentId
-          ? {
-            ...appointment,
-            status: "Confirmed",
-          }
-          : appointment
-      )
-    );
+    try {
+      const token = getToken();
 
-    setOpenMenu(null);
+      if (!token) {
+        alert("Admin token not found");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/${appointmentId}`,
+        {
+          method: "PUT",
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            status: "confirmed",
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Failed to confirm appointment"
+        );
+      }
+
+      await fetchAppointments();
+
+      setOpenMenu(null);
+
+    } catch (error) {
+      console.error(
+        "Confirm appointment error:",
+        error
+      );
+
+      alert(error.message);
+    }
   };
 
   /* =====================================================
      COMPLETE APPOINTMENT
   ===================================================== */
 
-  const handleCompleteAppointment = (
+  const handleCompleteAppointment = async (
     appointmentId
   ) => {
-    setAppointments((prev) =>
-      prev.map((appointment) =>
-        appointment.id === appointmentId
-          ? {
-            ...appointment,
-            status: "Completed",
-          }
-          : appointment
-      )
-    );
+    try {
+      const token = getToken();
 
-    setOpenMenu(null);
+      if (!token) {
+        alert("Admin token not found");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/${appointmentId}`,
+        {
+          method: "PUT",
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            status: "completed",
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Failed to complete appointment"
+        );
+      }
+
+      await fetchAppointments();
+
+      setOpenMenu(null);
+
+    } catch (error) {
+      console.error(
+        "Complete appointment error:",
+        error
+      );
+
+      alert(error.message);
+    }
   };
 
   /* =====================================================
      DELETE APPOINTMENT
   ===================================================== */
 
-  const handleDeleteAppointment = () => {
-    if (!deleteAppointment) {
-      return;
-    }
+  const handleDeleteAppointment =
+    async () => {
+      if (!deleteAppointment) {
+        return;
+      }
 
-    setAppointments((prev) =>
-      prev.filter(
-        (appointment) =>
-          appointment.id !==
-          deleteAppointment.id
-      )
-    );
+      try {
+        const token = getToken();
 
-    setDeleteAppointment(null);
-  };
+        if (!token) {
+          alert("Admin token not found");
+          return;
+        }
+
+        const response = await fetch(
+          `${API_URL}/${deleteAppointment.id}`,
+          {
+            method: "DELETE",
+
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type":
+                "application/json",
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            "Failed to delete appointment"
+          );
+        }
+
+        await fetchAppointments();
+
+        setDeleteAppointment(null);
+
+      } catch (error) {
+        console.error(
+          "Delete appointment error:",
+          error
+        );
+
+        alert(error.message);
+      }
+    };
 
   /* =====================================================
      CLOSE MENU
@@ -383,6 +569,7 @@ const Appointments = () => {
         </p>
       </div>
 
+
       {/* =====================================================
           APPOINTMENT SUMMARY
       ===================================================== */}
@@ -391,7 +578,7 @@ const Appointments = () => {
 
         {/* TOTAL */}
 
-        <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(41,75,104,0.10)]">
+        <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
 
           <div className="flex items-center justify-between">
 
@@ -411,7 +598,7 @@ const Appointments = () => {
 
             </div>
 
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#1976c8] group-hover:text-white">
               <ClipboardList size={23} />
             </div>
 
@@ -421,9 +608,10 @@ const Appointments = () => {
 
         </div>
 
+
         {/* PENDING */}
 
-        <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(41,75,104,0.10)]">
+        <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
 
           <div className="flex items-center justify-between">
 
@@ -443,7 +631,7 @@ const Appointments = () => {
 
             </div>
 
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-500 transition-all duration-300 group-hover:scale-105">
               <CircleAlert size={23} />
             </div>
 
@@ -453,9 +641,10 @@ const Appointments = () => {
 
         </div>
 
+
         {/* CONFIRMED */}
 
-        <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(41,75,104,0.10)]">
+        <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
 
           <div className="flex items-center justify-between">
 
@@ -475,7 +664,7 @@ const Appointments = () => {
 
             </div>
 
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#1976c8]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#1976c8] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#1976c8] group-hover:text-white">
               <CheckCircle2 size={23} />
             </div>
 
@@ -486,6 +675,7 @@ const Appointments = () => {
         </div>
 
       </div>
+
 
       {/* =====================================================
           SEARCH + FILTER
@@ -518,6 +708,7 @@ const Appointments = () => {
 
           </div>
 
+
           {/* FILTERS */}
 
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -531,6 +722,7 @@ const Appointments = () => {
               }
               className="rounded-xl border border-gray-200 bg-[#fafcfd] px-4 py-2.5 text-sm text-gray-600 outline-none transition focus:border-[#1976c8] focus:bg-white"
             >
+
               <option>
                 All Status
               </option>
@@ -544,9 +736,19 @@ const Appointments = () => {
               </option>
 
               <option>
+                Rescheduled
+              </option>
+
+              <option>
+                Cancelled
+              </option>
+
+              <option>
                 Completed
               </option>
+
             </select>
+
 
             <select
               value={departmentFilter}
@@ -557,6 +759,7 @@ const Appointments = () => {
               }
               className="rounded-xl border border-gray-200 bg-[#fafcfd] px-4 py-2.5 text-sm text-gray-600 outline-none transition focus:border-[#1976c8] focus:bg-white"
             >
+
               <option>
                 All Departments
               </option>
@@ -572,6 +775,7 @@ const Appointments = () => {
               <option>
                 Dermatology
               </option>
+
             </select>
 
           </div>
@@ -579,6 +783,7 @@ const Appointments = () => {
         </div>
 
       </div>
+
 
       {/* =====================================================
           DESKTOP TABLE
@@ -624,141 +829,184 @@ const Appointments = () => {
 
             </thead>
 
+
             {/* BODY */}
 
             <tbody className="divide-y divide-gray-100">
 
-              {filteredAppointments.map(
-                (appointment) => (
+              {loading ? (
 
-                  <tr
-                    key={appointment.id}
-                    className="group transition hover:bg-[#f9fcfe]"
+                <tr>
+
+                  <td
+                    colSpan="6"
+                    className="px-6 py-14 text-center"
                   >
 
-                    {/* PATIENT */}
+                    <div className="flex flex-col items-center justify-center">
 
-                    <td className="px-6 py-5">
+                      <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
 
-                      <div className="flex items-center gap-3">
+                      <p className="mt-3 text-sm text-gray-500">
+                        Loading appointments...
+                      </p>
 
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition group-hover:bg-[#1976c8] group-hover:text-white">
-                          <UserRound size={18} />
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              ) : (
+
+                filteredAppointments.map(
+                  (appointment) => (
+
+                    <tr
+                      key={appointment.id}
+                      className="group transition hover:bg-[#f9fcfe]"
+                    >
+
+                      {/* PATIENT */}
+
+                      <td className="px-6 py-5">
+
+                        <div className="flex items-center gap-3">
+
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:bg-[#1976c8] group-hover:text-white">
+                            <UserRound size={18} />
+                          </div>
+
+                          <div>
+
+                            <p className="font-semibold text-[#294b68]">
+                              {appointment.patient}
+                            </p>
+
+                            <p className="mt-0.5 text-xs text-gray-400">
+                              Appointment #
+                              {appointment.id}
+                            </p>
+
+                          </div>
+
                         </div>
 
-                        <div>
+                      </td>
 
-                          <p className="font-semibold text-[#294b68]">
-                            {appointment.patient}
-                          </p>
 
-                          <p className="mt-0.5 text-xs text-gray-400">
-                            Appointment #
-                            {appointment.id}
-                          </p>
+                      {/* DOCTOR */}
+
+                      <td className="px-6 py-5">
+
+                        <div className="flex items-center gap-2">
+
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
+                            <Stethoscope size={15} />
+                          </div>
+
+                          <span className="text-sm font-medium text-gray-600">
+                            {appointment.doctor}
+                          </span>
 
                         </div>
 
-                      </div>
+                      </td>
 
-                    </td>
 
-                    {/* DOCTOR */}
+                      {/* DEPARTMENT */}
 
-                    <td className="px-6 py-5">
+                      <td className="px-6 py-5">
 
-                      <div className="flex items-center gap-2">
-
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
-                          <Stethoscope size={15} />
-                        </div>
-
-                        <span className="text-sm font-medium text-gray-600">
-                          {appointment.doctor}
+                        <span className="rounded-lg bg-[#f6f9fc] px-3 py-1.5 text-xs font-medium text-gray-600">
+                          {appointment.department}
                         </span>
 
-                      </div>
+                      </td>
 
-                    </td>
 
-                    {/* DEPARTMENT */}
+                      {/* DATE */}
 
-                    <td className="px-6 py-5">
+                      <td className="px-6 py-5">
 
-                      <span className="rounded-lg bg-[#f6f9fc] px-3 py-1.5 text-xs font-medium text-gray-600">
-                        {appointment.department}
-                      </span>
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
 
-                    </td>
+                          <CalendarDays
+                            size={16}
+                            className="text-[#1976c8]"
+                          />
 
-                    {/* DATE */}
+                          {appointment.date}
 
-                    <td className="px-6 py-5">
+                        </div>
 
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
 
-                        <CalendarDays
-                          size={16}
-                          className="text-[#1976c8]"
-                        />
+                          <Clock3 size={13} />
 
-                        {appointment.date}
+                          {appointment.time}
 
-                      </div>
+                        </div>
 
-                      <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
+                      </td>
 
-                        <Clock3 size={13} />
 
-                        {appointment.time}
+                      {/* STATUS */}
 
-                      </div>
-
-                    </td>
-
-                    {/* STATUS */}
-
-                    <td className="px-6 py-5">
-
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[appointment.status].badge}`}
-                      >
+                      <td className="px-6 py-5">
 
                         <span
-                          className={`h-1.5 w-1.5 rounded-full ${statusStyle[appointment.status].dot}`}
-                        />
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[
+                              appointment.status
+                            ]?.badge ||
+                            "bg-gray-100 text-gray-500"
+                            }`}
+                        >
 
-                        {appointment.status}
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${statusStyle[
+                                appointment.status
+                              ]?.dot ||
+                              "bg-gray-400"
+                              }`}
+                          />
 
-                      </span>
+                          {appointment.status}
 
-                    </td>
+                        </span>
 
-                    {/* ACTION */}
+                      </td>
 
-                    <td className="px-6 py-5">
 
-                      <button
-                        type="button"
-                        data-appointment-menu
-                        onClick={(event) =>
-                          handleMenuClick(
-                            event,
-                            appointment.id
-                          )
-                        }
-                        className="rounded-lg p-2 text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                      >
-                        <MoreVertical
-                          size={18}
-                        />
-                      </button>
+                      {/* ACTION */}
 
-                    </td>
+                      <td className="px-6 py-5">
 
-                  </tr>
+                        <button
+                          type="button"
+                          data-appointment-menu
+                          onClick={(event) =>
+                            handleMenuClick(
+                              event,
+                              appointment.id
+                            )
+                          }
+                          className="rounded-lg p-2 text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
+                        >
 
-                )
+                          <MoreVertical
+                            size={18}
+                          />
+
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                  )
+
               )}
 
             </tbody>
@@ -769,12 +1017,14 @@ const Appointments = () => {
 
       </div>
 
+
       {/* =====================================================
           EMPTY DESKTOP STATE
       ===================================================== */}
 
-      {filteredAppointments.length === 0 && (
-        <div className="hidden rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm lg:block">
+      {!loading &&
+        filteredAppointments.length === 0 && (
+          <div className="hidden rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm lg:block">
 
           <ClipboardList
             size={40}
@@ -789,8 +1039,9 @@ const Appointments = () => {
             Try changing your search or filters.
           </p>
 
-        </div>
-      )}
+          </div>
+        )}
+
 
       {/* =====================================================
           MOBILE CARDS
@@ -798,170 +1049,204 @@ const Appointments = () => {
 
       <div className="space-y-4 lg:hidden">
 
-        {filteredAppointments.map(
-          (appointment) => (
+        {loading ? (
 
-            <div
-              key={appointment.id}
-              className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md"
-            >
+          <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
 
-              {/* TOP */}
+            <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
 
-              <div className="flex items-start justify-between">
+            <p className="mt-3 text-sm text-gray-500">
+              Loading appointments...
+            </p>
 
-                <div className="flex items-center gap-3">
+          </div>
 
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
-                    <UserRound size={19} />
+        ) : (
+
+          filteredAppointments.map(
+            (appointment) => (
+
+              <div
+                key={appointment.id}
+                className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]"
+              >
+
+                {/* TOP */}
+
+                <div className="flex items-start justify-between">
+
+                  <div className="flex items-center gap-3">
+
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:bg-[#1976c8] group-hover:text-white">
+                      <UserRound size={19} />
+                    </div>
+
+                    <div>
+
+                      <h2 className="font-bold text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
+                        {appointment.patient}
+                      </h2>
+
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        Appointment #
+                        {appointment.id}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    data-appointment-menu
+                    onClick={(event) =>
+                      handleMenuClick(
+                        event,
+                        appointment.id
+                      )
+                    }
+                    className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
+                  >
+
+                    <MoreVertical
+                      size={18}
+                    />
+
+                  </button>
+
+                </div>
+
+
+                {/* DOCTOR */}
+
+                <div className="mt-5 flex items-center gap-3">
+
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
+                    <Stethoscope size={16} />
                   </div>
 
                   <div>
 
-                    <h2 className="font-bold text-[#294b68]">
-                      {appointment.patient}
-                    </h2>
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                      Doctor
+                    </p>
 
-                    <p className="mt-0.5 text-xs text-gray-400">
-                      Appointment #
-                      {appointment.id}
+                    <p className="mt-0.5 text-sm font-semibold text-gray-600">
+                      {appointment.doctor}
                     </p>
 
                   </div>
 
                 </div>
 
-                <button
-                  type="button"
-                  data-appointment-menu
-                  onClick={(event) =>
-                    handleMenuClick(
-                      event,
-                      appointment.id
-                    )
-                  }
-                  className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
-                >
-                  <MoreVertical
-                    size={18}
-                  />
-                </button>
 
-              </div>
+                {/* DEPARTMENT */}
 
-              {/* DOCTOR */}
-
-              <div className="mt-5 flex items-center gap-3">
-
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
-                  <Stethoscope size={16} />
-                </div>
-
-                <div>
+                <div className="mt-4">
 
                   <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
-                    Doctor
+                    Department
                   </p>
 
-                  <p className="mt-0.5 text-sm font-semibold text-gray-600">
-                    {appointment.doctor}
+                  <p className="mt-1 text-sm font-medium text-gray-600">
+                    {appointment.department}
                   </p>
 
                 </div>
 
-              </div>
 
-              {/* DEPARTMENT */}
+                {/* DATE + TIME */}
 
-              <div className="mt-4">
+                <div className="mt-4 grid grid-cols-2 gap-3">
 
-                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
-                  Department
-                </p>
+                  <div className="rounded-xl bg-[#f8fafc] p-3">
 
-                <p className="mt-1 text-sm font-medium text-gray-600">
-                  {appointment.department}
-                </p>
+                    <div className="flex items-center gap-2 text-[#1976c8]">
 
-              </div>
+                      <CalendarDays size={15} />
 
-              {/* DATE + TIME */}
+                      <span className="text-[10px] font-semibold uppercase">
+                        Date
+                      </span>
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
+                    </div>
 
-                <div className="rounded-xl bg-[#f8fafc] p-3">
-
-                  <div className="flex items-center gap-2 text-[#1976c8]">
-
-                    <CalendarDays size={15} />
-
-                    <span className="text-[10px] font-semibold uppercase">
-                      Date
-                    </span>
+                    <p className="mt-1 text-xs font-semibold text-gray-600">
+                      {appointment.date}
+                    </p>
 
                   </div>
 
-                  <p className="mt-1 text-xs font-semibold text-gray-600">
-                    {appointment.date}
-                  </p>
 
-                </div>
+                  <div className="rounded-xl bg-[#f8fafc] p-3">
 
-                <div className="rounded-xl bg-[#f8fafc] p-3">
+                    <div className="flex items-center gap-2 text-[#1976c8]">
 
-                  <div className="flex items-center gap-2 text-[#1976c8]">
+                      <Clock3 size={15} />
 
-                    <Clock3 size={15} />
+                      <span className="text-[10px] font-semibold uppercase">
+                        Time
+                      </span>
 
-                    <span className="text-[10px] font-semibold uppercase">
-                      Time
-                    </span>
+                    </div>
+
+                    <p className="mt-1 text-xs font-semibold text-gray-600">
+                      {appointment.time}
+                    </p>
 
                   </div>
 
-                  <p className="mt-1 text-xs font-semibold text-gray-600">
-                    {appointment.time}
-                  </p>
-
                 </div>
 
-              </div>
 
-              {/* STATUS */}
+                {/* STATUS */}
 
-              <div className="mt-4 border-t border-gray-100 pt-4">
-
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[appointment.status].badge}`}
-                >
+                <div className="mt-4 border-t border-gray-100 pt-4">
 
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${statusStyle[appointment.status].dot}`}
-                  />
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[
+                        appointment.status
+                      ]?.badge ||
+                      "bg-gray-100 text-gray-500"
+                      }`}
+                  >
 
-                  {appointment.status}
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${statusStyle[
+                          appointment.status
+                        ]?.dot ||
+                        "bg-gray-400"
+                        }`}
+                    />
 
-                </span>
+                    {appointment.status}
+
+                  </span>
+
+                </div>
+
+
+                {/* BLUE HOVER LINE */}
+
+                <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
 
               </div>
 
-              {/* BOTTOM ACCENT */}
+            )
+            )
 
-              <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
-
-            </div>
-
-          )
         )}
 
       </div>
+
 
       {/* =====================================================
           EMPTY MOBILE STATE
       ===================================================== */}
 
-      {filteredAppointments.length === 0 && (
-        <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm lg:hidden">
+      {!loading &&
+        filteredAppointments.length === 0 && (
+          <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm lg:hidden">
 
           <ClipboardList
             size={40}
@@ -976,8 +1261,9 @@ const Appointments = () => {
             Try changing your search or filters.
           </p>
 
-        </div>
-      )}
+          </div>
+        )}
+
 
       {/* =====================================================
           ACTION MENU
@@ -985,6 +1271,7 @@ const Appointments = () => {
 
       {openMenu &&
         createPortal(
+
           <div
             data-appointment-menu
             style={{
@@ -996,6 +1283,7 @@ const Appointments = () => {
           >
 
             {(() => {
+
               const appointment =
                 appointments.find(
                   (item) =>
@@ -1008,6 +1296,7 @@ const Appointments = () => {
 
               return (
                 <>
+
                   {/* VIEW */}
 
                   <button
@@ -1019,75 +1308,97 @@ const Appointments = () => {
                     }
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
                   >
+
                     <Eye size={16} />
 
                     View Details
+
                   </button>
+
 
                   {/* CONFIRM */}
 
                   {appointment.status ===
                     "Pending" && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleConfirmAppointment(
-                            appointment.id
-                          )
-                        }
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-green-50 hover:text-green-600"
-                      >
-                        <Check size={16} />
 
-                        Confirm
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleConfirmAppointment(
+                          appointment.id
+                        )
+                      }
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-green-50 hover:text-green-600"
+                    >
+
+                      <Check size={16} />
+
+                      Confirm
+
+                    </button>
+
                     )}
+
 
                   {/* COMPLETE */}
 
                   {appointment.status ===
                     "Confirmed" && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleCompleteAppointment(
-                            appointment.id
-                          )
-                        }
-                        className="flex w-full items-center gap-3 rounded-lg pl-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-blue-50 hover:text-[#1976c8]"
-                      >
-                        <CheckCircle2
-                          size={16}
-                        />
 
-                        Mark Completed
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCompleteAppointment(
+                          appointment.id
+                        )
+                      }
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-blue-50 hover:text-[#1976c8]"
+                    >
+
+                      <CheckCircle2
+                        size={16}
+                      />
+
+                      Mark Completed
+
+                    </button>
+
                     )}
+
 
                   {/* DELETE */}
 
                   <button
                     type="button"
                     onClick={() => {
+
                       setDeleteAppointment(
                         appointment
                       );
 
                       setOpenMenu(null);
+
                     }}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50"
                   >
+
                     <Trash2 size={16} />
 
                     Delete
+
                   </button>
+
                 </>
               );
+
             })()}
 
           </div>,
+
           document.body
+
         )}
+
 
       {/* =====================================================
           VIEW DETAILS MODAL
@@ -1095,6 +1406,7 @@ const Appointments = () => {
 
       {showDetails &&
         selectedAppointment && (
+
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
             <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
@@ -1123,16 +1435,22 @@ const Appointments = () => {
                   }
                   className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#294b68]"
                 >
+
                   <X size={19} />
+
                 </button>
 
               </div>
+
 
               {/* DETAILS */}
 
               <div className="mt-6 space-y-4">
 
+              {/* PATIENT */}
+
                 <div>
+
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                     Patient
                   </p>
@@ -1142,9 +1460,35 @@ const Appointments = () => {
                       selectedAppointment.patient
                     }
                   </p>
-                </div>
+
+              </div>
+
+
+              {/* PHONE */}
+
+              {selectedAppointment.phone && (
 
                 <div>
+
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Phone
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-600">
+                    {
+                      selectedAppointment.phone
+                    }
+                  </p>
+
+                </div>
+
+              )}
+
+
+              {/* DOCTOR */}
+
+                <div>
+
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                     Doctor
                   </p>
@@ -1154,9 +1498,14 @@ const Appointments = () => {
                       selectedAppointment.doctor
                     }
                   </p>
+
                 </div>
 
+
+              {/* DEPARTMENT */}
+
                 <div>
+
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                     Department
                   </p>
@@ -1166,7 +1515,11 @@ const Appointments = () => {
                       selectedAppointment.department
                     }
                   </p>
+
                 </div>
+
+
+              {/* DATE + TIME */}
 
                 <div className="grid grid-cols-2 gap-3">
 
@@ -1184,6 +1537,7 @@ const Appointments = () => {
 
                   </div>
 
+
                   <div className="rounded-xl bg-[#f6f9fc] p-3">
 
                     <p className="text-xs text-gray-400">
@@ -1200,6 +1554,51 @@ const Appointments = () => {
 
                 </div>
 
+
+              {/* REASON */}
+
+              {selectedAppointment.reason && (
+
+                <div>
+
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Reason
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    {
+                      selectedAppointment.reason
+                    }
+                  </p>
+
+                </div>
+
+              )}
+
+
+              {/* NOTES */}
+
+              {selectedAppointment.notes && (
+
+                <div>
+
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Notes
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    {
+                      selectedAppointment.notes
+                    }
+                  </p>
+
+                </div>
+
+              )}
+
+
+              {/* STATUS */}
+
                 <div>
 
                   <p className="text-xs text-gray-400">
@@ -1207,11 +1606,19 @@ const Appointments = () => {
                   </p>
 
                   <span
-                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[selectedAppointment.status].badge}`}
+                  className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[
+                      selectedAppointment.status
+                    ]?.badge ||
+                    "bg-gray-100 text-gray-500"
+                    }`}
                   >
 
                     <span
-                      className={`h-1.5 w-1.5 rounded-full ${statusStyle[selectedAppointment.status].dot}`}
+                    className={`h-1.5 w-1.5 rounded-full ${statusStyle[
+                        selectedAppointment.status
+                      ]?.dot ||
+                      "bg-gray-400"
+                      }`}
                     />
 
                     {
@@ -1223,6 +1630,7 @@ const Appointments = () => {
                 </div>
 
               </div>
+
 
               {/* CLOSE */}
 
@@ -1243,13 +1651,16 @@ const Appointments = () => {
             </div>
 
           </div>
+
         )}
+
 
       {/* =====================================================
           DELETE CONFIRMATION
       ===================================================== */}
 
       {deleteAppointment && (
+
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
           <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
@@ -1257,14 +1668,18 @@ const Appointments = () => {
             {/* ICON */}
 
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
+
               <Trash2 size={22} />
+
             </div>
+
 
             {/* TITLE */}
 
             <h2 className="mt-4 !text-lg font-bold text-[#294b68]">
               Delete Appointment?
             </h2>
+
 
             {/* MESSAGE */}
 
@@ -1284,6 +1699,7 @@ const Appointments = () => {
 
             </p>
 
+
             {/* BUTTONS */}
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -1300,6 +1716,7 @@ const Appointments = () => {
                 Cancel
               </button>
 
+
               <button
                 type="button"
                 onClick={
@@ -1315,6 +1732,7 @@ const Appointments = () => {
           </div>
 
         </div>
+
       )}
 
     </div>
