@@ -171,7 +171,10 @@ const DashboardNavbar = ({ setIsOpen }) => {
                 {/* My Profile */}
                 <button
                   type="button"
-                  onClick={() => setProfileOpen(false)}
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/dashboard/profile");
+                  }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-[#294b68] transition-all duration-200 hover:bg-[#f7fafc] hover:text-[#1976c8]"
                 >
                   <UserRound size={17} />

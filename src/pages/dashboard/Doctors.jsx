@@ -7,9 +7,14 @@ import {
     Trash2,
     Power,
     X,
+    CheckCircle2,
 } from "lucide-react";
 
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useState,
+} from "react";
+
 import { createPortal } from "react-dom";
 
 const Doctors = () => {
@@ -30,7 +35,8 @@ const Doctors = () => {
     // API CONFIGURATION
     // =====================================================
 
-    const API_URL = "http://localhost:5000/api/dashboard";
+    const API_URL =
+        "http://localhost:5000/api/dashboard";
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem("token");
@@ -50,7 +56,8 @@ const Doctors = () => {
 
         id: doctor._id,
 
-        specialty: doctor.specialization || "",
+        specialty:
+            doctor.specialization || "",
 
         department:
             doctor.departmentId?.name ||
@@ -68,8 +75,11 @@ const Doctors = () => {
     // =====================================================
 
     const fetchDoctors = async () => {
+
         try {
+
             setLoading(true);
+
             setErrorMessage("");
 
             const response = await fetch(
@@ -80,9 +90,11 @@ const Doctors = () => {
                 }
             );
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             if (!response.ok) {
+
                 throw new Error(
                     data.message ||
                     "Failed to load doctors."
@@ -94,7 +106,9 @@ const Doctors = () => {
                     formatDoctor
                 )
             );
+
         } catch (error) {
+
             console.error(
                 "Error loading doctors:",
                 error
@@ -104,7 +118,9 @@ const Doctors = () => {
                 error.message ||
                 "Failed to load doctors."
             );
+
         } finally {
+
             setLoading(false);
         }
     };
@@ -114,7 +130,9 @@ const Doctors = () => {
     // =====================================================
 
     const fetchDepartments = async () => {
+
         try {
+
             const response = await fetch(
                 `${API_URL}/departments`,
                 {
@@ -123,9 +141,11 @@ const Doctors = () => {
                 }
             );
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             if (!response.ok) {
+
                 throw new Error(
                     data.message ||
                     "Failed to load departments."
@@ -135,7 +155,9 @@ const Doctors = () => {
             setDepartments(
                 data.departments || []
             );
+
         } catch (error) {
+
             console.error(
                 "Error loading departments:",
                 error
@@ -148,64 +170,90 @@ const Doctors = () => {
     // =====================================================
 
     useEffect(() => {
+
         fetchDoctors();
+
         fetchDepartments();
+
     }, []);
 
     // =====================================================
     // STATES
     // =====================================================
 
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] =
+        useState("");
 
-    const [departmentFilter, setDepartmentFilter] =
-        useState("All Departments");
+    const [
+        departmentFilter,
+        setDepartmentFilter,
+    ] = useState("All Departments");
 
-    const [openMenu, setOpenMenu] = useState(null);
+    const [openMenu, setOpenMenu] =
+        useState(null);
 
-    const [menuPosition, setMenuPosition] = useState({
+    const [
+        menuPosition,
+        setMenuPosition,
+    ] = useState({
         top: 0,
         right: 0,
     });
 
-    const [showModal, setShowModal] = useState(false);
+    const [showModal, setShowModal] =
+        useState(false);
 
-    const [editingDoctor, setEditingDoctor] = useState(null);
+    const [editingDoctor, setEditingDoctor] =
+        useState(null);
 
-    const [formData, setFormData] = useState({
-        name: "",
-        specialty: "",
-        departmentId: "",
-        qualification: "",
-        experience: "",
-        phone: "",
-        email: "",
-        schedule: "",
-    });
+    const [formData, setFormData] =
+        useState({
+            name: "",
+            specialty: "",
+            departmentId: "",
+            qualification: "",
+            experience: "",
+            phone: "",
+            email: "",
+            schedule: "",
+        });
 
-    const [saving, setSaving] = useState(false);
+    const [saving, setSaving] =
+        useState(false);
 
     // =====================================================
     // SEARCHABLE DEPARTMENT / SPECIALTY STATES
     // =====================================================
 
-    const [departmentSearch, setDepartmentSearch] = useState("");
+    const [
+        departmentSearch,
+        setDepartmentSearch,
+    ] = useState("");
 
-    const [showDepartmentOptions, setShowDepartmentOptions] =
-        useState(false);
+    const [
+        showDepartmentOptions,
+        setShowDepartmentOptions,
+    ] = useState(false);
 
-    const [specialtySearch, setSpecialtySearch] = useState("");
+    const [
+        specialtySearch,
+        setSpecialtySearch,
+    ] = useState("");
 
-    const [showSpecialtyOptions, setShowSpecialtyOptions] =
-        useState(false);
+    const [
+        showSpecialtyOptions,
+        setShowSpecialtyOptions,
+    ] = useState(false);
 
     // =====================================================
     // CONFIRMATION STATES
     // =====================================================
 
-    const [statusDoctor, setStatusDoctor] = useState(null);
+    const [statusDoctor, setStatusDoctor] =
+        useState(null);
 
-    const [deleteDoctor, setDeleteDoctor] = useState(null);
+    const [deleteDoctor, setDeleteDoctor] =
+        useState(null);
 
     // =====================================================
     // DEPARTMENT OPTIONS
@@ -283,17 +331,21 @@ const Doctors = () => {
     // =====================================================
 
     const availableDepartments = [
-        ...departments.map((department) => ({
-            id: department._id,
-            name: department.name,
-            isBackend: true,
-        })),
+        ...departments.map(
+            (department) => ({
+                id: department._id,
+                name: department.name,
+                isBackend: true,
+            })
+        ),
 
-        ...defaultDepartments.map((name) => ({
-            id: `default-${name}`,
-            name,
-            isBackend: false,
-        })),
+        ...defaultDepartments.map(
+            (name) => ({
+                id: `default-${name}`,
+                name,
+                isBackend: false,
+            })
+        ),
     ].filter(
         (department, index, array) =>
             array.findIndex(
@@ -308,12 +360,13 @@ const Doctors = () => {
     // =====================================================
 
     const filteredDepartmentOptions =
-        availableDepartments.filter((department) =>
-            department.name
-                .toLowerCase()
-                .includes(
-                    departmentSearch.toLowerCase()
-                )
+        availableDepartments.filter(
+            (department) =>
+                department.name
+                    .toLowerCase()
+                    .includes(
+                        departmentSearch.toLowerCase()
+                    )
         );
 
     // =====================================================
@@ -321,12 +374,13 @@ const Doctors = () => {
     // =====================================================
 
     const filteredSpecialtyOptions =
-        specialtyOptions.filter((specialty) =>
-            specialty
-                .toLowerCase()
-                .includes(
-                    specialtySearch.toLowerCase()
-                )
+        specialtyOptions.filter(
+            (specialty) =>
+                specialty
+                    .toLowerCase()
+                    .includes(
+                        specialtySearch.toLowerCase()
+                    )
         );
 
     // =====================================================
@@ -334,13 +388,18 @@ const Doctors = () => {
     // =====================================================
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
+
+        const handleClickOutside = (
+            event
+        ) => {
+
             const clickedInsideAction =
                 event.target.closest(
                     "[data-doctor-action]"
                 );
 
             if (!clickedInsideAction) {
+
                 setOpenMenu(null);
             }
         };
@@ -351,11 +410,13 @@ const Doctors = () => {
         );
 
         return () => {
+
             document.removeEventListener(
                 "mousedown",
                 handleClickOutside
             );
         };
+
     }, []);
 
     // =====================================================
@@ -363,6 +424,7 @@ const Doctors = () => {
     // =====================================================
 
     useEffect(() => {
+
         if (openMenu === null) {
             return;
         }
@@ -387,6 +449,7 @@ const Doctors = () => {
         );
 
         return () => {
+
             window.removeEventListener(
                 "scroll",
                 handleScroll,
@@ -398,32 +461,60 @@ const Doctors = () => {
                 handleResize
             );
         };
+
     }, [openMenu]);
 
     // =====================================================
     // SEARCH + FILTER
     // =====================================================
 
-    const filteredDoctors = doctors.filter((doctor) => {
-        const search = searchTerm.toLowerCase();
+    const filteredDoctors =
+        doctors.filter((doctor) => {
 
-        const matchesSearch =
-            doctor.name
-                .toLowerCase()
-                .includes(search) ||
-            doctor.specialty
-                .toLowerCase()
-                .includes(search) ||
-            doctor.department
-                .toLowerCase()
-                .includes(search);
+            const search =
+                searchTerm.toLowerCase();
 
-        const matchesDepartment =
-            departmentFilter === "All Departments" ||
-            doctor.department === departmentFilter;
+            const matchesSearch =
+                doctor.name
+                    .toLowerCase()
+                    .includes(search) ||
+                doctor.specialty
+                    .toLowerCase()
+                    .includes(search) ||
+                doctor.department
+                    .toLowerCase()
+                    .includes(search);
 
-        return matchesSearch && matchesDepartment;
-    });
+            const matchesDepartment =
+                departmentFilter ===
+                "All Departments" ||
+                doctor.department ===
+                departmentFilter;
+
+            return (
+                matchesSearch &&
+                matchesDepartment
+            );
+        });
+
+    // =====================================================
+    // SUMMARY COUNTS
+    // =====================================================
+
+    const totalDoctors =
+        doctors.length;
+
+    const activeDoctors =
+        doctors.filter(
+            (doctor) =>
+                doctor.status === "Active"
+        ).length;
+
+    const inactiveDoctors =
+        doctors.filter(
+            (doctor) =>
+                doctor.status === "Inactive"
+        ).length;
 
     // =====================================================
     // OPEN ACTION DROPDOWN
@@ -433,17 +524,24 @@ const Doctors = () => {
         doctorId,
         event
     ) => {
+
         if (openMenu === doctorId) {
+
             setOpenMenu(null);
+
             return;
         }
 
         const buttonRect =
-            event.currentTarget.getBoundingClientRect();
+            event.currentTarget
+                .getBoundingClientRect();
 
         const menuWidth = 176;
+
         const menuHeight = 150;
+
         const gap = 8;
+
         const screenPadding = 8;
 
         const spaceBelow =
@@ -459,18 +557,23 @@ const Doctors = () => {
             spaceBelow >=
             menuHeight + gap
         ) {
+
             top =
                 buttonRect.bottom +
                 gap;
+
         } else if (
             spaceAbove >=
             menuHeight + gap
         ) {
+
             top =
                 buttonRect.top -
                 menuHeight -
                 gap;
+
         } else {
+
             top = Math.max(
                 screenPadding,
                 Math.min(
@@ -492,11 +595,18 @@ const Doctors = () => {
             window.innerWidth -
             screenPadding
         ) {
-            right = screenPadding;
+
+            right =
+                screenPadding;
         }
 
-        if (right < screenPadding) {
-            right = screenPadding;
+        if (
+            right <
+            screenPadding
+        ) {
+
+            right =
+                screenPadding;
         }
 
         setMenuPosition({
@@ -512,6 +622,7 @@ const Doctors = () => {
     // =====================================================
 
     const resetForm = () => {
+
         setFormData({
             name: "",
             specialty: "",
@@ -537,6 +648,7 @@ const Doctors = () => {
     // =====================================================
 
     const handleAddDoctor = () => {
+
         setOpenMenu(null);
 
         setEditingDoctor(null);
@@ -550,7 +662,10 @@ const Doctors = () => {
     // OPEN EDIT DOCTOR
     // =====================================================
 
-    const handleEditDoctor = (doctor) => {
+    const handleEditDoctor = (
+        doctor
+    ) => {
+
         setEditingDoctor(doctor);
 
         const departmentId =
@@ -569,17 +684,22 @@ const Doctors = () => {
             "";
 
         setFormData({
-            name: doctor.name || "",
+            name:
+                doctor.name || "",
 
-            specialty: specialty,
+            specialty:
+                specialty,
 
-            departmentId: departmentId,
+            departmentId:
+                departmentId,
 
             qualification:
-                doctor.qualification || "",
+                doctor.qualification ||
+                "",
 
             experience:
-                doctor.experience ?? "",
+                doctor.experience ??
+                "",
 
             phone:
                 doctor.phone || "",
@@ -588,7 +708,8 @@ const Doctors = () => {
                 doctor.email || "",
 
             schedule:
-                doctor.schedule || "",
+                doctor.schedule ||
+                "",
         });
 
         setDepartmentSearch(
@@ -599,9 +720,13 @@ const Doctors = () => {
             specialty
         );
 
-        setShowDepartmentOptions(false);
+        setShowDepartmentOptions(
+            false
+        );
 
-        setShowSpecialtyOptions(false);
+        setShowSpecialtyOptions(
+            false
+        );
 
         setOpenMenu(null);
 
@@ -612,16 +737,21 @@ const Doctors = () => {
     // FORM INPUT
     // =====================================================
 
-    const handleInputChange = (event) => {
+    const handleInputChange = (
+        event
+    ) => {
+
         const {
             name,
             value,
         } = event.target;
 
-        setFormData((previous) => ({
-            ...previous,
-            [name]: value,
-        }));
+        setFormData(
+            (previous) => ({
+                ...previous,
+                [name]: value,
+            })
+        );
     };
 
     // =====================================================
@@ -631,15 +761,18 @@ const Doctors = () => {
     const handleSelectDepartment = (
         department
     ) => {
+
         if (!department.isBackend) {
             return;
         }
 
-        setFormData((previous) => ({
-            ...previous,
-            departmentId:
-                department.id,
-        }));
+        setFormData(
+            (previous) => ({
+                ...previous,
+                departmentId:
+                    department.id,
+            })
+        );
 
         setDepartmentSearch(
             department.name
@@ -657,10 +790,13 @@ const Doctors = () => {
     const handleSelectSpecialty = (
         specialty
     ) => {
-        setFormData((previous) => ({
-            ...previous,
-            specialty,
-        }));
+
+        setFormData(
+            (previous) => ({
+                ...previous,
+                specialty,
+            })
+        );
 
         setSpecialtySearch(
             specialty
@@ -675,7 +811,10 @@ const Doctors = () => {
     // SAVE DOCTOR
     // =====================================================
 
-    const handleSaveDoctor = async (event) => {
+    const handleSaveDoctor = async (
+        event
+    ) => {
+
         event.preventDefault();
 
         if (
@@ -688,6 +827,7 @@ const Doctors = () => {
             !formData.email.trim() ||
             !formData.schedule.trim()
         ) {
+
             setErrorMessage(
                 "Please fill in all doctor details."
             );
@@ -696,11 +836,15 @@ const Doctors = () => {
         }
 
         try {
+
             setSaving(true);
+
             setErrorMessage("");
 
             const payload = {
-                name: formData.name.trim(),
+
+                name:
+                    formData.name.trim(),
 
                 specialization:
                     formData.specialty.trim(),
@@ -712,7 +856,9 @@ const Doctors = () => {
                     formData.qualification.trim(),
 
                 experience:
-                    Number(formData.experience),
+                    Number(
+                        formData.experience
+                    ),
 
                 phone:
                     formData.phone.trim(),
@@ -729,26 +875,32 @@ const Doctors = () => {
             // =================================================
 
             if (editingDoctor) {
-                const response = await fetch(
-                    `${API_URL}/doctors/${editingDoctor.id}`,
-                    {
-                        method: "PUT",
-                        headers: getAuthHeaders(),
-                        body: JSON.stringify(
-                            payload
-                        ),
-                    }
-                );
+
+                const response =
+                    await fetch(
+                        `${API_URL}/doctors/${editingDoctor.id}`,
+                        {
+                            method: "PUT",
+                            headers:
+                                getAuthHeaders(),
+                            body:
+                                JSON.stringify(
+                                    payload
+                                ),
+                        }
+                    );
 
                 const data =
                     await response.json();
 
                 if (!response.ok) {
+
                     throw new Error(
                         data.message ||
                         "Failed to update doctor."
                     );
                 }
+
             }
 
                 // =================================================
@@ -756,21 +908,26 @@ const Doctors = () => {
                 // =================================================
 
             else {
-                const response = await fetch(
-                    `${API_URL}/doctors`,
-                    {
-                        method: "POST",
-                        headers: getAuthHeaders(),
-                        body: JSON.stringify(
-                            payload
-                        ),
-                    }
-                );
+
+                const response =
+                    await fetch(
+                        `${API_URL}/doctors`,
+                        {
+                            method: "POST",
+                            headers:
+                                getAuthHeaders(),
+                            body:
+                                JSON.stringify(
+                                    payload
+                                ),
+                        }
+                    );
 
                 const data =
                     await response.json();
 
                 if (!response.ok) {
+
                     throw new Error(
                         data.message ||
                         "Failed to add doctor."
@@ -787,6 +944,7 @@ const Doctors = () => {
             resetForm();
 
         } catch (error) {
+
             console.error(
                 "Error saving doctor:",
                 error
@@ -796,7 +954,9 @@ const Doctors = () => {
                 error.message ||
                 "Failed to save doctor."
             );
+
         } finally {
+
             setSaving(false);
         }
     };
@@ -805,11 +965,16 @@ const Doctors = () => {
     // OPEN STATUS CONFIRMATION
     // =====================================================
 
-    const handleToggleStatus = (doctorId) => {
-        const doctor = doctors.find(
-            (item) =>
-                item.id === doctorId
-        );
+    const handleToggleStatus = (
+        doctorId
+    ) => {
+
+        const doctor =
+            doctors.find(
+                (item) =>
+                    item.id ===
+                    doctorId
+            );
 
         if (!doctor) {
             return;
@@ -824,77 +989,95 @@ const Doctors = () => {
     // CONFIRM STATUS CHANGE
     // =====================================================
 
-    const handleStatusChange = async () => {
-        if (!statusDoctor) {
-            return;
-        }
+    const handleStatusChange =
+        async () => {
 
-        const newStatus =
-            statusDoctor.status === "Active"
-                ? "inactive"
-                : "active";
+            if (!statusDoctor) {
+                return;
+            }
 
-        try {
-            const response = await fetch(
-                `${API_URL}/doctors/${statusDoctor.id}`,
-                {
-                    method: "PUT",
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({
-                        status: newStatus,
-                    }),
+            const newStatus =
+                statusDoctor.status ===
+                    "Active"
+                    ? "inactive"
+                    : "active";
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/doctors/${statusDoctor.id}`,
+                        {
+                            method: "PUT",
+                            headers:
+                                getAuthHeaders(),
+                            body:
+                                JSON.stringify({
+                                    status:
+                                        newStatus,
+                                }),
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to change doctor status."
+                    );
                 }
-            );
 
-            const data =
-                await response.json();
+                setDoctors(
+                    (previous) =>
+                        previous.map(
+                            (doctor) =>
+                                doctor.id ===
+                                    statusDoctor.id
+                                    ? {
+                                        ...doctor,
+                                        status:
+                                            newStatus ===
+                                                "active"
+                                                ? "Active"
+                                                : "Inactive",
+                                    }
+                                    : doctor
+                        )
+                );
 
-            if (!response.ok) {
-                throw new Error(
-                    data.message ||
+                setStatusDoctor(null);
+
+            } catch (error) {
+
+                console.error(
+                    "Error changing doctor status:",
+                    error
+                );
+
+                setErrorMessage(
+                    error.message ||
                     "Failed to change doctor status."
                 );
             }
-
-            setDoctors((previous) =>
-                previous.map((doctor) =>
-                    doctor.id ===
-                        statusDoctor.id
-                        ? {
-                            ...doctor,
-                            status:
-                                newStatus ===
-                                    "active"
-                                    ? "Active"
-                                    : "Inactive",
-                        }
-                        : doctor
-                )
-            );
-
-            setStatusDoctor(null);
-        } catch (error) {
-            console.error(
-                "Error changing doctor status:",
-                error
-            );
-
-            setErrorMessage(
-                error.message ||
-                "Failed to change doctor status."
-            );
-        }
-    };
+        };
 
     // =====================================================
     // OPEN DELETE CONFIRMATION
     // =====================================================
 
-    const handleDeleteDoctor = (doctorId) => {
-        const doctor = doctors.find(
-            (item) =>
-                item.id === doctorId
-        );
+    const handleDeleteDoctor = (
+        doctorId
+    ) => {
+
+        const doctor =
+            doctors.find(
+                (item) =>
+                    item.id ===
+                    doctorId
+            );
 
         if (!doctor) {
             return;
@@ -910,40 +1093,47 @@ const Doctors = () => {
     // =====================================================
 
     const handleDelete = async () => {
+
         if (!deleteDoctor) {
             return;
         }
 
         try {
-            const response = await fetch(
-                `${API_URL}/doctors/${deleteDoctor.id}`,
-                {
-                    method: "DELETE",
-                    headers: getAuthHeaders(),
-                }
-            );
+
+            const response =
+                await fetch(
+                    `${API_URL}/doctors/${deleteDoctor.id}`,
+                    {
+                        method: "DELETE",
+                        headers:
+                            getAuthHeaders(),
+                    }
+                );
 
             const data =
                 await response.json();
 
             if (!response.ok) {
+
                 throw new Error(
                     data.message ||
                     "Failed to delete doctor."
                 );
             }
 
-            setDoctors((previous) =>
-                previous.filter(
-                    (doctor) =>
-                        doctor.id !==
-                        deleteDoctor.id
-                )
+            setDoctors(
+                (previous) =>
+                    previous.filter(
+                        (doctor) =>
+                            doctor.id !==
+                            deleteDoctor.id
+                    )
             );
 
             setDeleteDoctor(null);
 
         } catch (error) {
+
             console.error(
                 "Error deleting doctor:",
                 error
@@ -961,6 +1151,7 @@ const Doctors = () => {
     // =====================================================
 
     const handleCloseModal = () => {
+
         setShowModal(false);
 
         setEditingDoctor(null);
@@ -972,15 +1163,20 @@ const Doctors = () => {
     // ACTION DROPDOWN COMPONENT
     // =====================================================
 
-    const ActionDropdown = ({ doctor }) => {
+    const ActionDropdown = ({
+        doctor,
+    }) => {
+
         if (
             !doctor ||
             openMenu !== doctor.id
         ) {
+
             return null;
         }
 
         return createPortal(
+
             <div
                 data-doctor-action
                 onMouseDown={(event) =>
@@ -993,8 +1189,6 @@ const Doctors = () => {
                 }}
                 className="z-[99999] w-44 overflow-hidden rounded-xl border border-[#dcebf5] bg-white py-1 shadow-[0_15px_40px_rgba(41,75,104,0.20)]"
             >
-
-                {/* EDIT */}
 
                 <button
                     type="button"
@@ -1009,12 +1203,12 @@ const Doctors = () => {
                     }
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-[#294b68] transition hover:bg-[#f8fbfd] hover:text-[#1976c8]"
                 >
+
                     <Pencil size={16} />
 
                     Edit
-                </button>
 
-                {/* TOGGLE STATUS */}
+                </button>
 
                 <button
                     type="button"
@@ -1029,15 +1223,15 @@ const Doctors = () => {
                     }
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-[#294b68] transition hover:bg-[#f8fbfd] hover:text-[#1976c8]"
                 >
+
                     <Power size={16} />
 
                     {doctor.status ===
                         "Active"
                         ? "Set Inactive"
                         : "Set Active"}
-                </button>
 
-                {/* DELETE */}
+                </button>
 
                 <button
                     type="button"
@@ -1052,9 +1246,11 @@ const Doctors = () => {
                     }
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-500 transition hover:bg-red-50"
                 >
+
                     <Trash2 size={16} />
 
                     Delete
+
                 </button>
 
             </div>,
@@ -1068,11 +1264,12 @@ const Doctors = () => {
     // =====================================================
 
     return (
+
         <div className="space-y-6">
 
             {/* =====================================================
                 PAGE HEADER
-                ===================================================== */}
+            ===================================================== */}
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
@@ -1082,7 +1279,7 @@ const Doctors = () => {
                         Doctors
                     </h1>
 
-                    <p className="!mb-0 mt-1.5 text-sm text-gray-500">
+                    <p className="!mb-0 mt-1 text-sm text-gray-500">
                         Manage hospital doctors
                         and their departments.
                     </p>
@@ -1094,19 +1291,125 @@ const Doctors = () => {
                     onClick={handleAddDoctor}
                     className="flex items-center justify-center gap-2 !rounded-xl bg-[#1976c8] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1565a8] hover:shadow-md"
                 >
+
                     <Plus
                         size={18}
                         strokeWidth={2.2}
                     />
 
                     Add Doctor
+
                 </button>
 
             </div>
 
             {/* =====================================================
+                SUMMARY CARDS
+            ===================================================== */}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+                {/* TOTAL */}
+
+                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
+
+                    <div className="flex items-center gap-4">
+
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+
+                            <Stethoscope
+                                size={23}
+                            />
+
+                        </div>
+
+                        <div>
+
+                            <p className="!mb-0 text-sm font-medium text-gray-500">
+                                Total Doctors
+                            </p>
+
+                            <h3 className="!mb-0 mt-1 !text-2xl !font-bold !text-[#294b68]">
+                                {totalDoctors}
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+
+                </div>
+
+                {/* ACTIVE */}
+
+                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
+
+                    <div className="flex items-center gap-4">
+
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600">
+
+                            <CheckCircle2
+                                size={23}
+                            />
+
+                        </div>
+
+                        <div>
+
+                            <p className="!mb-0 text-sm font-medium text-gray-500">
+                                Active Doctors
+                            </p>
+
+                            <h3 className="!mb-0 mt-1 !text-2xl !font-bold !text-[#294b68]">
+                                {activeDoctors}
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-green-500 transition-all duration-300 group-hover:w-full" />
+
+                </div>
+
+                {/* INACTIVE */}
+
+                <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
+
+                    <div className="flex items-center gap-4">
+
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
+
+                            <Power
+                                size={23}
+                            />
+
+                        </div>
+
+                        <div>
+
+                            <p className="!mb-0 text-sm font-medium text-gray-500">
+                                Inactive Doctors
+                            </p>
+
+                            <h3 className="!mb-0 mt-1 !text-2xl !font-bold !text-[#294b68]">
+                                {inactiveDoctors}
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-gray-400 transition-all duration-300 group-hover:w-full" />
+
+                </div>
+
+            </div>
+
+            {/* =====================================================
                 ERROR MESSAGE
-                ===================================================== */}
+            ===================================================== */}
 
             {errorMessage && (
 
@@ -1132,15 +1435,13 @@ const Doctors = () => {
 
             {/* =====================================================
                 SEARCH & FILTER
-                ===================================================== */}
+            ===================================================== */}
 
-            <div className="rounded-2xl border border-[#dcebf5] bg-white p-4 shadow-[0_4px_20px_rgba(41,75,104,0.04)]">
+            <div className="rounded-2xl border border-[#e5edf3] bg-white p-4 shadow-sm">
 
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 
-                    {/* SEARCH */}
-
-                    <div className="relative w-full md:max-w-md">
+                    <div className="relative w-full lg:max-w-md">
 
                         <Search
                             size={18}
@@ -1162,8 +1463,6 @@ const Doctors = () => {
 
                     </div>
 
-                    {/* DEPARTMENT FILTER */}
-
                     <select
                         value={departmentFilter}
                         onChange={(event) =>
@@ -1171,7 +1470,7 @@ const Doctors = () => {
                                 event.target.value
                             )
                         }
-                        className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm font-medium text-[#294b68] outline-none transition-all duration-200 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10 md:w-auto"
+                        className="w-full rounded-xl border border-[#dcebf5] bg-[#f8fbfd] px-4 py-3 text-sm font-medium text-[#294b68] outline-none transition-all duration-200 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10 lg:w-auto"
                     >
 
                         <option>
@@ -1180,12 +1479,18 @@ const Doctors = () => {
 
                         {departments.map(
                             (department) => (
+
                                 <option
-                                    key={department._id}
-                                    value={department.name}
+                                    key={
+                                        department._id
+                                    }
+                                    value={
+                                        department.name
+                                    }
                                 >
                                     {department.name}
                                 </option>
+
                             )
                         )}
 
@@ -1196,247 +1501,292 @@ const Doctors = () => {
             </div>
 
             {/* =====================================================
-                DOCTORS LIST CONTAINER
-                ===================================================== */}
+                DOCTORS LIST
+            ===================================================== */}
 
-            <div className="relative z-10 overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_4px_20px_rgba(41,75,104,0.04)]">
+            <div className="overflow-hidden rounded-2xl border border-[#e5edf3] bg-white shadow-sm">
 
-                {/* DESKTOP TABLE */}
+                {/* =================================================
+                    DESKTOP TABLE
+                ================================================= */}
 
-                <div className="hidden h-[610px] overflow-auto md:block">
+                <div className="hidden lg:block">
 
-                    <table className="w-full min-w-[800px] text-left">
+                    {/* TABLE HEADER */}
 
-                        <thead className="sticky top-0 z-20">
+                    <div className="overflow-hidden">
 
-                            <tr className="border-b border-[#edf3f7] bg-[#f8fbfd]">
+                        <table className="w-full min-w-[900px] table-fixed text-left">
 
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#294b68]">
-                                    Doctor
-                                </th>
+                            <thead>
 
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#294b68]">
-                                    Specialty
-                                </th>
+                                <tr className="border-b border-[#edf3f7] bg-[#f8fafc]">
 
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#294b68]">
-                                    Department
-                                </th>
+                                    <th className="w-[30%] px-6 py-4 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                        Doctor
+                                    </th>
 
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#294b68]">
-                                    Status
-                                </th>
+                                    <th className="w-[20%] px-6 py-4 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                        Specialty
+                                    </th>
 
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#294b68]">
-                                    Action
-                                </th>
+                                    <th className="w-[20%] px-6 py-4 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                        Department
+                                    </th>
 
-                            </tr>
+                                    <th className="w-[15%] px-6 py-4 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                        Status
+                                    </th>
 
-                        </thead>
-
-                        <tbody>
-
-                            {loading ? (
-
-                                <tr>
-
-                                    <td
-                                        colSpan="5"
-                                        className="px-6 py-16 text-center text-sm text-gray-400"
-                                    >
-                                        Loading doctors...
-                                    </td>
+                                    <th className="w-[15%] px-6 py-4 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                        Action
+                                    </th>
 
                                 </tr>
 
-                            ) : filteredDoctors.length > 0 ? (
+                            </thead>
 
-                                filteredDoctors.map(
-                                    (doctor) => (
+                        </table>
 
-                                        <tr
-                                            key={doctor.id}
-                                            className="border-b border-[#edf3f7] transition-all duration-200 last:border-b-0 hover:bg-[#f8fbfd]"
+                    </div>
+
+                    {/* TABLE BODY */}
+
+                    <div className="h-[640px] overflow-auto scroll-smooth">
+
+                        <table className="w-full min-w-[900px] table-fixed text-left">
+
+                            <tbody>
+
+                                {loading ? (
+
+                                    <tr>
+
+                                        <td
+                                            colSpan="5"
+                                            className="px-6 py-16 text-center text-sm text-gray-400"
                                         >
+                                            Loading doctors...
+                                        </td>
 
-                                            {/* DOCTOR */}
+                                    </tr>
 
-                                            <td className="px-6 py-5">
+                                ) : filteredDoctors.length > 0 ? (
 
-                                                <div className="flex items-center gap-3">
+                                        filteredDoctors.map(
+                                            (doctor) => (
 
-                                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] shadow-sm">
+                                            <tr
+                                                key={
+                                                    doctor.id
+                                                }
+                                                className="group border-b border-[#edf3f7] transition hover:bg-[#f9fcfe]"
+                                            >
 
-                                                        <Stethoscope
-                                                            size={20}
-                                                            strokeWidth={2}
-                                                        />
+                                                {/* DOCTOR */}
 
-                                                    </div>
+                                                <td className="w-[30%] px-6 py-5">
 
-                                                    <div>
+                                                    <div className="flex items-center gap-3">
 
-                                                        <p className="!mb-0 text-sm font-bold text-[#294b68]">
-                                                            {doctor.name}
-                                                        </p>
+                                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
 
-                                                        <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                                            Doctor ID: DOC-
-                                                            {doctor.id
-                                                                .toString()
-                                                                .slice(
-                                                                    -6
+                                                            <Stethoscope
+                                                                size={
+                                                                    20
+                                                                }
+                                                                strokeWidth={
+                                                                    2
+                                                                }
+                                                            />
+
+                                                        </div>
+
+                                                        <div className="min-w-0">
+
+                                                            <p className="!mb-0 truncate text-sm font-bold text-[#294b68]">
+                                                                {
+                                                                    doctor.name
+                                                                }
+                                                            </p>
+
+                                                            <p className="!mb-0 mt-1 truncate text-xs text-gray-400">
+
+                                                                Doctor ID:
+                                                                DOC-
+                                                                {String(
+                                                                    doctor.id ||
+                                                                    ""
                                                                 )
-                                                                .toUpperCase()}
-                                                        </p>
+                                                                    .slice(
+                                                                        -6
+                                                                    )
+                                                                    .toUpperCase()}
+
+                                                            </p>
+
+                                                        </div>
 
                                                     </div>
 
-                                                </div>
+                                                </td>
 
-                                            </td>
+                                                {/* SPECIALTY */}
 
-                                            {/* SPECIALTY */}
+                                                <td className="w-[20%] px-6 py-5">
 
-                                            <td className="px-6 py-5">
+                                                    <span className="text-sm font-medium text-gray-600">
+                                                        {
+                                                            doctor.specialty
+                                                        }
+                                                    </span>
 
-                                                <span className="text-sm font-medium text-gray-600">
-                                                    {doctor.specialty}
-                                                </span>
+                                                </td>
 
-                                            </td>
+                                                {/* DEPARTMENT */}
 
-                                            {/* DEPARTMENT */}
+                                                <td className="w-[20%] px-6 py-5">
 
-                                            <td className="px-6 py-5">
+                                                    <span className="text-sm text-gray-500">
+                                                        {
+                                                            doctor.department
+                                                        }
+                                                    </span>
 
-                                                <span className="text-sm text-gray-500">
-                                                    {doctor.department}
-                                                </span>
+                                                </td>
 
-                                            </td>
+                                                {/* STATUS */}
 
-                                            {/* STATUS */}
-
-                                            <td className="px-6 py-5">
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleToggleStatus(
-                                                            doctor.id
-                                                        )
-                                                    }
-                                                    className={`inline-flex items-center gap-1.5 !rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
-                                                        "Active"
-                                                        ? "bg-green-50 text-green-600 hover:bg-green-100"
-                                                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                                    }`}
-                                                >
-
-                                                    <span
-                                                        className={`h-1.5 w-1.5 rounded-full ${doctor.status ===
-                                                            "Active"
-                                                            ? "bg-green-500"
-                                                            : "bg-gray-400"
-                                                        }`}
-                                                    ></span>
-
-                                                    {doctor.status}
-
-                                                </button>
-
-                                            </td>
-
-                                            {/* ACTION */}
-
-                                            <td className="px-6 py-5">
-
-                                                <div
-                                                    data-doctor-action
-                                                    className="relative inline-block"
-                                                >
+                                                <td className="w-[15%] px-6 py-5">
 
                                                     <button
                                                         type="button"
-                                                        data-doctor-action
-                                                        onClick={(event) =>
-                                                            handleActionMenu(
-                                                                doctor.id,
-                                                                event
+                                                        onClick={() =>
+                                                            handleToggleStatus(
+                                                                doctor.id
                                                             )
                                                         }
-                                                        className={`relative z-50 flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
-                                                            doctor.id
-                                                            ? "bg-[#eaf5fb] text-[#1976c8]"
-                                                            : "hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                                        }`}
+                                                        className={`inline-flex items-center gap-1.5 !rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
+                                                                "Active"
+                                                                ? "bg-green-50 text-green-600 hover:bg-green-100"
+                                                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                                            }`}
                                                     >
 
-                                                        <MoreVertical
-                                                            size={19}
-                                                            strokeWidth={2}
+                                                        <span
+                                                            className={`h-1.5 w-1.5 rounded-full ${doctor.status ===
+                                                                    "Active"
+                                                                    ? "bg-green-500"
+                                                                    : "bg-gray-400"
+                                                                }`}
                                                         />
+
+                                                        {
+                                                            doctor.status
+                                                        }
 
                                                     </button>
 
-                                                </div>
+                                                </td>
 
-                                            </td>
+                                                {/* ACTION */}
 
-                                        </tr>
+                                                <td className="w-[15%] px-6 py-5">
 
+                                                    <div
+                                                        data-doctor-action
+                                                        className="relative inline-block"
+                                                    >
+
+                                                        <button
+                                                            type="button"
+                                                            data-doctor-action
+                                                            onClick={(
+                                                                event
+                                                            ) =>
+                                                                handleActionMenu(
+                                                                    doctor.id,
+                                                                    event
+                                                                )
+                                                            }
+                                                            className={`relative z-50 flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
+                                                                    doctor.id
+                                                                    ? "bg-[#eaf5fb] text-[#1976c8]"
+                                                                    : "hover:bg-[#eaf5fb] hover:text-[#1976c8]"
+                                                                }`}
+                                                        >
+
+                                                            <MoreVertical
+                                                                size={
+                                                                    19
+                                                                }
+                                                                strokeWidth={
+                                                                    2
+                                                                }
+                                                            />
+
+                                                        </button>
+
+                                                    </div>
+
+                                                </td>
+
+                                            </tr>
+
+                                        )
                                     )
-                                )
 
-                            ) : (
+                                    ) : (
 
-                                <tr>
+                                            <tr>
 
-                                    <td
-                                        colSpan="5"
-                                        className="px-6 py-12 text-center"
-                                    >
+                                                <td
+                                                    colSpan="5"
+                                                    className="px-6 py-16 text-center"
+                                                >
 
-                                        <div className="flex flex-col items-center">
+                                                    <div className="flex flex-col items-center">
 
-                                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf5fb] text-[#1976c8]">
+                                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf5fb] text-[#1976c8]">
 
-                                                        <Stethoscope
-                                                            size={25}
-                                                        />
+                                                            <Stethoscope
+                                                                size={
+                                                                    25
+                                                                }
+                                                            />
 
-                                            </div>
+                                                        </div>
 
-                                            <p className="!mb-0 mt-4 text-sm font-semibold text-[#294b68]">
-                                                No doctors found
-                                            </p>
+                                                        <p className="!mb-0 mt-4 text-sm font-semibold text-[#294b68]">
+                                                            No doctors found
+                                                        </p>
 
-                                            <p className="!mb-0 mt-1 text-xs text-gray-400">
-                                                        Try changing your
-                                                        search or filter.
-                                            </p>
+                                                        <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                                            Try changing your
+                                                            search or filter.
+                                                        </p>
 
-                                        </div>
+                                                    </div>
 
-                                    </td>
+                                                </td>
 
-                                </tr>
+                                            </tr>
 
-                            )}
+                                )}
 
-                        </tbody>
+                            </tbody>
 
-                    </table>
+                        </table>
+
+                    </div>
 
                 </div>
 
                 {/* =================================================
                     MOBILE CARDS
-                    ================================================= */}
+                ================================================= */}
 
-                <div className="divide-y divide-[#edf3f7] md:hidden">
+                <div className="space-y-4 p-4 lg:hidden">
 
                     {loading ? (
 
@@ -1450,60 +1800,72 @@ const Doctors = () => {
                             (doctor) => (
 
                                 <div
-                                    key={doctor.id}
-                                    className="relative p-5 transition-all duration-200 hover:bg-[#f8fbfd]"
+                                    key={
+                                        doctor.id
+                                    }
+                                    className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.10)]"
                                 >
 
                                     <div className="flex items-start justify-between gap-3">
 
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex min-w-0 items-center gap-3">
 
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] shadow-sm">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
 
                                                 <Stethoscope
-                                                    size={20}
-                                                    strokeWidth={2}
+                                                    size={
+                                                        20
+                                                    }
+                                                    strokeWidth={
+                                                        2
+                                                    }
                                                 />
 
                                             </div>
 
-                                            <div>
+                                            <div className="min-w-0">
 
-                                                <p className="!mb-0 text-sm font-bold text-[#294b68]">
-                                                    {doctor.name}
+                                                <p className="!mb-0 truncate text-sm font-bold text-[#294b68]">
+                                                    {
+                                                        doctor.name
+                                                    }
                                                 </p>
 
                                                 <p className="!mb-0 mt-1 text-xs text-gray-400">
+
                                                     DOC-
-                                                    {doctor.id
-                                                        .toString()
+                                                    {String(
+                                                        doctor.id ||
+                                                        ""
+                                                    )
                                                         .slice(
                                                             -6
                                                         )
                                                         .toUpperCase()}
+
                                                 </p>
 
                                             </div>
 
                                         </div>
 
-                                        {/* MOBILE ACTION */}
-
                                         <div
                                             data-doctor-action
-                                            className="relative"
+                                            className="relative shrink-0"
                                         >
 
                                             <button
                                                 type="button"
                                                 data-doctor-action
-                                                onClick={(event) =>
+                                                onClick={(
+                                                    event
+                                                ) =>
                                                     handleActionMenu(
                                                         doctor.id,
                                                         event
                                                     )
                                                 }
-                                                className={`relative z-50 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
+                                                className={`relative z-50 flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition-all duration-200 ${openMenu ===
                                                     doctor.id
                                                     ? "bg-[#eaf5fb] text-[#1976c8]"
                                                     : "hover:bg-[#eaf5fb] hover:text-[#1976c8]"
@@ -1511,7 +1873,9 @@ const Doctors = () => {
                                             >
 
                                                 <MoreVertical
-                                                    size={19}
+                                                    size={
+                                                        19
+                                                    }
                                                 />
 
                                             </button>
@@ -1520,7 +1884,7 @@ const Doctors = () => {
 
                                     </div>
 
-                                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
 
                                         <div>
 
@@ -1529,7 +1893,9 @@ const Doctors = () => {
                                             </p>
 
                                             <p className="!mb-0 text-sm font-medium text-gray-600">
-                                                {doctor.specialty}
+                                                {
+                                                    doctor.specialty
+                                                }
                                             </p>
 
                                         </div>
@@ -1541,7 +1907,9 @@ const Doctors = () => {
                                             </p>
 
                                             <p className="!mb-0 text-sm text-gray-500">
-                                                {doctor.department}
+                                                {
+                                                    doctor.department
+                                                }
                                             </p>
 
                                         </div>
@@ -1557,7 +1925,7 @@ const Doctors = () => {
                                                     doctor.id
                                                 )
                                             }
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
+                                            className={`inline-flex items-center gap-1.5 !rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${doctor.status ===
                                                 "Active"
                                                 ? "bg-green-50 text-green-600 hover:bg-green-100"
                                                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -1570,13 +1938,17 @@ const Doctors = () => {
                                                     ? "bg-green-500"
                                                     : "bg-gray-400"
                                                 }`}
-                                            ></span>
+                                            />
 
-                                            {doctor.status}
+                                            {
+                                                doctor.status
+                                            }
 
                                         </button>
 
                                     </div>
+
+                                    <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
 
                                 </div>
 
@@ -1585,7 +1957,7 @@ const Doctors = () => {
 
                     ) : (
 
-                        <div className="px-5 py-12 text-center">
+                                <div className="rounded-2xl border border-[#e5edf3] bg-white px-5 py-12 text-center">
 
                             <div className="flex flex-col items-center">
 
@@ -1618,9 +1990,10 @@ const Doctors = () => {
 
             {/* =====================================================
                 ACTION DROPDOWN
-                ===================================================== */}
+            ===================================================== */}
 
             {openMenu !== null && (
+
                 <ActionDropdown
                     doctor={doctors.find(
                         (doctor) =>
@@ -1628,11 +2001,12 @@ const Doctors = () => {
                             openMenu
                     )}
                 />
+
             )}
 
             {/* =====================================================
                 ADD / EDIT DOCTOR MODAL
-                ===================================================== */}
+            ===================================================== */}
 
             {showModal && (
 
@@ -1662,10 +2036,14 @@ const Doctors = () => {
 
                             <button
                                 type="button"
-                                onClick={handleCloseModal}
+                                onClick={
+                                    handleCloseModal
+                                }
                                 className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
                             >
+
                                 <X size={19} />
+
                             </button>
 
                         </div>
@@ -1673,15 +2051,15 @@ const Doctors = () => {
                         {/* FORM */}
 
                         <form
-                            onSubmit={handleSaveDoctor}
+                            onSubmit={
+                                handleSaveDoctor
+                            }
                             className="max-h-[75vh] overflow-y-auto p-6"
                         >
 
                             <div className="space-y-4">
 
-                                {/* =================================================
-                                    DOCTOR NAME
-                                    ================================================= */}
+                                {/* DOCTOR NAME */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -1692,17 +2070,19 @@ const Doctors = () => {
                                     <input
                                         type="text"
                                         name="name"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
+                                        value={
+                                            formData.name
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                         placeholder="Enter doctor name"
                                         className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                     />
 
                                 </div>
 
-                                {/* =================================================
-                                    SPECIALTY
-                                    ================================================= */}
+                                {/* SPECIALTY */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -1715,15 +2095,21 @@ const Doctors = () => {
                                         <input
                                             type="text"
                                             name="specialty"
-                                            value={formData.specialty}
-                                            onChange={(event) => {
+                                            value={
+                                                formData.specialty
+                                            }
+                                            onChange={(
+                                                event
+                                            ) => {
 
                                                 handleInputChange(
                                                     event
                                                 );
 
                                                 setSpecialtySearch(
-                                                    event.target.value
+                                                    event
+                                                        .target
+                                                        .value
                                                 );
 
                                                 setShowSpecialtyOptions(
@@ -1742,13 +2128,16 @@ const Doctors = () => {
                                             }}
                                             onBlur={() => {
 
-                                                setTimeout(() => {
+                                                setTimeout(
+                                                    () => {
 
-                                                    setShowSpecialtyOptions(
-                                                        false
-                                                    );
+                                                        setShowSpecialtyOptions(
+                                                            false
+                                                        );
 
-                                                }, 150);
+                                                    },
+                                                    150
+                                                );
                                             }}
                                             placeholder="Search or enter specialty"
                                             className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
@@ -1795,15 +2184,14 @@ const Doctors = () => {
                                                     )}
 
                                                 </div>
+
                                             )}
 
                                     </div>
 
                                 </div>
 
-                                {/* =================================================
-                                    DEPARTMENT
-                                    ================================================= */}
+                                {/* DEPARTMENT */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -1818,10 +2206,13 @@ const Doctors = () => {
                                             value={
                                                 departmentSearch
                                             }
-                                            onChange={(event) => {
+                                            onChange={(
+                                                event
+                                            ) => {
 
                                                 const value =
-                                                    event.target
+                                                    event
+                                                        .target
                                                         .value;
 
                                                 setDepartmentSearch(
@@ -1833,28 +2224,32 @@ const Doctors = () => {
                                                 );
 
                                                 setFormData(
-                                                    (previous) => ({
+                                                    (
+                                                        previous
+                                                    ) => ({
                                                         ...previous,
                                                         departmentId:
                                                             "",
                                                     })
                                                 );
                                             }}
-                                            onFocus={() => {
-
+                                            onFocus={() =>
                                                 setShowDepartmentOptions(
                                                     true
-                                                );
-                                            }}
+                                                )
+                                            }
                                             onBlur={() => {
 
-                                                setTimeout(() => {
+                                                setTimeout(
+                                                    () => {
 
-                                                    setShowDepartmentOptions(
-                                                        false
-                                                    );
+                                                        setShowDepartmentOptions(
+                                                            false
+                                                        );
 
-                                                }, 150);
+                                                    },
+                                                    150
+                                                );
                                             }}
                                             placeholder="Search department..."
                                             className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 pr-10 text-sm font-medium text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
@@ -1945,9 +2340,7 @@ const Doctors = () => {
 
                                 </div>
 
-                                {/* =================================================
-                                    QUALIFICATION
-                                    ================================================= */}
+                                {/* QUALIFICATION */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -1958,17 +2351,19 @@ const Doctors = () => {
                                     <input
                                         type="text"
                                         name="qualification"
-                                        value={formData.qualification}
-                                        onChange={handleInputChange}
+                                        value={
+                                            formData.qualification
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                         placeholder="e.g. MBBS, MD Cardiology"
                                         className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                     />
 
                                 </div>
 
-                                {/* =================================================
-                                    EXPERIENCE
-                                    ================================================= */}
+                                {/* EXPERIENCE */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -1982,8 +2377,12 @@ const Doctors = () => {
                                             type="number"
                                             name="experience"
                                             min="0"
-                                            value={formData.experience}
-                                            onChange={handleInputChange}
+                                            value={
+                                                formData.experience
+                                            }
+                                            onChange={
+                                                handleInputChange
+                                            }
                                             placeholder="Years of experience"
                                             className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 pr-16 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                         />
@@ -1996,9 +2395,7 @@ const Doctors = () => {
 
                                 </div>
 
-                                {/* =================================================
-                                    PHONE
-                                    ================================================= */}
+                                {/* PHONE */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -2009,17 +2406,19 @@ const Doctors = () => {
                                     <input
                                         type="tel"
                                         name="phone"
-                                        value={formData.phone}
-                                        onChange={handleInputChange}
+                                        value={
+                                            formData.phone
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                         placeholder="Enter phone number"
                                         className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                     />
 
                                 </div>
 
-                                {/* =================================================
-                                    EMAIL
-                                    ================================================= */}
+                                {/* EMAIL */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -2030,17 +2429,19 @@ const Doctors = () => {
                                     <input
                                         type="email"
                                         name="email"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
+                                        value={
+                                            formData.email
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                         placeholder="Enter email address"
-                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
+                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white] focus:ring-2 focus:ring-[#1976c8]/10"
                                     />
 
                                 </div>
 
-                                {/* =================================================
-                                    SCHEDULE
-                                    ================================================= */}
+                                {/* SCHEDULE */}
 
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
@@ -2051,8 +2452,12 @@ const Doctors = () => {
                                     <input
                                         type="text"
                                         name="schedule"
-                                        value={formData.schedule}
-                                        onChange={handleInputChange}
+                                        value={
+                                            formData.schedule
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                         placeholder="e.g. Monday - Friday, 9:00 AM - 2:00 PM"
                                         className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                     />
@@ -2061,16 +2466,18 @@ const Doctors = () => {
 
                             </div>
 
-                            {/* =================================================
-                                BUTTONS
-                                ================================================= */}
+                            {/* BUTTONS */}
 
                             <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[#edf3f7] pt-5 sm:flex-row sm:justify-end">
 
                                 <button
                                     type="button"
-                                    onClick={handleCloseModal}
-                                    disabled={saving}
+                                    onClick={
+                                        handleCloseModal
+                                    }
+                                    disabled={
+                                        saving
+                                    }
                                     className="!rounded-lg border border-[#dcebf5] px-6 py-3 text-sm font-semibold text-[#294b68] transition hover:bg-[#f8fbfd] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     Cancel
@@ -2078,9 +2485,12 @@ const Doctors = () => {
 
                                 <button
                                     type="submit"
-                                    disabled={saving}
+                                    disabled={
+                                        saving
+                                    }
                                     className="!rounded-lg bg-[#1976c8] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#1565a8] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
+
                                     {saving
                                         ? editingDoctor
                                             ? "Updating..."
@@ -2088,6 +2498,7 @@ const Doctors = () => {
                                         : editingDoctor
                                             ? "Update Doctor"
                                             : "Add Doctor"}
+
                                 </button>
 
                             </div>
@@ -2102,7 +2513,7 @@ const Doctors = () => {
 
             {/* =====================================================
                 STATUS CONFIRMATION
-                ===================================================== */}
+            ===================================================== */}
 
             {statusDoctor && (
 
@@ -2111,7 +2522,9 @@ const Doctors = () => {
                     <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
 
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+
                             <Power size={22} />
+
                         </div>
 
                         <h2 className="!mb-0 mt-4 !text-lg !font-bold !text-[#294b68]">
@@ -2123,7 +2536,9 @@ const Doctors = () => {
                             Are you sure you want to set{" "}
 
                             <span className="font-semibold text-[#294b68]">
-                                {statusDoctor.name}
+                                {
+                                    statusDoctor.name
+                                }
                             </span>{" "}
 
                             to{" "}
@@ -2171,7 +2586,7 @@ const Doctors = () => {
 
             {/* =====================================================
                 DELETE CONFIRMATION
-                ===================================================== */}
+            ===================================================== */}
 
             {deleteDoctor && (
 
@@ -2180,7 +2595,9 @@ const Doctors = () => {
                     <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
 
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
+
                             <Trash2 size={22} />
+
                         </div>
 
                         <h2 className="!mb-0 mt-4 !text-lg !font-bold !text-[#294b68]">
@@ -2192,7 +2609,9 @@ const Doctors = () => {
                             Are you sure you want to delete{" "}
 
                             <span className="font-semibold text-[#294b68]">
-                                {deleteDoctor.name}
+                                {
+                                    deleteDoctor.name
+                                }
                             </span>
 
                             ? This action cannot be undone.

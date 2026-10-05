@@ -4,16 +4,11 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
-// =====================================================
-// LAYOUT
-// =====================================================
+// ==========================================
+// WEBSITE
+// ==========================================
 
 import WebsiteLayout from "./layouts/WebsiteLayout";
-import DashboardLayout from "./layouts/DashboardLayout";
-
-// =====================================================
-// WEBSITE PAGES
-// =====================================================
 
 import Home from "./pages/website/Home";
 import About from "./pages/website/About";
@@ -25,9 +20,18 @@ import FAQ from "./pages/website/FAQ";
 import Contact from "./pages/website/Contact";
 import Profile from "./pages/website/Profile";
 
-// =====================================================
-// DASHBOARD PAGES
-// =====================================================
+// ==========================================
+// AUTH
+// ==========================================
+
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+
+// ==========================================
+// DASHBOARD
+// ==========================================
+
+import DashboardLayout from "./layouts/DashboardLayout";
 
 import Dashboard from "./pages/dashboard/Dashboard";
 import DashboardDoctors from "./pages/dashboard/Doctors";
@@ -36,127 +40,67 @@ import DashboardServices from "./pages/dashboard/Services";
 import DashboardAppointments from "./pages/dashboard/Appointments";
 import DashboardUsers from "./pages/dashboard/Users";
 
-// =====================================================
-// AUTH PAGES
-// =====================================================
+// ==========================================
+// AUTH PROTECTION
+// ==========================================
 
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-// =====================================================
+// ==========================================
 // ROUTER
-// =====================================================
+// ==========================================
 
 const router = createBrowserRouter([
-  // ===================================================
-  // PUBLIC WEBSITE
-  // ===================================================
+  // ======================================
+  // WEBSITE ROUTES
+  // ======================================
 
   {
     path: "/",
     element: <WebsiteLayout />,
-
     children: [
-      // HOME
       {
         index: true,
         element: <Home />,
       },
-
-      // ABOUT
       {
         path: "about",
         element: <About />,
       },
-
-      // SERVICES
       {
         path: "services",
         element: <Services />,
       },
-
-      // DEPARTMENTS
       {
         path: "departments",
         element: <Departments />,
       },
-
-      // DOCTORS
       {
         path: "doctors",
         element: <Doctors />,
       },
-
-      // APPOINTMENT
       {
         path: "appointment",
         element: <Appointment />,
       },
-
-      // FAQ
       {
         path: "faq",
         element: <FAQ />,
       },
-
-      // CONTACT
       {
         path: "contact",
         element: <Contact />,
       },
-    ],
-  },
-
-  // ===================================================
-  // ADMIN DASHBOARD
-  // ===================================================
-
-  {
-    path: "/dashboard",
-    element: <DashboardLayout />,
-
-    children: [
-      // DASHBOARD HOME
       {
-        index: true,
-        element: <Dashboard />,
-      },
-
-      // DOCTORS
-      {
-        path: "doctors",
-        element: <DashboardDoctors />,
-      },
-
-      // DEPARTMENTS
-      {
-        path: "departments",
-        element: <DashboardDepartments />,
-      },
-
-      // SERVICES
-      {
-        path: "services",
-        element: <DashboardServices />,
-      },
-
-      // APPOINTMENTS
-      {
-        path: "appointments",
-        element: <DashboardAppointments />,
-      },
-
-      // USERS
-      {
-        path: "users",
-        element: <DashboardUsers />,
+        path: "profile",
+        element: <Profile />,
       },
     ],
   },
 
-  // ===================================================
-  // AUTHENTICATION
-  // ===================================================
+  // ======================================
+  // AUTH ROUTES
+  // ======================================
 
   {
     path: "/login",
@@ -168,18 +112,84 @@ const router = createBrowserRouter([
     element: <Signup />,
   },
 
-  // ===================================================
-  // USER PROFILE
-  // ===================================================
+  // ======================================
+  // ADMIN DASHBOARD
+  // ADMIN ONLY
+  // ======================================
 
   {
-    path: "/profile",
-    element: <Profile />,
+    path: "/dashboard",
+
+    element: (
+      <ProtectedRoute allowedRoles={["admin"]} />
+    ),
+
+    children: [
+      {
+        element: <DashboardLayout />,
+
+        children: [
+          // ======================================
+          // DASHBOARD HOME
+          // ======================================
+
+          {
+            index: true,
+            element: <Dashboard />,
+          },
+
+          // ======================================
+          // DOCTORS
+          // ======================================
+
+          {
+            path: "doctors",
+            element: <DashboardDoctors />,
+          },
+
+          // ======================================
+          // DEPARTMENTS
+          // ======================================
+
+          {
+            path: "departments",
+            element: <DashboardDepartments />,
+          },
+
+          // ======================================
+          // SERVICES
+          // ======================================
+
+          {
+            path: "services",
+            element: <DashboardServices />,
+          },
+
+          // ======================================
+          // APPOINTMENTS
+          // ======================================
+
+          {
+            path: "appointments",
+            element: <DashboardAppointments />,
+          },
+
+          // ======================================
+          // USERS
+          // ======================================
+
+          {
+            path: "users",
+            element: <DashboardUsers />,
+          },
+        ],
+      },
+    ],
   },
 
-  // ===================================================
-  // UNKNOWN URL
-  // ===================================================
+  // ======================================
+  // UNKNOWN ROUTE
+  // ======================================
 
   {
     path: "*",
@@ -187,12 +197,12 @@ const router = createBrowserRouter([
   },
 ]);
 
-// =====================================================
+// ==========================================
 // APP
-// =====================================================
+// ==========================================
 
-function App() {
+const App = () => {
   return <RouterProvider router={router} />;
-}
+};
 
 export default App;

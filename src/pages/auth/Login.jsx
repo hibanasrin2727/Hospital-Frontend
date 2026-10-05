@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import api from "../../services/api";
-import { saveAuth } from "../../utils/auth";
+import {
+  saveAuth,
+  isLoggedIn,
+  getUser,
+} from "../../utils/auth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +17,26 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // =====================================================
+  // IF ALREADY LOGGED IN
+  // =====================================================
+
+  if (isLoggedIn()) {
+    const user = getUser();
+
+    if (user?.role === "admin") {
+      return <Navigate to="/dashboard" replace />;
+    }
+
+    if (user?.role === "patient") {
+      return <Navigate to="/" replace />;
+    }
+  }
+
+  // =====================================================
+  // LOGIN
+  // =====================================================
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -21,9 +45,9 @@ const Login = () => {
     try {
       setLoading(true);
 
-      // ===============================
+      // =========================================
       // LOGIN API
-      // ===============================
+      // =========================================
 
       const response = await api.post(
         "/dashboard/auth/login",
@@ -35,20 +59,57 @@ const Login = () => {
 
       console.log("Login response:", response.data);
 
-      // ===============================
+      // =========================================
+      // CHECK LOGIN RESPONSE
+      // =========================================
+
+      if (!response.data?.token || !response.data?.user) {
+        setError("Invalid login response from server.");
+        return;
+      }
+
+      // =========================================
       // SAVE TOKEN + USER
-      // ===============================
+      // =========================================
 
       saveAuth(
         response.data.token,
         response.data.user
       );
 
-      // ===============================
-      // GO TO HOME
-      // ===============================
+      // =========================================
+      // GET LOGGED-IN USER
+      // =========================================
 
-      navigate("/");
+      const user = response.data.user;
+
+      // =========================================
+      // ROLE-BASED REDIRECT
+      // =========================================
+
+      if (user?.role === "admin") {
+        navigate("/dashboard", {
+          replace: true,
+        });
+
+        return;
+      }
+
+      if (user?.role === "patient") {
+        navigate("/", {
+          replace: true,
+        });
+
+        return;
+      }
+
+      // =========================================
+      // UNKNOWN ROLE
+      // =========================================
+
+      setError(
+        "Your account does not have a valid access role."
+      );
 
     } catch (error) {
       console.error("Login error:", error);
@@ -56,13 +117,14 @@ const Login = () => {
       if (error.response) {
         setError(
           error.response.data?.message ||
-            "Invalid email or password."
+          "Invalid email or password."
         );
       } else {
         setError(
           "Unable to connect to the server. Please make sure the backend is running."
         );
       }
+
     } finally {
       setLoading(false);
     }
@@ -73,7 +135,7 @@ const Login = () => {
 
       {/* ===============================
           HOME BUTTON
-          =============================== */}
+      =============================== */}
 
       <button
         type="button"
@@ -87,7 +149,7 @@ const Login = () => {
 
       {/* ===============================
           LOGIN CONTAINER
-          =============================== */}
+      =============================== */}
 
       <div className="flex min-h-screen items-center justify-center px-5 py-12">
 
@@ -97,7 +159,7 @@ const Login = () => {
 
             {/* ===============================
                 ICON
-                =============================== */}
+            =============================== */}
 
             <div className="mb-3 flex justify-center">
 
@@ -112,7 +174,7 @@ const Login = () => {
 
             {/* ===============================
                 TITLE
-                =============================== */}
+            =============================== */}
 
             <div className="text-center">
 
@@ -129,7 +191,7 @@ const Login = () => {
 
             {/* ===============================
                 ERROR MESSAGE
-                =============================== */}
+            =============================== */}
 
             {error && (
               <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600">
@@ -140,7 +202,7 @@ const Login = () => {
 
             {/* ===============================
                 LOGIN FORM
-                =============================== */}
+            =============================== */}
 
             <form
               onSubmit={handleLogin}
@@ -246,7 +308,7 @@ const Login = () => {
 
             {/* ===============================
                 SIGNUP
-                =============================== */}
+            =============================== */}
 
             <div className="mt-7 border-t border-gray-100 pt-6 text-center">
 

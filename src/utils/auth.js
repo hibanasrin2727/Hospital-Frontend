@@ -1,59 +1,90 @@
-// =====================================================
-// CHECK WHETHER USER IS LOGGED IN
-// =====================================================
+// ==========================================
+// CHECK LOGIN
+// ==========================================
+
 export const isLoggedIn = () => {
-  const token = localStorage.getItem("token");
-
-  return !!token;
+  return !!localStorage.getItem("token");
 };
 
 
-// =====================================================
+// ==========================================
 // GET LOGGED-IN USER
-// =====================================================
+// ==========================================
+
 export const getUser = () => {
-  const user = localStorage.getItem("user");
-
-  if (!user) {
-    return null;
-  }
-
   try {
-    return JSON.parse(user);
-  } catch (error) {
-    console.error("Invalid user data:", error);
-    return null;
-  }
+      const user = localStorage.getItem("user");
+
+      if (!user) {
+        return null;
+      }
+
+      return JSON.parse(user);
+
+    } catch (error) {
+      console.error("Failed to read user data:", error);
+      return null;
+    }
 };
 
 
-// =====================================================
-// GET JWT TOKEN
-// =====================================================
+// ==========================================
+// GET TOKEN
+// ==========================================
+
 export const getToken = () => {
   return localStorage.getItem("token");
 };
 
 
-// =====================================================
-// SAVE LOGIN INFORMATION
-// =====================================================
+// ==========================================
+// GET USER ROLE
+// ==========================================
+
+export const getUserRole = () => {
+  const user = getUser();
+
+  return user?.role || null;
+};
+
+
+// ==========================================
+// CHECK ADMIN
+// ==========================================
+
+export const isAdmin = () => {
+  return getUserRole() === "admin";
+};
+
+
+// ==========================================
+// CHECK PATIENT
+// ==========================================
+
+export const isPatient = () => {
+  return getUserRole() === "patient";
+};
+
+
+// ==========================================
+// SAVE AUTHENTICATION
+// ==========================================
+
 export const saveAuth = (token, user) => {
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
 
-  // Tell Navbar and other components that login changed
   window.dispatchEvent(new Event("authChanged"));
 };
 
 
-// =====================================================
+// ==========================================
 // LOGOUT
-// =====================================================
+// ==========================================
+
 export const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
 
-  // Tell Navbar and other components that login changed
   window.dispatchEvent(new Event("authChanged"));
 };
