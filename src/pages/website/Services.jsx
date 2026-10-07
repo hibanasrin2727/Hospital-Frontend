@@ -1,5 +1,36 @@
+
 import { useEffect, useState } from "react";
 import api from "../../services/api";
+
+// =====================================================
+// BACKEND BASE URL
+// =====================================================
+
+const BACKEND_URL = "http://localhost:5000";
+
+// =====================================================
+// GET FILE URL
+// =====================================================
+
+const getFileUrl = (file) => {
+  if (!file) return "";
+
+  // Already a complete URL
+  if (
+    file.startsWith("http://") ||
+    file.startsWith("https://") ||
+    file.startsWith("data:")
+  ) {
+    return file;
+  }
+
+  // Backend uploaded file
+  if (file.startsWith("/")) {
+    return `${BACKEND_URL}${file} `;
+  }
+
+  return `${BACKEND_URL}/${file}`;
+};
 
 // =====================================================
 // SHUFFLE SERVICES
@@ -56,7 +87,6 @@ const Services = () => {
           shuffleServices(validServices);
 
         setServices(shuffledServices);
-
       } catch (error) {
         console.error(
           "Error fetching services:",
@@ -64,7 +94,6 @@ const Services = () => {
         );
 
         setError("Unable to load services.");
-
       } finally {
         setLoading(false);
       }
@@ -128,8 +157,6 @@ const Services = () => {
 
           <div className="mx-auto max-w-[850px] text-center">
 
-            {/* TITLE */}
-
             <h2 className="text-[30px] font-semibold leading-[1.2] text-[#294b68] md:text-[32px]">
               Services
             </h2>
@@ -148,7 +175,7 @@ const Services = () => {
 
             {/* DESCRIPTION */}
 
-            <p className="mt-[18px] text-[14px] leading-[1.7] text-[#444] md:text-[15px]">
+            <p className="!mt-[18px] text-[14px] leading-[1.7] text-[#444] md:text-[15px]">
               We provide reliable healthcare services designed to
               support patients at every stage of their healthcare journey.
             </p>
@@ -157,7 +184,6 @@ const Services = () => {
 
           {/* =================================================
               VIEW ALL BUTTON
-              ONLY SHOW WHEN SERVICES > 6
               ================================================= */}
 
           {!loading &&
@@ -171,7 +197,7 @@ const Services = () => {
                 onClick={() =>
                   setShowAll(!showAll)
                 }
-                className="inline-flex items-center gap-2 border-0 bg-transparent px-[24px] py-[10px] text-[14px] font-semibold text-[#1976c8] transition-all duration-300 hover:bg-[#105592]"
+                className="inline-flex items-center gap-2 border-0 bg-transparent px-[24px] py-[10px] text-[14px] font-semibold text-[#1976c8] transition-all duration-300 hover:bg-[#105592] hover:text-black"
               >
 
                 <span>
@@ -257,64 +283,106 @@ const Services = () => {
 
               {displayedServices.map((service) => (
 
-                  <div
-                    key={service._id}
-                    className="group flex min-h-[310px] flex-col items-center border border-[#dedede] bg-white px-[24px] py-[62px] text-center transition-all duration-300 hover:-translate-y-1 hover:border-[#c8ddeb] hover:shadow-[0_10px_30px_rgba(41,75,104,0.08)]"
-                  >
+                <div
+                  key={service._id}
+                  className="group flex min-h-[420px] flex-col items-center border border-[#dedede] bg-white px-[24px] py-[35px] text-center transition-all duration-300 hover:-translate-y-1 hover:border-[#c8ddeb] hover:shadow-[0_10px_30px_rgba(41,75,104,0.08)]"
+                >
 
-                    {/* =================================================
-                        ICON
-                        ================================================= */}
+                  {/* =================================================
+                      SERVICE IMAGE
+                      ================================================= */}
 
-                    <div className="relative mb-[22px] h-[62px] w-[62px]">
+                  <div className="mb-[25px] h-[150px] w-full overflow-hidden rounded-[4px] bg-[#eaf5fb]">
 
-                      {/* BACK LAYER */}
+                    {service.image ? (
 
-                      <div className="absolute left-[-7px] top-[-7px] h-[54px] w-[54px] rounded-[4px] bg-[#d9ebfa]">
+                      <img
+                        src={getFileUrl(service.image)}
+                        alt={service.name}
+                        className="!h-full !w-full !object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          e.currentTarget.style.display =
+                            "none";
+                        }}
+                      />
+
+                    ) : (
+
+                        <div className="flex h-full w-full items-center justify-center text-[#1976c8]">
+
+                          <i className="bi bi-image text-[35px]"></i>
+
                       </div>
 
-                      {/* MAIN ICON BOX */}
-
-                      <div className="relative flex h-[56px] w-[56px] items-center justify-center rounded-[3px] bg-[#1976c8] text-white shadow-sm transition-all duration-300 group-hover:bg-[#105592]">
-
-                        <i
-                          className={`${service.icon ||
-                            "bi bi-heart-pulse-fill"
-                          } text-[25px]`}
-                        ></i>
-
-                      </div>
-
-                    </div>
-
-                    {/* =================================================
-                        SERVICE NAME
-                        ================================================= */}
-
-                    <button
-                      type="button"
-                      onClick={scrollToAppointment}
-                      className="border-0 bg-transparent p-0 text-center"
-                    >
-
-                      <h3 className="text-[20px] font-bold leading-[1.25] text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
-                        {service.name}
-                      </h3>
-
-                    </button>
-
-                    {/* =================================================
-                        SERVICE DESCRIPTION
-                        ================================================= */}
-
-                    <p className="mt-[14px] max-w-[330px] text-[14px] leading-[1.65] text-[#444]">
-                      {service.description ||
-                        "Professional healthcare services provided by our experienced medical team."}
-                    </p>
+                    )}
 
                   </div>
 
-                ))}
+                  {/* =================================================
+                      SERVICE NAME
+                      ================================================= */}
+
+                  <button
+                    type="button"
+                    onClick={scrollToAppointment}
+                    className="border-0 bg-transparent p-0 text-center"
+                  >
+
+                    <h3 className="!m-0 !text-[20px] font-bold leading-[1.25] text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
+                      {service.name}
+                    </h3>
+
+                  </button>
+
+                  {/* =================================================
+                      SERVICE DESCRIPTION
+                      ================================================= */}
+
+                  <p className="!mt-[18px] max-w-[330px] text-[14px] leading-[1.65] text-[#444]">
+                    {service.description ||
+                      "Professional healthcare services provided by our experienced medical team."}
+                  </p>
+
+                  {/* =================================================
+                      PRICE
+                      ================================================= */}
+
+                  {service.price !== undefined &&
+                    service.price !== null && (
+
+                      <div className="mt-auto w-full border-t border-gray-100 pt-4">
+
+                        <div className="flex items-center justify-between">
+
+                          <div className="text-left">
+
+                            <p className="!mb-0 text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                              Price
+                            </p>
+
+                            <p className="!mb-0 mt-1 text-base font-bold text-[#294b68]">
+                              ₹
+                              {Number(
+                                service.price || 0
+                              ).toLocaleString("en-IN")}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+                    )}
+
+                  {/* =================================================
+                      BOTTOM HOVER LINE
+                      ================================================= */}
+
+                  <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full"></div>
+
+                </div>
+
+              ))}
 
             </div>
             )}

@@ -1,3 +1,4 @@
+
 import {
     Search,
     Plus,
@@ -19,7 +20,9 @@ const Departments = () => {
     // API URL
     // =====================================================
 
-    const API_URL = "http://localhost:5000/api/dashboard/departments";
+    const API_URL =
+        "http://localhost:5000/api/dashboard/departments";
+
 
     // =====================================================
     // DOCTOR API URL
@@ -99,19 +102,24 @@ const Departments = () => {
         try {
 
             setLoading(true);
+
             setError("");
 
             const token = getToken();
 
             if (!token) {
+
                 setError(
                     "Authentication token not found. Please login again."
                 );
+
                 return;
             }
 
+
             const response = await fetch(API_URL, {
                 method: "GET",
+
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json",
@@ -125,7 +133,8 @@ const Departments = () => {
             if (!response.ok) {
 
                 throw new Error(
-                    data.message || "Failed to fetch departments"
+                    data.message ||
+                    "Failed to fetch departments"
                 );
 
             }
@@ -150,6 +159,7 @@ const Departments = () => {
             setLoading(false);
 
         }
+
     };
 
 
@@ -211,23 +221,6 @@ const Departments = () => {
 
             doctors.forEach((doctor) => {
 
-                /*
-                 * Because the backend uses:
-                 *
-                 * .populate("departmentId")
-                 *
-                 * departmentId can be an object:
-                 *
-                 * {
-                 *   _id: "...",
-                 *   name: "Cardiology",
-                 *   ...
-                 * }
-                 *
-                 * It can also be an ID string/object.
-                 */
-
-
                 let departmentId = null;
 
 
@@ -271,14 +264,13 @@ const Departments = () => {
                 error
             );
 
-            /*
-             * Do not break the department page
-             * if doctor count request fails.
-             */
+            // Do not break department page
+            // if doctor count request fails.
 
             setDoctorCounts({});
 
         }
+
     };
 
 
@@ -296,6 +288,7 @@ const Departments = () => {
         return (
             doctorCounts[String(departmentId)] || 0
         );
+
     };
 
 
@@ -316,20 +309,24 @@ const Departments = () => {
     // FILTER
     // =====================================================
 
-    const filteredDepartments = departments.filter((department) => {
+    const filteredDepartments = departments.filter(
+        (department) => {
 
-        const searchText = search.toLowerCase();
+            const searchText =
+                search.toLowerCase();
 
-        return (
-            department.name
-                ?.toLowerCase()
-                .includes(searchText) ||
+            return (
+                department.name
+                    ?.toLowerCase()
+                    .includes(searchText) ||
 
-            department.description
-                ?.toLowerCase()
-                .includes(searchText)
-        );
-    });
+                department.description
+                    ?.toLowerCase()
+                    .includes(searchText)
+            );
+
+        }
+    );
 
 
     // =====================================================
@@ -341,17 +338,25 @@ const Departments = () => {
         const handleClickOutside = (event) => {
 
             const clickedInsideAction =
-                event.target.closest("[data-department-action]");
+                event.target.closest(
+                    "[data-department-action]"
+                );
+
 
             if (!clickedInsideAction) {
+
                 setOpenMenu(null);
+
             }
+
         };
+
 
         document.addEventListener(
             "mousedown",
             handleClickOutside
         );
+
 
         return () => {
 
@@ -375,13 +380,16 @@ const Departments = () => {
             return;
         }
 
+
         const handleScroll = () => {
             setOpenMenu(null);
         };
 
+
         const handleResize = () => {
             setOpenMenu(null);
         };
+
 
         window.addEventListener(
             "scroll",
@@ -389,10 +397,12 @@ const Departments = () => {
             true
         );
 
+
         window.addEventListener(
             "resize",
             handleResize
         );
+
 
         return () => {
 
@@ -416,13 +426,17 @@ const Departments = () => {
     // OPEN ACTION MENU
     // =====================================================
 
-    const handleActionMenu = (departmentId, event) => {
+    const handleActionMenu = (
+        departmentId,
+        event
+    ) => {
 
         if (openMenu === departmentId) {
 
             setOpenMenu(null);
 
             return;
+
         }
 
 
@@ -520,6 +534,7 @@ const Departments = () => {
 
 
         setOpenMenu(departmentId);
+
     };
 
 
@@ -537,6 +552,7 @@ const Departments = () => {
         });
 
         setShowModal(true);
+
     };
 
 
@@ -544,18 +560,22 @@ const Departments = () => {
     // OPEN EDIT MODAL
     // =====================================================
 
-    const handleEditDepartment = (department) => {
+    const handleEditDepartment = (
+        department
+    ) => {
 
         setEditingDepartment(department);
 
         setFormData({
             name: department.name || "",
-            description: department.description || "",
+            description:
+                department.description || "",
         });
 
         setOpenMenu(null);
 
         setShowModal(true);
+
     };
 
 
@@ -567,7 +587,7 @@ const Departments = () => {
 
         const {
             name,
-            value
+            value,
         } = event.target;
 
 
@@ -575,6 +595,7 @@ const Departments = () => {
             ...previous,
             [name]: value,
         }));
+
     };
 
 
@@ -615,12 +636,13 @@ const Departments = () => {
                 );
 
                 return;
+
             }
 
 
-        // =============================================
-        // UPDATE
-        // =============================================
+            // =============================================
+            // UPDATE
+            // =============================================
 
             if (editingDepartment) {
 
@@ -638,12 +660,15 @@ const Departments = () => {
                         },
 
                         body: JSON.stringify({
+
                             name:
                                 formData.name.trim(),
 
                             description:
                                 formData.description.trim(),
+
                         }),
+
                     }
                 );
 
@@ -662,15 +687,15 @@ const Departments = () => {
                 }
 
 
-                // Update UI with backend response
-
-                setDepartments((previous) =>
-                    previous.map((department) =>
-                        department._id ===
-                            editingDepartment._id
-                            ? data.department
-                            : department
-                    )
+                setDepartments(
+                    (previous) =>
+                        previous.map(
+                            (department) =>
+                                department._id ===
+                                    editingDepartment._id
+                                    ? data.department
+                                    : department
+                        )
                 );
 
             }
@@ -696,12 +721,15 @@ const Departments = () => {
                         },
 
                         body: JSON.stringify({
+
                             name:
                                 formData.name.trim(),
 
                             description:
                                 formData.description.trim(),
+
                         }),
+
                     }
                 );
 
@@ -720,12 +748,13 @@ const Departments = () => {
                 }
 
 
-                // Add new department to top
+                setDepartments(
+                    (previous) => [
+                        data.department,
+                        ...previous,
+                    ]
+                );
 
-                setDepartments((previous) => [
-                    data.department,
-                    ...previous,
-                ]);
             }
 
 
@@ -759,6 +788,7 @@ const Departments = () => {
             setSaving(false);
 
         }
+
     };
 
 
@@ -790,6 +820,7 @@ const Departments = () => {
                 );
 
                 return;
+
             }
 
 
@@ -823,28 +854,31 @@ const Departments = () => {
             }
 
 
-        // Remove from UI
+            // Remove from UI
 
-            setDepartments((previous) =>
-                previous.filter(
-                    (department) =>
-                        department._id !==
-                        deleteDepartment._id
-                )
+            setDepartments(
+                (previous) =>
+                    previous.filter(
+                        (department) =>
+                            department._id !==
+                            deleteDepartment._id
+                    )
             );
 
 
-            // Remove doctor count for deleted department
+            // Remove doctor count
 
             setDoctorCounts((previous) => {
 
                 const updated = {
-                    ...previous
+                    ...previous,
                 };
+
 
                 delete updated[
                     String(deleteDepartment._id)
                 ];
+
 
                 return updated;
 
@@ -870,6 +904,7 @@ const Departments = () => {
             setSaving(false);
 
         }
+
     };
 
 
@@ -901,6 +936,7 @@ const Departments = () => {
                 );
 
                 return;
+
             }
 
 
@@ -944,15 +980,15 @@ const Departments = () => {
             }
 
 
-        // Update department in UI
-
-            setDepartments((previous) =>
-                previous.map((department) =>
-                    department._id ===
-                        statusDepartment._id
-                        ? data.department
-                        : department
-                )
+            setDepartments(
+                (previous) =>
+                    previous.map(
+                        (department) =>
+                            department._id ===
+                                statusDepartment._id
+                                ? data.department
+                                : department
+                    )
             );
 
 
@@ -975,6 +1011,7 @@ const Departments = () => {
             setSaving(false);
 
         }
+
     };
 
 
@@ -983,7 +1020,7 @@ const Departments = () => {
     // =====================================================
 
     const ActionDropdown = ({
-        department
+        department,
     }) => {
 
         if (
@@ -992,6 +1029,7 @@ const Departments = () => {
         ) {
 
             return null;
+
         }
 
 
@@ -1089,6 +1127,7 @@ const Departments = () => {
             document.body
 
         );
+
     };
 
 
@@ -1113,7 +1152,9 @@ const Departments = () => {
                 </div>
 
             </div>
+
         );
+
     }
 
 
@@ -1132,7 +1173,7 @@ const Departments = () => {
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-                <div>
+                <div className="min-w-0">
 
                     <h1 className="!m-0 !text-2xl !font-bold !text-[#294b68]">
                         Departments
@@ -1148,7 +1189,7 @@ const Departments = () => {
                 <button
                     type="button"
                     onClick={handleAddDepartment}
-                    className="flex items-center justify-center gap-2 !rounded-lg bg-[#1976c8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
+                    className="flex shrink-0 items-center justify-center gap-2 !rounded-lg bg-[#1976c8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
                 >
 
                     <Plus size={18} />
@@ -1179,7 +1220,9 @@ const Departments = () => {
                         }
                         className="ml-4"
                     >
+
                         <X size={18} />
+
                     </button>
 
                 </div>
@@ -1188,29 +1231,54 @@ const Departments = () => {
 
 
             {/* =====================================================
-                SEARCH
+                SEARCH + FILTER
             ===================================================== */}
 
             <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
 
-                <div className="relative w-full md:max-w-md">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 
-                    <Search
-                        size={18}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
+                    {/* SEARCH */}
 
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={(event) =>
-                            setSearch(
-                                event.target.value
-                            )
-                        }
-                        placeholder="Search departments..."
-                        className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
-                    />
+                    <div className="relative w-full md:max-w-md">
+
+                        <Search
+                            size={18}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
+
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(event) =>
+                                setSearch(
+                                    event.target.value
+                                )
+                            }
+                            placeholder="Search departments..."
+                            className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
+                        />
+
+                    </div>
+
+
+                    {/* FILTER / RESULT COUNT */}
+
+                    <div className="flex items-center justify-between gap-3">
+
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500">
+
+                            <span className="font-semibold text-[#294b68]">
+                                {filteredDepartments.length}
+                            </span>
+
+                            <span className="ml-1">
+                                Departments
+                            </span>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
@@ -1218,118 +1286,140 @@ const Departments = () => {
 
 
             {/* =====================================================
-    DEPARTMENT CARDS
-===================================================== */}
+                DEPARTMENT CARDS
+            ===================================================== */}
 
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <div className="overflow-hidden rounded-xl">
 
-                {filteredDepartments.map(
-                    (department) => (
+                <div
+                    className="
+                        grid
+                        max-h-[calc(100vh-310px)]
+                        min-h-[300px]
+                        grid-cols-1
+                        gap-2
+                        overflow-y-auto
+                        pr-1
+                        md:grid-cols-2
+                        xl:grid-cols-4
 
-            <div
-                key={department._id}
-                className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]"
-            >
+                        [&::-webkit-scrollbar]:w-1.5
+                        [&::-webkit-scrollbar-track]:bg-transparent
+                        [&::-webkit-scrollbar-thumb]:rounded-full
+                        [&::-webkit-scrollbar-thumb]:bg-[#cfe5f5]
+                        hover:[&::-webkit-scrollbar-thumb]:bg-[#1976c8]
+                    "
+                >
 
-                {/* TOP */}
+                    {filteredDepartments.map(
+                        (department) => (
 
-                <div className="flex items-start justify-between">
+                            <div
+                                key={department._id}
+                                className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]"
+                            >
 
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#1976c8] group-hover:text-white">
+                                {/* TOP */}
 
-                        <Building2
-                            size={23}
-                        />
+                                <div className="flex items-start justify-between">
 
-                    </div>
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#1976c8] group-hover:text-white">
+
+                                        <Building2
+                                            size={23}
+                                        />
+
+                                    </div>
 
 
-                    <div
-                        data-department-action
-                        className="relative"
-                    >
+                                    <div
+                                        data-department-action
+                                        className="relative"
+                                    >
 
-                        <button
-                            type="button"
-                            onClick={(event) =>
-                                handleActionMenu(
-                                    department._id,
-                                    event
-                                )
-                            }
-                            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
-                        >
+                                        <button
+                                            type="button"
+                                            onClick={(event) =>
+                                                handleActionMenu(
+                                                    department._id,
+                                                    event
+                                                )
+                                            }
+                                            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
+                                        >
 
-                            <MoreVertical
-                                size={19}
-                            />
+                                            <MoreVertical
+                                                size={19}
+                                            />
 
-                        </button>
+                                        </button>
 
-                    </div>
+                                    </div>
+
+                                </div>
+
+
+                                {/* DEPARTMENT NAME */}
+
+                                <div className="mt-5">
+
+                                    <h2 className="!m-0 !text-lg !font-bold !text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
+                                        {department.name}
+                                    </h2>
+
+                                    <p className="!mb-0 mt-1 text-sm text-gray-500">
+                                        {department.description}
+                                    </p>
+
+                                </div>
+
+
+                                {/* DETAILS */}
+
+                                <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
+
+                                    <div className="flex items-center gap-2 text-sm text-gray-500">
+
+                                        <Users
+                                            size={17}
+                                        />
+
+                                        <span>
+                                            {getDoctorCount(
+                                                department._id
+                                            )} Doctors
+                                        </span>
+
+                                    </div>
+
+
+                                    <span
+                                        className={`rounded-full px-3 py-1 text-xs font-semibold ${department.status === "active"
+                                                ? "bg-green-50 text-green-600"
+                                                : "bg-gray-100 text-gray-500"
+                                            }`}
+                                    >
+
+                                        {department.status ===
+                                            "active"
+                                            ? "Active"
+                                            : "Inactive"}
+
+                                    </span>
+
+                                </div>
+
+
+                                {/* BLUE HOVER LINE */}
+
+                                <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+
+                            </div>
+
+                        )
+                    )}
 
                 </div>
-
-
-                {/* DEPARTMENT NAME */}
-
-                <div className="mt-5">
-
-                    <h2 className="!m-0 !text-lg !font-bold !text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
-                        {department.name}
-                    </h2>
-
-                    <p className="!mb-0 mt-1 text-sm text-gray-500">
-                        {department.description}
-                    </p>
-
-                </div>
-
-
-                {/* DETAILS */}
-
-                <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-
-                        <Users
-                            size={17}
-                        />
-
-                        <span>
-                            {getDoctorCount(
-                                department._id
-                            )} Doctors
-                        </span>
-
-                    </div>
-
-
-                    <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${department.status === "active"
-                                ? "bg-green-50 text-green-600"
-                                : "bg-gray-100 text-gray-500"
-                            }`}
-                    >
-
-                        {department.status ===
-                            "active"
-                            ? "Active"
-                            : "Inactive"}
-
-                    </span>
-
-                </div>
-
-
-                {/* BLUE HOVER LINE */}
-
-                <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
-
-            </div>
-
-        )
-    )}
 
             </div>
 
@@ -1352,9 +1442,11 @@ const Departments = () => {
                     </h3>
 
                     <p className="!mb-0 mt-1 text-sm text-gray-400">
+
                         {search
                             ? "Try searching with a different department name."
                             : "Add your first hospital department."}
+
                     </p>
 
                 </div>
@@ -1678,7 +1770,9 @@ const Departments = () => {
             )}
 
         </div>
+
     );
+
 };
 
 export default Departments;

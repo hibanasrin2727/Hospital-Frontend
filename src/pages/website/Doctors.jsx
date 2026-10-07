@@ -1,5 +1,9 @@
+
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../services/api";
+
+const BACKEND_URL = "http://localhost:5000";
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -55,16 +59,37 @@ const Doctors = () => {
 
   // ================= DOCTOR IMAGE =================
   const getDoctorImage = (doctor, index) => {
-    if (doctor?.image) {
-      if (doctor.image.startsWith("http")) {
-        return doctor.image;
+    const image = doctor?.image;
+
+    // Backend image exists
+    if (image) {
+      // Already a complete URL
+      if (
+        image.startsWith("http://") ||
+        image.startsWith("https://") ||
+        image.startsWith("data:")
+      ) {
+        return image;
       }
 
-      return doctor.image.startsWith("/")
-        ? doctor.image
-        : `/assets/img/${doctor.image}`;
+      // Backend relative path
+      // Example:
+      // /uploads/doctors/1728123456-doctor.jpg
+      if (image.startsWith("/")) {
+        return `${BACKEND_URL}${image}`;
+      }
+
+      // Backend may return:
+      // uploads/doctors/doctor.jpg
+      if (image.startsWith("uploads/")) {
+        return `${BACKEND_URL}/${image}`;
+      }
+
+      // If only filename is stored
+      return `${BACKEND_URL}/uploads/doctors/${image}`;
     }
 
+    // Fallback existing website image
     return `/assets/img/doctors/doctors-${(index % 4) + 1}.jpg`;
   };
 
@@ -179,126 +204,144 @@ const Doctors = () => {
             doctors.length > 0 && (
               <>
 
-                <div className="mt-[58px] grid grid-cols-1 gap-[24px] lg:grid-cols-2">
+              <div className="mt-[58px] grid grid-cols-1 gap-[24px] lg:grid-cols-2">
 
                 {displayedDoctors.map((doctor, index) => (
 
-                    <div
-                      key={doctor._id}
-                      className="group flex min-h-[220px] items-center rounded-[4px] bg-white p-[30px] shadow-[0_4px_25px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(41,75,104,0.12)]"
-                    >
+                  <Link
+                    key={doctor._id}
+                    to={`/doctors/${doctor._id}`}
+                    className="group flex min-h-[220px] items-center rounded-[4px] bg-white p-[30px] shadow-[0_4px_25px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(41,75,104,0.12)]"
+                  >
 
-                      {/* ================= DOCTOR IMAGE ================= */}
+                    {/* ================= DOCTOR IMAGE ================= */}
 
-                      <div className="flex shrink-0 items-center justify-center">
+                    <div className="flex shrink-0 items-center justify-center">
 
-                        <img
-                          src={getDoctorImage(doctor, index)}
-                          alt={doctor.name}
-                          className="h-[150px] w-[150px] rounded-full object-cover"
-                        />
+                      <img
+                        src={getDoctorImage(doctor, index)}
+                        alt={doctor.name}
+                        className="h-[150px] w-[150px] rounded-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src =
+                            `/assets/img/doctors/doctors-${(index % 4) + 1}.jpg`;
+                        }}
+                      />
 
-                      </div>
-
-
-                      {/* ================= DOCTOR INFORMATION ================= */}
-
-                      <div className="ml-[30px] min-w-0">
-
-                        {/* Name */}
-
-                        <h3 className="text-[20px] font-bold leading-[1.3] text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8] md:text-[21px]">
-                          {doctor.name}
-                        </h3>
+                    </div>
 
 
-                        {/* Specialization */}
+                    {/* ================= DOCTOR INFORMATION ================= */}
 
-                        <p className="mt-[5px] text-[14px] font-medium text-[#222]">
-                          {doctor.specialization ||
-                            doctor.specialty ||
-                            "Medical Specialist"}
-                        </p>
+                    <div className="ml-[30px] min-w-0">
 
+                      {/* Name */}
 
-                        {/* Divider */}
-
-                        <div className="mt-[13px] h-[1px] w-[50px] bg-[#dddddd]"></div>
+                      <h3 className="text-[20px]  font-bold leading-[1.3] text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8] md:text-[21px]">
+                        {doctor.name}
+                      </h3>
 
 
-                        {/* Description */}
+                      {/* Specialization */}
 
-                        <p className="mt-[12px] line-clamp-2 text-[14px] leading-[1.55] text-[#444]">
-                          {doctor.description ||
-                            `${doctor.name} provides professional healthcare services to patients.`}
-                        </p>
-
-
-                        {/* ================= SOCIAL LINKS ================= */}
-
-                        <div className="mt-[14px] flex items-center gap-[9px]">
-
-                          {/* X */}
-
-                          <a
-                            href="#"
-                            aria-label="Twitter"
-                            onClick={(e) => e.preventDefault()}
-                            className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
-                          >
-                            <i className="bi bi-twitter-x text-[15px]"></i>
-                          </a>
+                      <p className="mt-[5px] text-[14px] font-medium text-[#222]">
+                        {doctor.specialization ||
+                          doctor.specialty ||
+                          "Medical Specialist"}
+                      </p>
 
 
-                          {/* Facebook */}
+                      {/* Divider */}
 
-                          <a
-                            href="#"
-                            aria-label="Facebook"
-                            onClick={(e) => e.preventDefault()}
-                            className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
-                          >
-                            <i className="bi bi-facebook text-[15px]"></i>
-                          </a>
+                      <div className="mt-[13px] h-[1px] w-[50px] bg-[#dddddd]"></div>
 
 
-                          {/* Instagram */}
+                      {/* Description */}
 
-                          <a
-                            href="#"
-                            aria-label="Instagram"
-                            onClick={(e) => e.preventDefault()}
-                            className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
-                          >
-                            <i className="bi bi-instagram text-[15px]"></i>
-                          </a>
+                      <p className="mt-[12px] line-clamp-2 text-[14px] leading-[1.55] text-[#444]">
+                        {doctor.description ||
+                          `${doctor.name} provides professional healthcare services to patients.`}
+                      </p>
 
 
-                          {/* LinkedIn */}
+                      {/* ================= SOCIAL LINKS ================= */}
 
-                          <a
-                            href="#"
-                            aria-label="LinkedIn"
-                            onClick={(e) => e.preventDefault()}
-                            className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
-                          >
-                            <i className="bi bi-linkedin text-[15px]"></i>
-                          </a>
+                      <div className="mt-[14px] flex items-center gap-[9px]">
 
-                        </div>
+                        {/* X */}
+
+                        <a
+                          href="#"
+                          aria-label="Twitter"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
+                        >
+                          <i className="bi bi-twitter-x text-[15px]"></i>
+                        </a>
+
+
+                        {/* Facebook */}
+
+                        <a
+                          href="#"
+                          aria-label="Facebook"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
+                        >
+                          <i className="bi bi-facebook text-[15px]"></i>
+                        </a>
+
+
+                        {/* Instagram */}
+
+                        <a
+                          href="#"
+                          aria-label="Instagram"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
+                        >
+                          <i className="bi bi-instagram text-[15px]"></i>
+                        </a>
+
+
+                        {/* LinkedIn */}
+
+                        <a
+                          href="#"
+                          aria-label="LinkedIn"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#f1f1f1] text-[#666] transition-all duration-300 hover:bg-[#1976c8] hover:text-white"
+                        >
+                          <i className="bi bi-linkedin text-[15px]"></i>
+                        </a>
 
                       </div>
 
                     </div>
 
-                  ))}
+                  </Link>
+
+                ))}
 
               </div>
 
 
               {/* =================================================
-                    VIEW ALL BUTTON
-                ================================================== */}
+            VIEW ALL BUTTON
+      ================================================== */}
 
               {doctors.length > 4 && (
 

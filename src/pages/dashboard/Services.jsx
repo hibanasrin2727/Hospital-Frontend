@@ -13,92 +13,97 @@ import {
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-const API_URL =
-    "http://localhost:5000/api/dashboard/services";
-
 const Services = () => {
 
-    /* =====================================================
-       SERVICES DATA
-    ===================================================== */
+// =====================================================
+// API URL
+// =====================================================
+
+    const API_URL =
+        "http://localhost:5000/api/dashboard/services";
+
+
+    // =====================================================
+    // SERVICE DATA
+    // =====================================================
 
     const [services, setServices] = useState([]);
 
-    /* =====================================================
-       STATES
-    ===================================================== */
+
+    // =====================================================
+    // STATES
+    // =====================================================
 
     const [search, setSearch] = useState("");
 
-    const [statusFilter, setStatusFilter] =
-        useState("all");
+    const [openMenu, setOpenMenu] = useState(null);
 
-    const [openMenu, setOpenMenu] =
-        useState(null);
+    const [menuPosition, setMenuPosition] = useState({
+        top: 0,
+        right: 0,
+    });
 
-    const [menuPosition, setMenuPosition] =
-        useState({
-            top: 0,
-            left: 0,
-        });
+    const [showModal, setShowModal] = useState(false);
 
-    const [showModal, setShowModal] =
-        useState(false);
+    const [editingService, setEditingService] = useState(null);
 
-    const [editingService, setEditingService] =
-        useState(null);
+    const [deleteService, setDeleteService] = useState(null);
 
-    const [statusService, setStatusService] =
-        useState(null);
+    const [statusService, setStatusService] = useState(null);
 
-    const [deleteService, setDeleteService] =
-        useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const [loading, setLoading] =
-        useState(true);
+    const [saving, setSaving] = useState(false);
 
-    const [saving, setSaving] =
-        useState(false);
+    const [error, setError] = useState("");
 
-    const [error, setError] =
-        useState("");
 
-    const [formData, setFormData] =
-        useState({
-            name: "",
-            description: "",
-            image: "",
-            icon: "",
-            price: "",
-        });
+    // =====================================================
+    // FORM
+    // =====================================================
 
-    /* =====================================================
-       GET TOKEN
-    ===================================================== */
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        image: "",
+        icon: "",
+        price: "",
+    });
+
+
+    // =====================================================
+    // GET TOKEN
+    // =====================================================
 
     const getToken = () => {
         return localStorage.getItem("token");
     };
 
-    /* =====================================================
-       FETCH SERVICES
-    ===================================================== */
+
+    // =====================================================
+    // FETCH SERVICES
+    // =====================================================
 
     const fetchServices = async () => {
 
         try {
 
             setLoading(true);
+
             setError("");
 
             const token = getToken();
 
+
             if (!token) {
+
                 setError(
-                    "Authentication token not found."
+                    "Authentication token not found. Please login again."
                 );
+
                 return;
             }
+
 
             const response = await fetch(
                 API_URL,
@@ -108,25 +113,32 @@ const Services = () => {
                     headers: {
                         Authorization:
                             `Bearer ${token}`,
+
                         "Content-Type":
                             "application/json",
                     },
                 }
             );
 
+
             const data =
                 await response.json();
 
+
             if (!response.ok) {
+
                 throw new Error(
                     data.message ||
                     "Failed to fetch services"
                 );
+
             }
+
 
             setServices(
                 data.services || []
             );
+
 
         } catch (error) {
 
@@ -135,56 +147,129 @@ const Services = () => {
                 error
             );
 
+
             setError(
                 error.message ||
-                "Failed to load services."
+                "Something went wrong while loading services."
             );
+
 
         } finally {
 
             setLoading(false);
 
         }
+
     };
 
-    /* =====================================================
-       LOAD SERVICES
-    ===================================================== */
+
+    // =====================================================
+    // FETCH ON PAGE LOAD
+    // =====================================================
 
     useEffect(() => {
+
         fetchServices();
+
     }, []);
 
-    /* =====================================================
-       CLOSE ACTION MENU
-    ===================================================== */
+
+    // =====================================================
+    // FILTER
+    // =====================================================
+
+    const filteredServices =
+        services.filter(
+            (service) => {
+
+                const searchText =
+                    search
+                        .toLowerCase()
+                        .trim();
+
+
+                return (
+
+                    service.name
+                        ?.toLowerCase()
+                        .includes(searchText) ||
+
+                    service.description
+                        ?.toLowerCase()
+                        .includes(searchText)
+
+                );
+
+            }
+        );
+
+
+    // =====================================================
+    // CLOSE MENU ON OUTSIDE CLICK
+    // =====================================================
 
     useEffect(() => {
 
-        const handleOutsideClick =
+        const handleClickOutside =
             (event) => {
 
-                if (
-                    !event.target.closest(
-                        "[data-service-menu]"
-                    )
-                ) {
+                const clickedInsideAction =
+                    event.target.closest(
+                        "[data-service-action]"
+                    );
+
+
+                if (!clickedInsideAction) {
+
                     setOpenMenu(null);
+
                 }
+
             };
 
-        const handleScroll = () => {
-            setOpenMenu(null);
-        };
-
-        const handleResize = () => {
-            setOpenMenu(null);
-        };
 
         document.addEventListener(
             "mousedown",
-            handleOutsideClick
+            handleClickOutside
         );
+
+
+        return () => {
+
+            document.removeEventListener(
+                "mousedown",
+                handleClickOutside
+            );
+
+        };
+
+    }, []);
+
+
+    // =====================================================
+    // CLOSE MENU ON SCROLL / RESIZE
+    // =====================================================
+
+    useEffect(() => {
+
+        if (openMenu === null) {
+            return;
+        }
+
+
+        const handleScroll = () => {
+
+            setOpenMenu(null);
+
+        };
+
+
+        const handleResize = () => {
+
+            setOpenMenu(null);
+
+        };
+
 
         window.addEventListener(
             "scroll",
@@ -192,17 +277,14 @@ const Services = () => {
             true
         );
 
+
         window.addEventListener(
             "resize",
             handleResize
         );
 
-        return () => {
 
-            document.removeEventListener(
-                "mousedown",
-                handleOutsideClick
-            );
+        return () => {
 
             window.removeEventListener(
                 "scroll",
@@ -210,64 +292,139 @@ const Services = () => {
                 true
             );
 
+
             window.removeEventListener(
                 "resize",
                 handleResize
             );
+
         };
 
-    }, []);
+    }, [openMenu]);
 
-    /* =====================================================
-       FILTER SERVICES
-    ===================================================== */
 
-    const filteredServices =
-        services.filter(
-            (service) => {
+    // =====================================================
+    // OPEN ACTION MENU
+    // =====================================================
 
-                const searchValue =
-                    search
-                        .toLowerCase()
-                        .trim();
+    const handleActionMenu = (
+        serviceId,
+        event
+    ) => {
 
-                const serviceName =
-                    service.name ||
-                    "";
+        if (openMenu === serviceId) {
 
-                const serviceDescription =
-                    service.description ||
-                    "";
+            setOpenMenu(null);
 
-                const matchesSearch =
-                    serviceName
-                        .toLowerCase()
-                        .includes(
-                            searchValue
-                        ) ||
-                    serviceDescription
-                        .toLowerCase()
-                        .includes(
-                            searchValue
-                        );
+            return;
 
-                const matchesStatus =
-                    statusFilter === "all" ||
-                    service.status ===
-                    statusFilter;
+        }
 
-                return (
-                    matchesSearch &&
-                    matchesStatus
-                );
-            }
-        );
 
-    /* =====================================================
-       OPEN ADD MODAL
-    ===================================================== */
+        const buttonRect =
+            event.currentTarget
+                .getBoundingClientRect();
 
-    const openAddModal = () => {
+
+        const menuWidth = 176;
+
+        const menuHeight = 150;
+
+        const gap = 8;
+
+        const screenPadding = 8;
+
+
+        const spaceBelow =
+            window.innerHeight -
+            buttonRect.bottom;
+
+
+        const spaceAbove =
+            buttonRect.top;
+
+
+        let top;
+
+
+        if (
+            spaceBelow >=
+            menuHeight + gap
+        ) {
+
+            top =
+                buttonRect.bottom +
+                gap;
+
+        } else if (
+            spaceAbove >=
+            menuHeight + gap
+        ) {
+
+            top =
+                buttonRect.top -
+                menuHeight -
+                gap;
+
+        } else {
+
+            top = Math.max(
+                screenPadding,
+                Math.min(
+                    buttonRect.bottom + gap,
+                    window.innerHeight -
+                    menuHeight -
+                    screenPadding
+                )
+            );
+
+        }
+
+
+        let right =
+            window.innerWidth -
+            buttonRect.right;
+
+
+        if (
+            right + menuWidth >
+            window.innerWidth -
+            screenPadding
+        ) {
+
+            right =
+                screenPadding;
+
+        }
+
+
+        if (
+            right <
+            screenPadding
+        ) {
+
+            right =
+                screenPadding;
+
+        }
+
+
+        setMenuPosition({
+            top,
+            right,
+        });
+
+
+        setOpenMenu(serviceId);
+
+    };
+
+
+    // =====================================================
+    // OPEN ADD MODAL
+    // =====================================================
+
+    const handleAddService = () => {
 
         setEditingService(null);
 
@@ -279,14 +436,18 @@ const Services = () => {
             price: "",
         });
 
+        setError("");
+
         setShowModal(true);
+
     };
 
-    /* =====================================================
-       OPEN EDIT MODAL
-    ===================================================== */
 
-    const openEditModal = (
+    // =====================================================
+    // OPEN EDIT MODAL
+    // =====================================================
+
+    const handleEditService = (
         service
     ) => {
 
@@ -297,8 +458,7 @@ const Services = () => {
                 service.name || "",
 
             description:
-                service.description ||
-                "",
+                service.description || "",
 
             image:
                 service.image || "",
@@ -310,15 +470,21 @@ const Services = () => {
                 service.price ?? "",
         });
 
+
         setOpenMenu(null);
+
+        setError("");
+
         setShowModal(true);
+
     };
 
-    /* =====================================================
-       FORM CHANGE
-    ===================================================== */
 
-    const handleFormChange = (
+    // =====================================================
+    // FORM INPUT
+    // =====================================================
+
+    const handleChange = (
         event
     ) => {
 
@@ -327,17 +493,21 @@ const Services = () => {
             value,
         } = event.target;
 
+
         setFormData(
-            (prev) => ({
-                ...prev,
+            (previous) => ({
+                ...previous,
                 [name]: value,
             })
         );
+
     };
 
-    /* =====================================================
-       ADD / EDIT SERVICE
-    ===================================================== */
+
+    // =====================================================
+    // SAVE SERVICE
+    // CREATE / UPDATE
+    // =====================================================
 
     const handleSubmit = async (
         event
@@ -345,33 +515,49 @@ const Services = () => {
 
         event.preventDefault();
 
+
         if (
             !formData.name.trim()
         ) {
+
             return;
+
         }
+
 
         if (
             !formData.description.trim()
         ) {
+
             return;
+
         }
+
 
         try {
 
             setSaving(true);
+
             setError("");
 
-            const token = getToken();
+
+            const token =
+                getToken();
+
 
             if (!token) {
+
                 setError(
-                    "Authentication token not found."
+                    "Authentication token not found. Please login again."
                 );
+
                 return;
+
             }
 
+
             const requestBody = {
+
                 name:
                     formData.name.trim(),
 
@@ -388,13 +574,17 @@ const Services = () => {
                     Number(
                         formData.price
                     ) || 0,
+
             };
 
-            let response;
+
+            // =================================================
+            // UPDATE
+            // =================================================
 
             if (editingService) {
 
-                response =
+                const response =
                     await fetch(
                         `${API_URL}/${editingService._id}`,
                         {
@@ -415,9 +605,42 @@ const Services = () => {
                         }
                     );
 
-            } else {
 
-                response =
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to update service"
+                    );
+
+                }
+
+
+                setServices(
+                    (previous) =>
+                        previous.map(
+                            (service) =>
+                                service._id ===
+                                    editingService._id
+                                    ? data.service
+                                    : service
+                        )
+                );
+
+            }
+
+
+            // =================================================
+            // CREATE
+            // =================================================
+
+            else {
+
+                const response =
                     await fetch(
                         API_URL,
                         {
@@ -437,23 +660,38 @@ const Services = () => {
                                 ),
                         }
                     );
-            }
 
-            const data =
-                await response.json();
 
-            if (!response.ok) {
-                throw new Error(
-                    data.message ||
-                    "Failed to save service"
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to create service"
+                    );
+
+                }
+
+
+                setServices(
+                    (previous) => [
+                        data.service,
+                        ...previous,
+                    ]
                 );
+
             }
 
-            /* Refresh from database */
 
-            await fetchServices();
+            // =================================================
+            // RESET
+            // =================================================
 
             setShowModal(false);
+
             setEditingService(null);
 
             setFormData({
@@ -464,6 +702,7 @@ const Services = () => {
                 price: "",
             });
 
+
         } catch (error) {
 
             console.error(
@@ -471,9 +710,10 @@ const Services = () => {
                 error
             );
 
+
             setError(
                 error.message ||
-                "Failed to save service."
+                "Something went wrong while saving service."
             );
 
         } finally {
@@ -481,282 +721,256 @@ const Services = () => {
             setSaving(false);
 
         }
+
     };
 
-    /* =====================================================
-       STATUS CONFIRMATION
-    ===================================================== */
 
-    const handleToggleStatus = (
-        serviceId
+    // =====================================================
+    // STATUS CONFIRMATION
+    // =====================================================
+
+    const handleStatusClick = (
+        service
     ) => {
 
-        const service =
-            services.find(
-                (item) =>
-                    item._id ===
-                    serviceId
-            );
-
-        if (!service) {
-            return;
-        }
-
-        setOpenMenu(null);
         setStatusService(service);
+
+        setOpenMenu(null);
+
     };
 
-    /* =====================================================
-       CHANGE STATUS
-    ===================================================== */
 
-    const handleStatusChange =
-        async () => {
+    // =====================================================
+    // CHANGE STATUS
+    // =====================================================
 
-            if (!statusService) {
-                return;
-            }
+    const handleStatusChange = async () => {
 
-            try {
-
-                setSaving(true);
-                setError("");
-
-                const token =
-                    getToken();
-
-                if (!token) {
-                    setError(
-                        "Authentication token not found."
-                    );
-                    return;
-                }
-
-                const newStatus =
-                    statusService.status ===
-                        "active"
-                        ? "inactive"
-                        : "active";
-
-                const response =
-                    await fetch(
-                        `${API_URL}/${statusService._id}`,
-                        {
-                            method: "PUT",
-
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`,
-
-                                "Content-Type":
-                                    "application/json",
-                            },
-
-                            body:
-                                JSON.stringify({
-                                    status:
-                                        newStatus,
-                                }),
-                        }
-                    );
-
-                const data =
-                    await response.json();
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.message ||
-                        "Failed to change service status"
-                    );
-                }
-
-                await fetchServices();
-
-                setStatusService(null);
-
-            } catch (error) {
-
-                console.error(
-                    "Status change error:",
-                    error
-                );
-
-                setError(
-                    error.message ||
-                    "Failed to change service status."
-                );
-
-            } finally {
-
-                setSaving(false);
-
-            }
-        };
-
-    /* =====================================================
-       DELETE CONFIRMATION
-    ===================================================== */
-
-    const handleDeleteService = (
-        serviceId
-    ) => {
-
-        const service =
-            services.find(
-                (item) =>
-                    item._id ===
-                    serviceId
-            );
-
-        if (!service) {
+        if (!statusService) {
             return;
         }
 
-        setOpenMenu(null);
-        setDeleteService(service);
-    };
 
-    /* =====================================================
-       DELETE SERVICE
-    ===================================================== */
+        try {
 
-    const handleDelete =
-        async () => {
+            setSaving(true);
 
-            if (!deleteService) {
-                return;
-            }
+            setError("");
 
-            try {
 
-                setSaving(true);
-                setError("");
+            const token =
+                getToken();
 
-                const token =
-                    getToken();
 
-                if (!token) {
-                    setError(
-                        "Authentication token not found."
-                    );
-                    return;
-                }
-
-                const response =
-                    await fetch(
-                        `${API_URL}/${deleteService._id}`,
-                        {
-                            method: "DELETE",
-
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`,
-
-                                "Content-Type":
-                                    "application/json",
-                            },
-                        }
-                    );
-
-                const data =
-                    await response.json();
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.message ||
-                        "Failed to delete service"
-                    );
-                }
-
-                await fetchServices();
-
-                setDeleteService(null);
-
-            } catch (error) {
-
-                console.error(
-                    "Delete service error:",
-                    error
-                );
+            if (!token) {
 
                 setError(
-                    error.message ||
-                    "Failed to delete service."
+                    "Authentication token not found. Please login again."
                 );
 
-            } finally {
-
-                setSaving(false);
+                return;
 
             }
-        };
 
-    /* =====================================================
-       ACTION MENU POSITION
-    ===================================================== */
 
-    const handleMenuClick = (
-        event,
-        serviceId
-    ) => {
+            const newStatus =
+                statusService.status ===
+                    "active"
+                    ? "inactive"
+                    : "active";
 
-        event.stopPropagation();
 
-        const rect =
-            event.currentTarget
-                .getBoundingClientRect();
+            const response =
+                await fetch(
+                    `${API_URL}/${statusService._id}`,
+                    {
+                        method: "PUT",
 
-        const menuWidth = 170;
-        const menuHeight = 125;
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
 
-        let left =
-            rect.right -
-            menuWidth;
+                            "Content-Type":
+                                "application/json",
+                        },
 
-        let top =
-            rect.bottom + 6;
+                        body:
+                            JSON.stringify({
+                                status:
+                                    newStatus,
+                            }),
+                    }
+                );
 
-        if (left < 10) {
-            left = 10;
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Failed to change service status"
+                );
+
+            }
+
+
+            setServices(
+                (previous) =>
+                    previous.map(
+                        (service) =>
+                            service._id ===
+                                statusService._id
+                                ? data.service
+                                : service
+                    )
+            );
+
+
+            setStatusService(null);
+
+
+        } catch (error) {
+
+            console.error(
+                "Status change error:",
+                error
+            );
+
+
+            setError(
+                error.message ||
+                "Something went wrong while changing service status."
+            );
+
+        } finally {
+
+            setSaving(false);
+
         }
 
-        if (
-            left + menuWidth >
-            window.innerWidth - 10
-        ) {
-
-            left =
-                window.innerWidth -
-                menuWidth -
-                10;
-        }
-
-        if (
-            top + menuHeight >
-            window.innerHeight - 10
-        ) {
-
-            top =
-                rect.top -
-                menuHeight -
-                6;
-        }
-
-        setMenuPosition({
-            top,
-            left,
-        });
-
-        setOpenMenu(
-            openMenu === serviceId
-                ? null
-                : serviceId
-        );
     };
 
-    /* =====================================================
-       FORMAT PRICE
-    ===================================================== */
+
+    // =====================================================
+    // DELETE CONFIRMATION
+    // =====================================================
+
+    const handleDeleteClick = (
+        service
+    ) => {
+
+        setDeleteService(service);
+
+        setOpenMenu(null);
+
+    };
+
+
+    // =====================================================
+    // DELETE SERVICE
+    // =====================================================
+
+    const handleDelete = async () => {
+
+        if (!deleteService) {
+            return;
+        }
+
+
+        try {
+
+            setSaving(true);
+
+            setError("");
+
+
+            const token =
+                getToken();
+
+
+            if (!token) {
+
+                setError(
+                    "Authentication token not found. Please login again."
+                );
+
+                return;
+
+            }
+
+
+            const response =
+                await fetch(
+                    `${API_URL}/${deleteService._id}`,
+                    {
+                        method: "DELETE",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`,
+
+                            "Content-Type":
+                                "application/json",
+                        },
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Failed to delete service"
+                );
+
+            }
+
+
+            setServices(
+                (previous) =>
+                    previous.filter(
+                        (service) =>
+                            service._id !==
+                            deleteService._id
+                    )
+            );
+
+
+            setDeleteService(null);
+
+
+        } catch (error) {
+
+            console.error(
+                "Delete service error:",
+                error
+            );
+
+
+            setError(
+                error.message ||
+                "Something went wrong while deleting service."
+            );
+
+        } finally {
+
+            setSaving(false);
+
+        }
+
+    };
+
+
+    // =====================================================
+    // FORMAT PRICE
+    // =====================================================
 
     const formatPrice = (
         price
@@ -767,66 +981,230 @@ const Services = () => {
         ).toLocaleString(
             "en-IN"
         );
+
     };
 
-    /* =====================================================
-       RETURN
-    ===================================================== */
+
+    // =====================================================
+    // ACTION DROPDOWN
+    // =====================================================
+
+    const ActionDropdown = ({
+        service,
+    }) => {
+
+        if (
+            !service ||
+            openMenu !== service._id
+        ) {
+
+            return null;
+
+        }
+
+
+        return createPortal(
+
+            <div
+                data-service-action
+                onMouseDown={(event) =>
+                    event.stopPropagation()
+                }
+                style={{
+                    position: "fixed",
+                    top:
+                        `${menuPosition.top}px`,
+                    right:
+                        `${menuPosition.right}px`,
+                }}
+                className="z-[99999] w-44 overflow-hidden rounded-xl border border-[#dcebf5] bg-white py-1 shadow-[0_15px_40px_rgba(41,75,104,0.20)]"
+            >
+
+                {/* EDIT */}
+
+                <button
+                    type="button"
+                    onClick={() =>
+                        handleEditService(
+                            service
+                        )
+                    }
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-[#294b68] transition hover:bg-[#f7fafc] hover:text-[#1976c8]"
+                >
+
+                    <Pencil size={16} />
+
+                    <span>
+                        Edit
+                    </span>
+
+                </button>
+
+
+                {/* STATUS */}
+
+                <button
+                    type="button"
+                    onClick={() =>
+                        handleStatusClick(
+                            service
+                        )
+                    }
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-[#294b68] transition hover:bg-[#f7fafc] hover:text-[#1976c8]"
+                >
+
+                    <Power size={16} />
+
+                    <span>
+                        {service.status ===
+                            "active"
+                            ? "Set Inactive"
+                            : "Set Active"}
+                    </span>
+
+                </button>
+
+
+                {/* DELETE */}
+
+                <button
+                    type="button"
+                    onClick={() =>
+                        handleDeleteClick(
+                            service
+                        )
+                    }
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold text-red-500 transition hover:bg-red-50"
+                >
+
+                    <Trash2 size={16} />
+
+                    <span>
+                        Delete
+                    </span>
+
+                </button>
+
+            </div>,
+
+            document.body
+
+        );
+
+    };
+
+
+    // =====================================================
+    // LOADING
+    // =====================================================
+
+    if (loading) {
+
+        return (
+
+            <div className="flex min-h-[400px] items-center justify-center">
+
+                <div className="text-center">
+
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
+
+                    <p className="mt-4 text-sm text-gray-500">
+                        Loading services...
+                    </p>
+
+                </div>
+
+            </div>
+
+        );
+
+    }
+
+
+    // =====================================================
+    // MAIN UI
+    // =====================================================
 
     return (
+
         <div className="space-y-6">
 
-            {/* =================================================
+
+            {/* =====================================================
                 HEADER
-            ================================================= */}
+            ===================================================== */}
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-                <div>
+                <div className="min-w-0">
 
-                    <h1 className="text-2xl font-bold text-[#294b68]">
+                    <h1 className="!m-0 !text-2xl !font-bold !text-[#294b68]">
                         Services
                     </h1>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="!mb-0 mt-1 text-sm text-gray-500">
                         Manage hospital services,
                         pricing and availability.
                     </p>
 
                 </div>
 
+
                 <button
                     type="button"
-                    onClick={openAddModal}
-                    className="flex items-center justify-center gap-2 !rounded-lg bg-[#1976c8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
+                    onClick={handleAddService}
+                    className="flex shrink-0 items-center justify-center gap-2 !rounded-lg bg-[#1976c8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
                 >
+
                     <Plus size={18} />
+
                     Add Service
+
                 </button>
 
             </div>
 
-            {/* =================================================
+
+            {/* =====================================================
                 ERROR
-            ================================================= */}
+            ===================================================== */}
 
             {error && (
-                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
-                    {error}
+
+                <div className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+
+                    <span>
+                        {error}
+                    </span>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setError("")
+                        }
+                        className="ml-4"
+                    >
+
+                        <X size={18} />
+
+                    </button>
+
                 </div>
+
             )}
 
-            {/* =================================================
-                SEARCH + FILTER
-            ================================================= */}
+
+            {/* =====================================================
+                SEARCH + RESULT COUNT
+            ===================================================== */}
 
             <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 
-                    {/* Search */}
+                    {/* SEARCH */}
 
-                    <div className="relative w-full sm:max-w-md">
+                    <div className="relative w-full md:max-w-md">
 
                         <Search
                             size={18}
@@ -842,91 +1220,99 @@ const Services = () => {
                                 )
                             }
                             placeholder="Search services..."
-                            className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#1976c8]"
+                            className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
                         />
 
                     </div>
 
-                    {/* Status Filter */}
 
-                    <select
-                        value={
-                            statusFilter
-                        }
-                        onChange={(event) =>
-                            setStatusFilter(
-                                event.target.value
-                            )
-                        }
-                        className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-600 outline-none focus:border-[#1976c8]"
-                    >
-                        <option value="all">
-                            All Status
-                        </option>
+                    {/* RESULT COUNT */}
 
-                        <option value="active">
-                            Active
-                        </option>
+                    <div className="flex items-center justify-between gap-3">
 
-                        <option value="inactive">
-                            Inactive
-                        </option>
-                    </select>
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500">
+
+                            <span className="font-semibold text-[#294b68]">
+                                {filteredServices.length}
+                            </span>
+
+                            <span className="ml-1">
+                                Services
+                            </span>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
             </div>
 
-            {/* =================================================
-    SERVICES GRID
-================================================= */}
 
-            {loading ? (
+            {/* =====================================================
+                SERVICE CARDS
+            ===================================================== */}
 
-                <div className="rounded-xl border border-gray-100 bg-white px-6 py-16 text-center shadow-sm">
-
-                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
-
-                    <p className="mt-4 text-sm text-gray-500">
-                        Loading services...
-                    </p>
-
-                </div>
-
-            ) : (
-
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-
-                    {filteredServices.map(
-                        (service) => (
+            <div className="overflow-hidden rounded-xl">
 
                 <div
-                    key={service._id}
-                    className="group relative rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-[#dcebf5] hover:shadow-[0_12px_30px_rgba(41,75,104,0.08)]"
+                    className="
+            grid
+            max-h-[calc(100vh-310px)]
+            min-h-[300px]
+            grid-cols-1
+            gap-2
+            overflow-y-auto
+            pr-1
+            md:grid-cols-2
+            xl:grid-cols-4
+
+            [&::-webkit-scrollbar]:w-1.5
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-[#cfe5f5]
+            hover:[&::-webkit-scrollbar-thumb]:bg-[#1976c8]
+        "
                 >
 
-                    {/* =================================================
-                        TOP
-                    ================================================= */}
+                    {filteredServices.map((service) => (
 
-                    <div className="flex items-start justify-between">
+            <div
+                key={service._id}
+                className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]"
+            >
 
-                        {/* SERVICE ICON */}
+                {/* =================================================
+                    TOP
+                ================================================= */}
 
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-[#eaf5fb] text-[#1976c8] transition group-hover:scale-105">
+                <div className="flex items-start justify-between">
 
-                            {service.icon ? (
+                    {/* SERVICE IMAGE + ICON */}
+
+                    <div className="relative">
+
+                        {/* SERVICE IMAGE */}
+
+                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl bg-[#eaf5fb]">
+
+                            {service.image ? (
 
                                 <img
-                                    src={service.icon}
+                                    src={service.image}
                                     alt={service.name}
-                                    className="h-full w-full object-contain p-2.5"
+                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    onError={(event) => {
+                                        event.currentTarget.style.display =
+                                            "none";
+                                    }}
                                 />
 
                             ) : (
 
                                 <Stethoscope
-                                    size={23}
+                                    size={28}
+                                    className="text-[#1976c8]"
                                 />
 
                             )}
@@ -934,303 +1320,246 @@ const Services = () => {
                         </div>
 
 
-                        {/* ACTION MENU */}
+                        {/* SERVICE ICON */}
 
-                        <div
-                            data-service-menu
-                            className="relative"
-                        >
+                        {service.icon && (
 
-                            <button
-                                type="button"
-                                onClick={(event) =>
-                                    handleMenuClick(
-                                        event,
-                                        service._id
-                                    )
-                                }
-                                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
-                            >
+                            <div className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border-2 border-white bg-[#1976c8] shadow-sm">
 
-                                <MoreVertical
-                                    size={19}
+                                <img
+                                    src={service.icon}
+                                    alt=""
+                                    className="h-full w-full object-contain p-1.5"
+                                    onError={(event) => {
+                                        event.currentTarget.style.display =
+                                            "none";
+                                    }}
                                 />
 
-                            </button>
+                            </div>
 
-                        </div>
+                        )}
 
                     </div>
 
 
-                    {/* =================================================
-                        SERVICE NAME
-                    ================================================= */}
+                    {/* ACTION */}
 
-                    <div className="mt-5">
+                    <div
+                        data-service-action
+                        className="relative"
+                    >
 
-                        <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
-                            {service.name}
-                        </h2>
+                        <button
+                            type="button"
+                            onClick={(event) =>
+                                handleActionMenu(
+                                    service._id,
+                                    event
+                                )
+                            }
+                            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
+                        >
 
-                        <p className="!mb-0 mt-1 line-clamp-2 text-sm leading-6 text-gray-500">
-                            {service.description}
+                            <MoreVertical
+                                size={19}
+                            />
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                {/* =================================================
+                    SERVICE NAME
+                ================================================= */}
+
+                <div className="mt-5">
+
+                    <h2 className="!m-0 !text-lg !font-bold !text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
+                        {service.name}
+                    </h2>
+
+                    <p className="!mb-0 mt-1 line-clamp-2 text-sm leading-6 text-gray-500">
+                        {service.description ||
+                            "Professional healthcare service provided by our experienced medical team."}
+                    </p>
+
+                </div>
+
+
+                {/* =================================================
+                    DETAILS
+                ================================================= */}
+
+                <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
+
+                    {/* PRICE */}
+
+                    <div>
+
+                        <p className="!mb-0 text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                            Price
+                        </p>
+
+                        <p className="!mb-0 mt-1 text-base font-bold text-[#294b68]">
+                            ₹
+                            {formatPrice(
+                                service.price
+                            )}
                         </p>
 
                     </div>
 
 
-                    {/* =================================================
-                        DETAILS
-                    ================================================= */}
+                    {/* STATUS */}
 
-                    <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
+                    <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${service.status === "active"
+                                ? "bg-green-50 text-green-600"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                    >
 
-                        {/* PRICE */}
+                        {service.status === "active"
+                            ? "Active"
+                            : "Inactive"}
 
-                        <div>
-
-                            <p className="!mb-0 text-[10px] font-medium uppercase tracking-wide text-gray-400">
-                                Price
-                            </p>
-
-                            <p className="!mb-0 mt-1 text-base font-bold text-[#294b68]">
-                                ₹{formatPrice(service.price)}
-                            </p>
-
-                        </div>
-
-
-                        {/* STATUS */}
-
-                        <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${service.status === "active"
-                                    ? "bg-green-50 text-green-600"
-                                    : "bg-gray-100 text-gray-500"
-                                }`}
-                        >
-
-                            {service.status === "active"
-                                ? "Active"
-                                : "Inactive"}
-
-                        </span>
-
-                    </div>
-
-
-                    {/* =================================================
-                        BLUE HOVER LINE
-                    ================================================= */}
-
-                    <div className="absolute bottom-0 left-0 h-[3px] w-0 rounded-b-xl bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+                    </span>
 
                 </div>
 
-            )
-        )}
 
-                    </div>
+                {/* BLUE HOVER LINE */}
 
-            )}
+                <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
 
-            {/* =================================================
-                EMPTY STATE
-            ================================================= */}
+            </div>
 
-            {!loading &&
-                filteredServices.length ===
-                0 && (
+        ))}
 
-                    <div className="rounded-xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
+                </div>
 
-                        <Stethoscope
-                            size={40}
-                            className="mx-auto text-gray-300"
-                        />
+</div>
 
-                    <h3 className="mt-4 text-lg font-semibold text-[#294b68]">
+
+
+
+
+            {/* =====================================================
+                EMPTY SEARCH RESULT
+            ===================================================== */}
+
+            {filteredServices.length === 0 && (
+
+                <div className="rounded-2xl border border-dashed border-[#dcebf5] bg-white px-6 py-12 text-center">
+
+                    <Stethoscope
+                        size={40}
+                        className="mx-auto text-gray-300"
+                    />
+
+                    <h3 className="!mb-0 mt-4 text-base font-bold text-[#294b68]">
                         No services found
                     </h3>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                        Try changing your
-                        search or status
-                        filter.
+                    <p className="!mb-0 mt-1 text-sm text-gray-400">
+
+                        {search
+                            ? "Try searching with a different service name."
+                            : "Add your first hospital service."}
+
                     </p>
 
                 </div>
-                )}
 
-            {/* =================================================
-                ACTION MENU
-            ================================================= */}
+            )}
 
-            {openMenu &&
-                createPortal(
 
-                    <div
-                        data-service-menu
-                        style={{
-                            position:
-                                "fixed",
+            {/* =====================================================
+                ACTION DROPDOWN
+            ===================================================== */}
 
-                            top:
-                                menuPosition.top,
+            {openMenu !== null && (
 
-                            left:
-                                menuPosition.left,
-                        }}
-                        className="z-[100] w-[170px] overflow-hidden rounded-xl border border-gray-100 bg-white p-1.5 shadow-[0_12px_35px_rgba(41,75,104,0.18)]"
-                    >
+                <ActionDropdown
+                    service={
+                        services.find(
+                            (service) =>
+                                service._id ===
+                                openMenu
+                        )
+                    }
+                />
 
-                        {(() => {
+            )}
 
-                            const service =
-                                services.find(
-                                    (item) =>
-                                        item._id ===
-                                        openMenu
-                                );
 
-                            if (!service) {
-                                return null;
-                            }
-
-                            return (
-                                <>
-
-                                    {/* EDIT */}
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            openEditModal(
-                                                service
-                                            )
-                                        }
-                                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                    >
-                                        <Pencil
-                                            size={
-                                                16
-                                            }
-                                        />
-
-                                        Edit
-                                    </button>
-
-                                    {/* STATUS */}
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleToggleStatus(
-                                                service._id
-                                            )
-                                        }
-                                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                    >
-                                        <Power
-                                            size={
-                                                16
-                                            }
-                                        />
-
-                                        {service.status ===
-                                            "active"
-                                            ? "Set Inactive"
-                                            : "Set Active"}
-                                    </button>
-
-                                    {/* DELETE */}
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleDeleteService(
-                                                service._id
-                                            )
-                                        }
-                                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50"
-                                    >
-                                        <Trash2
-                                            size={
-                                                16
-                                            }
-                                        />
-
-                                        Delete
-                                    </button>
-
-                                </>
-                            );
-
-                        })()}
-
-                    </div>,
-
-                    document.body
-                )}
-
-            {/* =================================================
+            {/* =====================================================
                 ADD / EDIT MODAL
-            ================================================= */}
+            ===================================================== */}
 
             {showModal && (
 
-                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
-                    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+                    <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#dcebf5] bg-white shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
 
-                        {/* HEADER */}
 
-                        <div className="flex items-center justify-between">
+                        {/* MODAL HEADER */}
+
+                        <div className="flex items-center justify-between border-b border-[#edf3f7] px-6 py-5">
 
                             <div>
 
-                                <h2 className="!mb-0 !text-lg !font-bold !text-[#294b68]">
+                                <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
+
                                     {editingService
                                         ? "Edit Service"
                                         : "Add Service"}
+
                                 </h2>
 
-                                <p className="mt-1 text-sm text-gray-500">
+                                <p className="!mb-0 mt-1 text-xs text-gray-400">
+
                                     {editingService
-                                        ? "Update service information."
-                                        : "Add a new hospital service."}
+                                        ? "Update service information below."
+                                        : "Enter service information below."}
+
                                 </p>
 
                             </div>
 
+
                             <button
                                 type="button"
                                 onClick={() =>
-                                    setShowModal(
-                                        false
-                                    )
+                                    setShowModal(false)
                                 }
-                                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#294b68]"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
                             >
-                                <X size={20} />
+
+                                <X size={19} />
+
                             </button>
 
                         </div>
 
+
                         {/* FORM */}
 
                         <form
-                            onSubmit={
-                                handleSubmit
-                            }
-                            className="mt-6 space-y-4"
+                            onSubmit={handleSubmit}
+                            className="max-h-[75vh] space-y-5 overflow-y-auto p-6"
                         >
 
                             {/* SERVICE NAME */}
 
                             <div>
 
-                                <label className="mb-1.5 block text-sm font-semibold text-[#294b68]">
+                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
                                     Service Name
                                 </label>
 
@@ -1241,20 +1570,21 @@ const Services = () => {
                                         formData.name
                                     }
                                     onChange={
-                                        handleFormChange
+                                        handleChange
                                     }
                                     placeholder="Enter service name"
-                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-[#1976c8]"
                                     required
+                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
                                 />
 
                             </div>
+
 
                             {/* DESCRIPTION */}
 
                             <div>
 
-                                <label className="mb-1.5 block text-sm font-semibold text-[#294b68]">
+                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
                                     Description
                                 </label>
 
@@ -1264,21 +1594,22 @@ const Services = () => {
                                         formData.description
                                     }
                                     onChange={
-                                        handleFormChange
+                                        handleChange
                                     }
                                     placeholder="Enter service description"
                                     rows="3"
-                                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-[#1976c8]"
                                     required
+                                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
                                 />
 
                             </div>
+
 
                             {/* IMAGE */}
 
                             <div>
 
-                                <label className="mb-1.5 block text-sm font-semibold text-[#294b68]">
+                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
                                     Image URL
                                 </label>
 
@@ -1289,19 +1620,20 @@ const Services = () => {
                                         formData.image
                                     }
                                     onChange={
-                                        handleFormChange
+                                        handleChange
                                     }
                                     placeholder="Enter image URL"
-                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-[#1976c8]"
+                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
                                 />
 
                             </div>
+
 
                             {/* ICON */}
 
                             <div>
 
-                                <label className="mb-1.5 block text-sm font-semibold text-[#294b68]">
+                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
                                     Icon URL
                                 </label>
 
@@ -1312,19 +1644,20 @@ const Services = () => {
                                         formData.icon
                                     }
                                     onChange={
-                                        handleFormChange
+                                        handleChange
                                     }
                                     placeholder="Enter icon URL"
-                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-[#1976c8]"
+                                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
                                 />
 
                             </div>
+
 
                             {/* PRICE */}
 
                             <div>
 
-                                <label className="mb-1.5 block text-sm font-semibold text-[#294b68]">
+                                <label className="mb-2 block text-sm font-semibold text-[#294b68]">
                                     Price
                                 </label>
 
@@ -1341,48 +1674,48 @@ const Services = () => {
                                             formData.price
                                         }
                                         onChange={
-                                            handleFormChange
+                                            handleChange
                                         }
                                         min="0"
                                         placeholder="Enter service price"
-                                        className="w-full rounded-xl border border-gray-200 py-3 pl-9 pr-4 text-sm outline-none transition focus:border-[#1976c8]"
+                                        className="w-full rounded-xl border border-gray-200 py-3 pl-9 pr-4 text-sm text-[#294b68] outline-none transition focus:border-[#1976c8] focus:ring-2 focus:ring-[#eaf5fb]"
                                     />
 
                                 </div>
 
                             </div>
 
+
                             {/* BUTTONS */}
 
-                            <div className="flex flex-col-reverse gap-3 pt-3 sm:flex-row sm:justify-end">
+                            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
 
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        setShowModal(
-                                            false
-                                        )
+                                        setShowModal(false)
                                     }
-                                    disabled={
-                                        saving
-                                    }
-                                    className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:opacity-50"
+                                    disabled={saving}
+                                    className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
+
                                     Cancel
+
                                 </button>
+
 
                                 <button
                                     type="submit"
-                                    disabled={
-                                        saving
-                                    }
+                                    disabled={saving}
                                     className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
+
                                     {saving
                                         ? "Saving..."
                                         : editingService
-                                        ? "Save Changes"
+                                            ? "Update Service"
                                         : "Add Service"}
+
                                 </button>
 
                             </div>
@@ -1392,35 +1725,39 @@ const Services = () => {
                     </div>
 
                 </div>
+
             )}
 
-            {/* =================================================
-                CHANGE STATUS CONFIRMATION
-            ================================================= */}
+
+            {/* =====================================================
+                STATUS CONFIRMATION
+            ===================================================== */}
 
             {statusService && (
 
-                <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
                     <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
 
+
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+
                             <Power size={22} />
+
                         </div>
+
 
                         <h2 className="!mb-0 mt-4 !text-lg !font-bold !text-[#294b68]">
                             Change Service Status?
                         </h2>
 
+
                         <p className="!mb-0 mt-2 text-sm leading-6 text-gray-500">
 
-                            Are you sure you
-                            want to set{" "}
+                            Are you sure you want to set{" "}
 
                             <span className="font-semibold text-[#294b68]">
-                                {
-                                    statusService.name
-                                }
+                                {statusService.name}
                             </span>{" "}
 
                             to{" "}
@@ -1428,41 +1765,40 @@ const Services = () => {
                             {statusService.status ===
                                 "active"
                                 ? "Inactive"
-                                : "Active"}
-                            ?
+                                : "Active"}?
 
                         </p>
+
 
                         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
                             <button
                                 type="button"
                                 onClick={() =>
-                                    setStatusService(
-                                        null
-                                    )
+                                    setStatusService(null)
                                 }
-                                disabled={
-                                    saving
-                                }
-                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:opacity-50"
+                                disabled={saving}
+                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
+
                                 Cancel
+
                             </button>
+
 
                             <button
                                 type="button"
                                 onClick={
                                     handleStatusChange
                                 }
-                                disabled={
-                                    saving
-                                }
+                                disabled={saving}
                                 className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8] disabled:cursor-not-allowed disabled:opacity-60"
                             >
+
                                 {saving
                                     ? "Updating..."
                                     : "Confirm"}
+
                             </button>
 
                         </div>
@@ -1470,72 +1806,75 @@ const Services = () => {
                     </div>
 
                 </div>
+
             )}
 
-            {/* =================================================
+
+            {/* =====================================================
                 DELETE CONFIRMATION
-            ================================================= */}
+            ===================================================== */}
 
             {deleteService && (
 
-                <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
 
                     <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
 
+
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
+
                             <Trash2 size={22} />
+
                         </div>
+
 
                         <h2 className="!mb-0 mt-4 !text-lg !font-bold !text-[#294b68]">
                             Delete Service?
                         </h2>
 
+
                         <p className="!mb-0 mt-2 text-sm leading-6 text-gray-500">
 
-                            Are you sure you
-                            want to delete{" "}
+                            Are you sure you want to delete{" "}
 
                             <span className="font-semibold text-[#294b68]">
-                                {
-                                    deleteService.name
-                                }
+                                {deleteService.name}
                             </span>
 
-                            ? This action
-                            cannot be undone.
+                            ? This action cannot be undone.
 
                         </p>
+
 
                         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
                             <button
                                 type="button"
                                 onClick={() =>
-                                    setDeleteService(
-                                        null
-                                    )
+                                    setDeleteService(null)
                                 }
-                                disabled={
-                                    saving
-                                }
-                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:opacity-50"
+                                disabled={saving}
+                                className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
+
                                 Cancel
+
                             </button>
+
 
                             <button
                                 type="button"
                                 onClick={
                                     handleDelete
                                 }
-                                disabled={
-                                    saving
-                                }
+                                disabled={saving}
                                 className="!rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                             >
+
                                 {saving
                                     ? "Deleting..."
                                     : "Delete Service"}
+
                             </button>
 
                         </div>
@@ -1543,10 +1882,13 @@ const Services = () => {
                     </div>
 
                 </div>
+
             )}
 
         </div>
+
     );
+
 };
 
 export default Services;

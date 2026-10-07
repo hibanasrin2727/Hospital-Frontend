@@ -15,6 +15,7 @@ import About from "./pages/website/About";
 import Services from "./pages/website/Services";
 import Departments from "./pages/website/Departments";
 import Doctors from "./pages/website/Doctors";
+import DoctorDetails from "./pages/website/DoctorDetails";
 import Appointment from "./pages/website/Appointment";
 import FAQ from "./pages/website/FAQ";
 import Contact from "./pages/website/Contact";
@@ -78,6 +79,10 @@ const router = createBrowserRouter([
       {
         path: "doctors",
         element: <Doctors />,
+      },
+      {
+        path: "doctors/:id",
+        element: <DoctorDetails />,
       },
       {
         path: "appointment",

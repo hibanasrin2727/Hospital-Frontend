@@ -1,3 +1,4 @@
+
 import {
     Search,
     Plus,
@@ -8,6 +9,8 @@ import {
     Power,
     X,
     CheckCircle2,
+    Upload,
+    Image as ImageIcon,
 } from "lucide-react";
 
 import {
@@ -38,13 +41,46 @@ const Doctors = () => {
     const API_URL =
         "http://localhost:5000/api/dashboard";
 
+    const BACKEND_URL =
+        "http://localhost:5000";
+
+    // =====================================================
+    // AUTH HEADERS
+    // =====================================================
+
     const getAuthHeaders = () => {
-        const token = localStorage.getItem("token");
+        const token =
+            localStorage.getItem("token");
 
         return {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization:
+                `Bearer ${token}`,
         };
+    };
+
+    // =====================================================
+    // IMAGE URL HELPER
+    // =====================================================
+
+    const getImageUrl = (image) => {
+
+        if (!image) {
+            return "";
+        }
+
+        if (
+            image.startsWith("http://") ||
+            image.startsWith("https://") ||
+            image.startsWith("data:")
+        ) {
+            return image;
+        }
+
+        if (image.startsWith("/")) {
+            return `${BACKEND_URL}${image}`;
+        }
+
+        return `${BACKEND_URL}/${image}`;
     };
 
     // =====================================================
@@ -52,9 +88,11 @@ const Doctors = () => {
     // =====================================================
 
     const formatDoctor = (doctor) => ({
+
         ...doctor,
 
-        id: doctor._id,
+        id:
+            doctor._id,
 
         specialty:
             doctor.specialization || "",
@@ -64,10 +102,14 @@ const Doctors = () => {
             doctor.departmentId?.departmentName ||
             "",
 
+        image:
+            doctor.image || "",
+
         status:
             doctor.status === "active"
                 ? "Active"
                 : "Inactive",
+
     });
 
     // =====================================================
@@ -82,13 +124,15 @@ const Doctors = () => {
 
             setErrorMessage("");
 
-            const response = await fetch(
-                `${API_URL}/doctors`,
-                {
-                    method: "GET",
-                    headers: getAuthHeaders(),
-                }
-            );
+            const response =
+                await fetch(
+                    `${API_URL}/doctors`,
+                    {
+                        method: "GET",
+                        headers:
+                            getAuthHeaders(),
+                    }
+                );
 
             const data =
                 await response.json();
@@ -102,9 +146,8 @@ const Doctors = () => {
             }
 
             setDoctors(
-                (data.doctors || []).map(
-                    formatDoctor
-                )
+                (data.doctors || [])
+                    .map(formatDoctor)
             );
 
         } catch (error) {
@@ -133,13 +176,15 @@ const Doctors = () => {
 
         try {
 
-            const response = await fetch(
-                `${API_URL}/departments`,
-                {
-                    method: "GET",
-                    headers: getAuthHeaders(),
-                }
-            );
+            const response =
+                await fetch(
+                    `${API_URL}/departments`,
+                    {
+                        method: "GET",
+                        headers:
+                            getAuthHeaders(),
+                    }
+                );
 
             const data =
                 await response.json();
@@ -178,7 +223,7 @@ const Doctors = () => {
     }, []);
 
     // =====================================================
-    // STATES
+    // SEARCH / FILTER STATES
     // =====================================================
 
     const [searchTerm, setSearchTerm] =
@@ -188,6 +233,10 @@ const Doctors = () => {
         departmentFilter,
         setDepartmentFilter,
     ] = useState("All Departments");
+
+    // =====================================================
+    // ACTION MENU STATES
+    // =====================================================
 
     const [openMenu, setOpenMenu] =
         useState(null);
@@ -200,11 +249,19 @@ const Doctors = () => {
         right: 0,
     });
 
+    // =====================================================
+    // MODAL STATES
+    // =====================================================
+
     const [showModal, setShowModal] =
         useState(false);
 
     const [editingDoctor, setEditingDoctor] =
         useState(null);
+
+    // =====================================================
+    // FORM DATA
+    // =====================================================
 
     const [formData, setFormData] =
         useState({
@@ -217,6 +274,20 @@ const Doctors = () => {
             email: "",
             schedule: "",
         });
+
+    // =====================================================
+    // IMAGE STATES
+    // =====================================================
+
+    const [selectedImage, setSelectedImage] =
+        useState(null);
+
+    const [imagePreview, setImagePreview] =
+        useState("");
+
+    // =====================================================
+    // SAVING STATE
+    // =====================================================
 
     const [saving, setSaving] =
         useState(false);
@@ -346,6 +417,7 @@ const Doctors = () => {
                 isBackend: false,
             })
         ),
+
     ].filter(
         (department, index, array) =>
             array.findIndex(
@@ -365,7 +437,8 @@ const Doctors = () => {
                 department.name
                     .toLowerCase()
                     .includes(
-                        departmentSearch.toLowerCase()
+                        departmentSearch
+                            .toLowerCase()
                     )
         );
 
@@ -379,7 +452,8 @@ const Doctors = () => {
                 specialty
                     .toLowerCase()
                     .includes(
-                        specialtySearch.toLowerCase()
+                        specialtySearch
+                            .toLowerCase()
                     )
         );
 
@@ -389,20 +463,19 @@ const Doctors = () => {
 
     useEffect(() => {
 
-        const handleClickOutside = (
-            event
-        ) => {
+        const handleClickOutside =
+            (event) => {
 
-            const clickedInsideAction =
-                event.target.closest(
-                    "[data-doctor-action]"
-                );
+                const clickedInsideAction =
+                    event.target.closest(
+                        "[data-doctor-action]"
+                    );
 
-            if (!clickedInsideAction) {
+                if (!clickedInsideAction) {
 
-                setOpenMenu(null);
-            }
-        };
+                    setOpenMenu(null);
+                }
+            };
 
         document.addEventListener(
             "mousedown",
@@ -420,7 +493,7 @@ const Doctors = () => {
     }, []);
 
     // =====================================================
-    // CLOSE ACTION MENU WHEN SCROLLING / RESIZING
+    // CLOSE ACTION MENU ON SCROLL / RESIZE
     // =====================================================
 
     useEffect(() => {
@@ -478,9 +551,11 @@ const Doctors = () => {
                 doctor.name
                     .toLowerCase()
                     .includes(search) ||
+
                 doctor.specialty
                     .toLowerCase()
                     .includes(search) ||
+
                 doctor.department
                     .toLowerCase()
                     .includes(search);
@@ -488,6 +563,7 @@ const Doctors = () => {
             const matchesDepartment =
                 departmentFilter ===
                 "All Departments" ||
+
                 doctor.department ===
                 departmentFilter;
 
@@ -638,6 +714,10 @@ const Doctors = () => {
 
         setSpecialtySearch("");
 
+        setSelectedImage(null);
+
+        setImagePreview("");
+
         setShowDepartmentOptions(false);
 
         setShowSpecialtyOptions(false);
@@ -684,6 +764,7 @@ const Doctors = () => {
             "";
 
         setFormData({
+
             name:
                 doctor.name || "",
 
@@ -710,6 +791,7 @@ const Doctors = () => {
             schedule:
                 doctor.schedule ||
                 "",
+
         });
 
         setDepartmentSearch(
@@ -718,6 +800,17 @@ const Doctors = () => {
 
         setSpecialtySearch(
             specialty
+        );
+
+        // Existing backend image
+        setSelectedImage(null);
+
+        setImagePreview(
+            doctor.image
+                ? getImageUrl(
+                    doctor.image
+                )
+                : ""
         );
 
         setShowDepartmentOptions(
@@ -752,6 +845,79 @@ const Doctors = () => {
                 [name]: value,
             })
         );
+    };
+
+    // =====================================================
+    // IMAGE CHANGE
+    // =====================================================
+
+    const handleImageChange = (
+        event
+    ) => {
+
+        const file =
+            event.target.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        // Basic image validation
+        if (!file.type.startsWith("image/")) {
+
+            setErrorMessage(
+                "Please select a valid image file."
+            );
+
+            return;
+        }
+
+        // 5 MB limit
+        if (
+            file.size >
+            5 * 1024 * 1024
+        ) {
+
+            setErrorMessage(
+                "Doctor photo must be less than 5 MB."
+            );
+
+            return;
+        }
+
+        setErrorMessage("");
+
+        setSelectedImage(file);
+
+        const previewUrl =
+            URL.createObjectURL(file);
+
+        setImagePreview(
+            previewUrl
+        );
+    };
+
+    // =====================================================
+    // REMOVE SELECTED IMAGE
+    // =====================================================
+
+    const handleRemoveImage = () => {
+
+        if (
+            selectedImage &&
+            imagePreview.startsWith(
+                "blob:"
+            )
+        ) {
+
+            URL.revokeObjectURL(
+                imagePreview
+            );
+        }
+
+        setSelectedImage(null);
+
+        setImagePreview("");
     };
 
     // =====================================================
@@ -841,34 +1007,63 @@ const Doctors = () => {
 
             setErrorMessage("");
 
-            const payload = {
+            // =================================================
+            // USE FORMDATA BECAUSE IMAGE IS BEING UPLOADED
+            // =================================================
 
-                name:
-                    formData.name.trim(),
+            const payload =
+                new FormData();
 
-                specialization:
-                    formData.specialty.trim(),
+            payload.append(
+                "name",
+                formData.name.trim()
+            );
 
-                departmentId:
-                    formData.departmentId,
+            payload.append(
+                "specialization",
+                formData.specialty.trim()
+            );
 
-                qualification:
-                    formData.qualification.trim(),
+            payload.append(
+                "departmentId",
+                formData.departmentId
+            );
 
-                experience:
-                    Number(
-                        formData.experience
-                    ),
+            payload.append(
+                "qualification",
+                formData.qualification.trim()
+            );
 
-                phone:
-                    formData.phone.trim(),
+            payload.append(
+                "experience",
+                Number(
+                    formData.experience
+                )
+            );
 
-                email:
-                    formData.email.trim(),
+            payload.append(
+                "phone",
+                formData.phone.trim()
+            );
 
-                schedule:
-                    formData.schedule.trim(),
-            };
+            payload.append(
+                "email",
+                formData.email.trim()
+            );
+
+            payload.append(
+                "schedule",
+                formData.schedule.trim()
+            );
+
+            // Add only if a new photo is selected
+            if (selectedImage) {
+
+                payload.append(
+                    "image",
+                    selectedImage
+                );
+            }
 
             // =================================================
             // EDIT DOCTOR
@@ -884,9 +1079,7 @@ const Doctors = () => {
                             headers:
                                 getAuthHeaders(),
                             body:
-                                JSON.stringify(
-                                    payload
-                                ),
+                                payload,
                         }
                     );
 
@@ -917,9 +1110,7 @@ const Doctors = () => {
                             headers:
                                 getAuthHeaders(),
                             body:
-                                JSON.stringify(
-                                    payload
-                                ),
+                                payload,
                         }
                     );
 
@@ -1009,8 +1200,11 @@ const Doctors = () => {
                         `${API_URL}/doctors/${statusDoctor.id}`,
                         {
                             method: "PUT",
-                            headers:
-                                getAuthHeaders(),
+                            headers: {
+                                ...getAuthHeaders(),
+                                "Content-Type":
+                                    "application/json",
+                            },
                             body:
                                 JSON.stringify({
                                     status:
@@ -1152,6 +1346,18 @@ const Doctors = () => {
 
     const handleCloseModal = () => {
 
+        if (
+            selectedImage &&
+            imagePreview.startsWith(
+                "blob:"
+            )
+        ) {
+
+            URL.revokeObjectURL(
+                imagePreview
+            );
+        }
+
         setShowModal(false);
 
         setEditingDoctor(null);
@@ -1184,8 +1390,10 @@ const Doctors = () => {
                 }
                 style={{
                     position: "fixed",
-                    top: `${menuPosition.top}px`,
-                    right: `${menuPosition.right}px`,
+                    top:
+                        `${menuPosition.top}px`,
+                    right:
+                        `${menuPosition.right}px`,
                 }}
                 className="z-[99999] w-44 overflow-hidden rounded-xl border border-[#dcebf5] bg-white py-1 shadow-[0_15px_40px_rgba(41,75,104,0.20)]"
             >
@@ -1317,9 +1525,7 @@ const Doctors = () => {
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
 
-                            <Stethoscope
-                                size={23}
-                            />
+                            <Stethoscope size={23} />
 
                         </div>
 
@@ -1349,9 +1555,7 @@ const Doctors = () => {
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600">
 
-                            <CheckCircle2
-                                size={23}
-                            />
+                            <CheckCircle2 size={23} />
 
                         </div>
 
@@ -1381,9 +1585,7 @@ const Doctors = () => {
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
 
-                            <Power
-                                size={23}
-                            />
+                            <Power size={23} />
 
                         </div>
 
@@ -1464,7 +1666,9 @@ const Doctors = () => {
                     </div>
 
                     <select
-                        value={departmentFilter}
+                        value={
+                            departmentFilter
+                        }
                         onChange={(event) =>
                             setDepartmentFilter(
                                 event.target.value
@@ -1488,7 +1692,9 @@ const Doctors = () => {
                                         department.name
                                     }
                                 >
-                                    {department.name}
+                                    {
+                                        department.name
+                                    }
                                 </option>
 
                             )
@@ -1589,16 +1795,44 @@ const Doctors = () => {
 
                                                     <div className="flex items-center gap-3">
 
-                                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+                                                        {/* PHOTO */}
 
-                                                            <Stethoscope
-                                                                size={
-                                                                    20
-                                                                }
-                                                                strokeWidth={
-                                                                    2
-                                                                }
-                                                            />
+                                                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#eaf5fb]">
+
+                                                            {doctor.image ? (
+
+                                                                <img
+                                                                    src={getImageUrl(
+                                                                        doctor.image
+                                                                    )}
+                                                                    alt={
+                                                                        doctor.name
+                                                                    }
+                                                                    className="h-full w-full object-cover"
+                                                                    onError={(
+                                                                        event
+                                                                    ) => {
+                                                                        event.currentTarget.style.display =
+                                                                            "none";
+                                                                    }}
+                                                                />
+
+                                                            ) : (
+
+                                                                <div className="flex h-full w-full items-center justify-center text-[#1976c8]">
+
+                                                                        <Stethoscope
+                                                                            size={
+                                                                                20
+                                                                            }
+                                                                            strokeWidth={
+                                                                                2
+                                                                            }
+                                                                        />
+
+                                                                </div>
+
+                                                            )}
 
                                                         </div>
 
@@ -1750,9 +1984,7 @@ const Doctors = () => {
                                                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf5fb] text-[#1976c8]">
 
                                                             <Stethoscope
-                                                                size={
-                                                                    25
-                                                                }
+                                                                size={25}
                                                             />
 
                                                         </div>
@@ -1810,16 +2042,41 @@ const Doctors = () => {
 
                                         <div className="flex min-w-0 items-center gap-3">
 
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8]">
+                                            {/* MOBILE PHOTO */}
 
-                                                <Stethoscope
-                                                    size={
-                                                        20
-                                                    }
-                                                    strokeWidth={
-                                                        2
-                                                    }
-                                                />
+                                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#eaf5fb]">
+
+                                                {doctor.image ? (
+
+                                                    <img
+                                                        src={getImageUrl(
+                                                            doctor.image
+                                                        )}
+                                                        alt={
+                                                            doctor.name
+                                                        }
+                                                        className="h-full w-full object-cover"
+                                                        onError={(
+                                                            event
+                                                        ) => {
+                                                            event.currentTarget.style.display =
+                                                                "none";
+                                                        }}
+                                                    />
+
+                                                ) : (
+
+                                                    <div className="flex h-full w-full items-center justify-center text-[#1976c8]">
+
+                                                            <Stethoscope
+                                                                size={
+                                                                    20
+                                                                }
+                                                            />
+
+                                                    </div>
+
+                                                )}
 
                                             </div>
 
@@ -1873,9 +2130,7 @@ const Doctors = () => {
                                             >
 
                                                 <MoreVertical
-                                                    size={
-                                                        19
-                                                    }
+                                                    size={19}
                                                 />
 
                                             </button>
@@ -2058,6 +2313,126 @@ const Doctors = () => {
                         >
 
                             <div className="space-y-4">
+
+                                {/* =================================================
+                                    DOCTOR PHOTO
+                                ================================================= */}
+
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+
+                                    <label className="w-full shrink-0 pt-3 text-sm font-semibold text-[#294b68] sm:w-40">
+                                        Doctor Photo
+                                    </label>
+
+                                    <div className="w-full">
+
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+
+                                            {/* IMAGE PREVIEW */}
+
+                                            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-[#dcebf5] bg-[#eaf5fb]">
+
+                                                {imagePreview ? (
+
+                                                    <img
+                                                        src={
+                                                            imagePreview
+                                                        }
+                                                        alt="Doctor preview"
+                                                        className="h-full w-full object-cover"
+                                                        onError={(
+                                                            event
+                                                        ) => {
+                                                            event.currentTarget.style.display =
+                                                                "none";
+                                                        }}
+                                                    />
+
+                                                ) : (
+
+                                                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-[#1976c8]">
+
+                                                        <ImageIcon
+                                                            size={
+                                                                25
+                                                            }
+                                                        />
+
+                                                        <span className="text-[9px] font-semibold uppercase tracking-wide">
+                                                            Photo
+                                                        </span>
+
+                                                    </div>
+
+                                                )}
+
+                                            </div>
+
+                                            {/* UPLOAD AREA */}
+
+                                            <div className="flex-1">
+
+                                                <label className="flex min-h-[96px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#c9ddea] bg-[#f8fbfd] px-4 py-4 text-center transition hover:border-[#1976c8] hover:bg-[#f1f8fc]">
+
+                                                    <Upload
+                                                        size={
+                                                            21
+                                                        }
+                                                        className="text-[#1976c8]"
+                                                    />
+
+                                                    <p className="!mb-0 mt-2 text-sm font-semibold text-[#294b68]">
+                                                        {selectedImage
+                                                            ? "Change photo"
+                                                            : "Upload doctor photo"}
+                                                    </p>
+
+                                                    <p className="!mb-0 mt-1 text-xs text-gray-400">
+                                                        JPG, PNG or WEBP · Max 5 MB
+                                                    </p>
+
+                                                    <input
+                                                        type="file"
+                                                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                                                        onChange={
+                                                            handleImageChange
+                                                        }
+                                                        className="hidden"
+                                                    />
+
+                                                </label>
+
+                                                {selectedImage && (
+
+                                                    <div className="mt-2 flex items-center justify-between">
+
+                                                        <p className="!mb-0 max-w-[75%] truncate text-xs text-gray-400">
+                                                            {
+                                                                selectedImage.name
+                                                            }
+                                                        </p>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={
+                                                                handleRemoveImage
+                                                            }
+                                                            className="text-xs font-semibold text-red-500 transition hover:text-red-600"
+                                                        >
+                                                            Remove
+                                                        </button>
+
+                                                    </div>
+
+                                                )}
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
 
                                 {/* DOCTOR NAME */}
 
@@ -2436,7 +2811,7 @@ const Doctors = () => {
                                             handleInputChange
                                         }
                                         placeholder="Enter email address"
-                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white] focus:ring-2 focus:ring-[#1976c8]/10"
+                                        className="h-12 w-full rounded-lg border border-[#dcebf5] bg-[#f8fbfd] px-4 text-sm text-[#294b68] outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#1976c8] focus:bg-white focus:ring-2 focus:ring-[#1976c8]/10"
                                     />
 
                                 </div>
