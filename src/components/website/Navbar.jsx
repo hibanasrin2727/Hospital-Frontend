@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +18,9 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [logoutLoading, setLogoutLoading] = useState(false);
+
+  const [loggedIn, setLoggedIn] = useState(isLoggedIn());
+  const [user, setUser] = useState(getUser());
 
   const navigate = useNavigate();
 
@@ -160,6 +164,23 @@ const Navbar = () => {
   }, []);
 
   // =====================================================
+  // Authentication
+  // =====================================================
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setLoggedIn(isLoggedIn());
+      setUser(getUser());
+    };
+
+    window.addEventListener("authChanged", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("authChanged", handleAuthChange);
+    };
+  }, []);
+
+  // =====================================================
   // Smooth scroll to section
   // =====================================================
 
@@ -186,45 +207,21 @@ const Navbar = () => {
   };
 
   // =====================================================
-  // Authentication
-  // =====================================================
-
-  const [loggedIn, setLoggedIn] = useState(isLoggedIn());
-  const [user, setUser] = useState(getUser());
-
-  useEffect(() => {
-    const handleAuthChange = () => {
-      setLoggedIn(isLoggedIn());
-      setUser(getUser());
-    };
-
-    window.addEventListener("authChanged", handleAuthChange);
-
-    return () => {
-      window.removeEventListener("authChanged", handleAuthChange);
-    };
-  }, []);
-
-  // =====================================================
   // Logout Handler
   // =====================================================
 
   const handleLogout = () => {
-    // Logout immediately
     logout();
 
     setLoggedIn(false);
     setUser(null);
 
-    // Close all dropdowns
     setAccountDropdownOpen(false);
     setMobileMenu(false);
     setDropdownOpen(false);
 
-    // Show loading screen
     setLogoutLoading(true);
 
-    // After 400ms go to Home
     setTimeout(() => {
       window.location.href = "/";
     }, 400);
@@ -649,7 +646,7 @@ const Navbar = () => {
                     onMouseDown={(event) =>
                       event.stopPropagation()
                     }
-                    className="absolute right-0 top-[52px] z-[10000] w-[200px] rounded-xl border border-gray-100 bg-white py-2 shadow-[0_8px_25px_rgba(0,0,0,0.12)]"
+                    className="absolute right-0 top-[52px] z-[10000] w-[250px] rounded-xl border border-gray-100 bg-white py-2 shadow-[0_8px_25px_rgba(0,0,0,0.12)]"
                   >
 
                     {/* User Information */}
@@ -683,6 +680,26 @@ const Navbar = () => {
 
                       <span>
                         Profile
+                      </span>
+                    </button>
+
+                    {/* My Appointments */}
+
+                    <button
+                      type="button"
+                      onMouseDown={(event) =>
+                        event.stopPropagation()
+                      }
+                      onClick={() => {
+                        setAccountDropdownOpen(false);
+                        navigate("/my-appointments");
+                      }}
+                      className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-3 text-left text-[14px] text-gray-600 transition-colors duration-200 hover:bg-[#f5f9fd] hover:text-[#1976c8]"
+                    >
+                      <i className="bi bi-calendar text-[16px]"></i>
+
+                      <span>
+                        My Appointments
                       </span>
                     </button>
 
@@ -778,7 +795,7 @@ const Navbar = () => {
                         onMouseDown={(event) =>
                           event.stopPropagation()
                         }
-                        className="absolute right-0 top-[48px] z-[10000] w-[190px] rounded-xl border border-gray-100 bg-white py-2 shadow-[0_8px_25px_rgba(0,0,0,0.12)]"
+                        className="absolute right-0 top-[48px] z-[10000] w-[230px] rounded-xl border border-gray-100 bg-white py-2 shadow-[0_8px_25px_rgba(0,0,0,0.12)]"
                       >
 
                         {/* User Information */}
@@ -812,6 +829,26 @@ const Navbar = () => {
 
                           <span>
                             Profile
+                          </span>
+                        </button>
+
+                        {/* My Appointments */}
+
+                        <button
+                          type="button"
+                          onMouseDown={(event) =>
+                            event.stopPropagation()
+                          }
+                          onClick={() => {
+                            setAccountDropdownOpen(false);
+                            navigate("/my-appointments");
+                          }}
+                          className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-3 text-left text-[14px] text-gray-600 transition-colors duration-200 hover:bg-[#f5f9fd] hover:text-[#1976c8]"
+                        >
+                          <i className="bi bi-calendar text-[16px]"></i>
+
+                          <span>
+                            My Appointments
                           </span>
                         </button>
 

@@ -17,6 +17,7 @@ import Departments from "./pages/website/Departments";
 import Doctors from "./pages/website/Doctors";
 import DoctorDetails from "./pages/website/DoctorDetails";
 import Appointment from "./pages/website/Appointment";
+import MyAppointments from "./pages/website/MyAppointments";
 import FAQ from "./pages/website/FAQ";
 import Contact from "./pages/website/Contact";
 import Profile from "./pages/website/Profile";
@@ -87,6 +88,10 @@ const router = createBrowserRouter([
       {
         path: "appointment",
         element: <Appointment />,
+      },
+      {
+        path: "my-appointments",
+        element: <MyAppointments />,
       },
       {
         path: "faq",

@@ -1,4 +1,3 @@
-
 import {
   Search,
   CalendarDays,
@@ -13,6 +12,7 @@ import {
   Check,
   Trash2,
   X,
+  Ban,
 } from "lucide-react";
 
 import {
@@ -23,19 +23,24 @@ import {
 
 import { createPortal } from "react-dom";
 
+
+// =====================================================
+// API URL
+// =====================================================
+
+const API_URL =
+  "http://localhost:5000/api/dashboard/appointments";
+
+
+// =====================================================
+// APPOINTMENTS
+// =====================================================
+
 const Appointments = () => {
 
-  /* =====================================================
-     API
-  ===================================================== */
-
-  const API_URL =
-    "http://localhost:5000/api/dashboard/appointments";
-
-
-  /* =====================================================
-     APPOINTMENTS
-  ===================================================== */
+// ===================================================
+// STATES
+// ===================================================
 
   const [appointments, setAppointments] =
     useState([]);
@@ -43,164 +48,176 @@ const Appointments = () => {
   const [loading, setLoading] =
     useState(true);
 
-
-  /* =====================================================
-     APPOINTMENT LIST REF
-  ===================================================== */
-
   const appointmentListRef =
     useRef(null);
 
 
-  /* =====================================================
-     TOKEN
-  ===================================================== */
+  // ===================================================
+  // TOKEN
+  // ===================================================
 
-  const getToken = () => {
-    return localStorage.getItem("token");
+  const getToken = () =>
+    localStorage.getItem("token");
+
+
+  // ===================================================
+  // FETCH APPOINTMENTS
+  // ===================================================
+
+  const fetchAppointments = async (
+    showLoader = true
+  ) => {
+
+    try {
+
+      if (showLoader) {
+        setLoading(true);
+      }
+
+      const token = getToken();
+
+      if (!token) {
+        throw new Error(
+          "Admin token not found"
+        );
+      }
+
+      const response = await fetch(
+        API_URL,
+        {
+          method: "GET",
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Failed to fetch appointments"
+        );
+      }
+
+      const formattedAppointments =
+        (data.appointments || []).map(
+          (appointment) => ({
+            id:
+              appointment._id,
+
+            patient:
+              appointment.patientId?.name ||
+              appointment.patientName ||
+              "Unknown Patient",
+
+            doctor:
+              appointment.doctorId?.name ||
+              "Unknown Doctor",
+
+            department:
+              appointment.departmentId?.name ||
+              "Unknown Department",
+
+            date:
+              appointment.date,
+
+            time:
+              appointment.time,
+
+            status:
+              appointment.status
+                ? appointment.status
+                  .charAt(0)
+                  .toUpperCase() +
+                appointment.status.slice(1)
+                : "Pending",
+
+            phone:
+              appointment.phone ||
+              appointment.patientId?.phone ||
+              "N/A",
+
+            reason:
+              appointment.reason ||
+              "No reason provided",
+
+            notes:
+              appointment.notes ||
+              "",
+
+            cancellationReason:
+              appointment.cancellationReason ||
+              "",
+
+            cancelledAt:
+              appointment.cancelledAt ||
+              null,
+          })
+        );
+
+      setAppointments(
+        formattedAppointments
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Fetch appointments error:",
+        error
+      );
+
+      alert(error.message);
+
+    } finally {
+
+      if (showLoader) {
+        setLoading(false);
+      }
+
+    }
   };
 
 
-  /* =====================================================
-     FETCH APPOINTMENTS
-  ===================================================== */
-
-  const fetchAppointments = async () => {
-
-      try {
-
-          setLoading(true);
-
-          const token = getToken();
-
-          if (!token) {
-
-              console.error(
-                "Admin token not found"
-              );
-
-              setAppointments([]);
-
-              return;
-            }
-
-          const response =
-            await fetch(
-              API_URL,
-              {
-                method: "GET",
-
-                      headers: {
-                        Authorization:
-                          `Bearer ${token}`,
-                        "Content-Type":
-                          "application/json",
-                      },
-                  }
-                );
-
-          const data =
-            await response.json();
-
-          if (!response.ok) {
-
-              throw new Error(
-                data.message ||
-                "Failed to fetch appointments"
-              );
-            }
-
-          const formattedAppointments =
-            (data.appointments || []).map(
-              (appointment) => ({
-
-                    id:
-                      appointment._id,
-
-                    patient:
-                      appointment.patientName ||
-                      appointment.patientId?.name ||
-                      "Unknown Patient",
-
-                    doctor:
-                      appointment.doctorId?.name ||
-                      "Unknown Doctor",
-
-                    department:
-                      appointment.departmentId?.name ||
-                      "Unknown Department",
-
-                    date:
-                      appointment.date,
-
-                    time:
-                      appointment.time,
-
-                    status:
-                      appointment.status
-                        ?.charAt(0)
-                        .toUpperCase() +
-                      appointment.status?.slice(1),
-
-                    phone:
-                      appointment.phone || "",
-
-                    reason:
-                      appointment.reason || "",
-
-                    notes:
-                      appointment.notes || "",
-
-                  })
-                );
-
-          setAppointments(
-            formattedAppointments
-          );
-
-        } catch (error) {
-
-          console.error(
-            "Fetch appointments error:",
-            error
-          );
-
-          setAppointments([]);
-
-        } finally {
-
-          setLoading(false);
-
-      }
-    };
-
-
-  /* =====================================================
-     FETCH ON PAGE LOAD
-  ===================================================== */
+  // ===================================================
+  // INITIAL FETCH + AUTO REFRESH
+  // ===================================================
 
   useEffect(() => {
+
     fetchAppointments();
+
+    const interval =
+      setInterval(() => {
+        fetchAppointments(false);
+      }, 60 * 1000);
+
+    return () =>
+      clearInterval(interval);
+
   }, []);
 
 
-  /* =====================================================
-     SEARCH + FILTER
-  ===================================================== */
+  // ===================================================
+  // SEARCH / FILTER STATES
+  // ===================================================
 
   const [search, setSearch] =
     useState("");
 
   const [statusFilter, setStatusFilter] =
-    useState("All Status");
+    useState("All");
 
   const [departmentFilter, setDepartmentFilter] =
-    useState("All Departments");
+    useState("All");
 
 
-  /* =====================================================
-     ACTION MENU
-  ===================================================== */
+  // ===================================================
+  // ACTION MENU
+  // ===================================================
 
   const [openMenu, setOpenMenu] =
     useState(null);
@@ -212,9 +229,9 @@ const Appointments = () => {
     });
 
 
-  /* =====================================================
-     MODALS
-  ===================================================== */
+  // ===================================================
+  // DETAILS
+  // ===================================================
 
   const [selectedAppointment, setSelectedAppointment] =
     useState(null);
@@ -222,102 +239,141 @@ const Appointments = () => {
   const [showDetails, setShowDetails] =
     useState(false);
 
+
+  // ===================================================
+  // DELETE
+  // ===================================================
+
   const [deleteAppointment, setDeleteAppointment] =
     useState(null);
 
 
-  /* =====================================================
-     STATUS STYLE
-  ===================================================== */
+  // ===================================================
+  // CANCEL
+  // ===================================================
+
+  const [cancelAppointment, setCancelAppointment] =
+    useState(null);
+
+  const [cancellationReason, setCancellationReason] =
+    useState("");
+
+  const [cancelling, setCancelling] =
+    useState(false);
+
+
+  // ===================================================
+  // STATUS STYLE
+  // ===================================================
 
   const statusStyle = {
 
-      Pending: {
-        badge:
-          "bg-amber-50 text-amber-600",
-        dot:
-          "bg-amber-500",
-      },
+    Pending: {
+      bg: "bg-amber-50",
+      text: "text-amber-600",
+      dot: "bg-amber-500",
+    },
 
-      Confirmed: {
-        badge:
-          "bg-blue-50 text-[#1976c8]",
-        dot:
-          "bg-[#1976c8]",
-      },
+    Confirmed: {
+      bg: "bg-blue-50",
+      text: "text-blue-600",
+      dot: "bg-blue-500",
+    },
 
-      Rescheduled: {
-        badge:
-          "bg-purple-50 text-purple-600",
-        dot:
-          "bg-purple-500",
-      },
+    Rescheduled: {
+      bg: "bg-purple-50",
+      text: "text-purple-600",
+      dot: "bg-purple-500",
+    },
 
-      Cancelled: {
-        badge:
-          "bg-red-50 text-red-600",
-        dot:
-          "bg-red-500",
-      },
+    Cancelled: {
+      bg: "bg-red-50",
+      text: "text-red-600",
+      dot: "bg-red-500",
+    },
 
-      Completed: {
-        badge:
-          "bg-green-50 text-green-600",
-        dot:
-          "bg-green-500",
-      },
+    Completed: {
+      bg: "bg-green-50",
+      text: "text-green-600",
+      dot: "bg-green-500",
+    },
 
-    };
+  };
 
 
-  /* =====================================================
-     FILTER APPOINTMENTS
-  ===================================================== */
+  // ===================================================
+  // DEPARTMENTS
+  // ===================================================
+
+  const departments = [
+    "All",
+
+    ...Array.from(
+      new Set(
+        appointments
+          .map(
+            (appointment) =>
+              appointment.department
+          )
+          .filter(Boolean)
+      )
+    ),
+  ];
+
+
+  // ===================================================
+  // FILTER APPOINTMENTS
+  // ===================================================
 
   const filteredAppointments =
-      appointments.filter(
-        (appointment) => {
+    appointments.filter(
+      (appointment) => {
 
-          const searchValue =
-                  search
-                    .toLowerCase()
-                    .trim();
+        const searchValue =
+          search
+            .toLowerCase()
+            .trim();
 
-            const matchesSearch =
-              appointment.patient
-                .toLowerCase()
-                .includes(searchValue) ||
-              appointment.doctor
-                .toLowerCase()
-                    .includes(searchValue) ||
-                  appointment.department
-                    .toLowerCase()
-                    .includes(searchValue);
+        const matchesSearch =
+          !searchValue ||
+          appointment.patient
+            .toLowerCase()
+            .includes(searchValue) ||
+          appointment.doctor
+            .toLowerCase()
+            .includes(searchValue) ||
+          appointment.department
+            .toLowerCase()
+            .includes(searchValue) ||
+          appointment.phone
+            .toLowerCase()
+            .includes(searchValue) ||
+          appointment.reason
+            .toLowerCase()
+            .includes(searchValue);
 
-            const matchesStatus =
-                  statusFilter ===
-                  "All Status" ||
-                  appointment.status ===
-                  statusFilter;
+        const matchesStatus =
+          statusFilter === "All" ||
+          appointment.status ===
+          statusFilter;
 
-            const matchesDepartment =
-              departmentFilter ===
-              "All Departments" ||
-              appointment.department ===
-              departmentFilter;
+        const matchesDepartment =
+          departmentFilter === "All" ||
+          appointment.department ===
+          departmentFilter;
 
-            return (
-              matchesSearch &&
-              matchesStatus &&
-              matchesDepartment
-            );
-          }
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesDepartment
         );
+      }
+    );
 
 
-  /* =====================================================
-     SUMMARY COUNTS
-  ===================================================== */
+  // ===================================================
+  // STATISTICS
+  // ===================================================
 
   const totalAppointments =
     appointments.length;
@@ -325,30 +381,44 @@ const Appointments = () => {
   const pendingAppointments =
     appointments.filter(
       (appointment) =>
-            appointment.status ===
-            "Pending"
-        ).length;
+        appointment.status ===
+        "Pending"
+    ).length;
 
   const confirmedAppointments =
     appointments.filter(
       (appointment) =>
-            appointment.status ===
-            "Confirmed"
-        ).length;
+        appointment.status ===
+        "Confirmed"
+    ).length;
+
+  const cancelledAppointments =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        "Cancelled"
+    ).length;
+
+  const completedAppointments =
+    appointments.filter(
+      (appointment) =>
+        appointment.status ===
+        "Completed"
+    ).length;
 
 
-  /* =====================================================
-     SCROLL LIST TO TOP
-  ===================================================== */
+  // ===================================================
+  // SCROLL TO TOP
+  // ===================================================
 
   useEffect(() => {
 
-    if (appointmentListRef.current) {
+    if (
+      appointmentListRef.current
+    ) {
 
-      appointmentListRef.current.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
+      appointmentListRef.current.scrollTop =
+        0;
 
     }
 
@@ -359,1609 +429,2101 @@ const Appointments = () => {
   ]);
 
 
-  /* =====================================================
-     OPEN ACTION MENU
-  ===================================================== */
+  // ===================================================
+  // MENU CLICK
+  // ===================================================
 
   const handleMenuClick = (
     event,
     appointmentId
   ) => {
 
-      event.stopPropagation();
+    event.stopPropagation();
 
-      const rect =
-          event.currentTarget
-            .getBoundingClientRect();
+    const rect =
+      event.currentTarget.getBoundingClientRect();
 
-      const menuWidth = 195;
-      const menuHeight = 175;
+    const menuWidth = 190;
+    const menuHeight = 190;
 
-      let left =
-          rect.right -
-          menuWidth;
+    let left =
+      rect.right - menuWidth;
 
-      let top =
-        rect.bottom + 6;
+    let top =
+      rect.bottom + 8;
 
-      if (left < 10) {
-        left = 10;
+    if (
+      left < 10
+    ) {
+      left = 10;
+    }
+
+    if (
+      left + menuWidth >
+      window.innerWidth - 10
+    ) {
+
+      left =
+        window.innerWidth -
+        menuWidth -
+        10;
+
+    }
+
+    if (
+      top + menuHeight >
+      window.innerHeight - 10
+    ) {
+
+      top =
+        rect.top -
+        menuHeight -
+        8;
+
+    }
+
+    setMenuPosition({
+      top,
+      left,
+    });
+
+    setOpenMenu(
+      openMenu === appointmentId
+        ? null
+        : appointmentId
+    );
+
+  };
+
+
+  // ===================================================
+  // VIEW APPOINTMENT
+  // ===================================================
+
+  const handleViewAppointment = (
+    appointment
+  ) => {
+
+    setSelectedAppointment(
+      appointment
+    );
+
+    setShowDetails(true);
+
+    setOpenMenu(null);
+
+  };
+
+
+  // ===================================================
+  // CONFIRM APPOINTMENT
+  // ===================================================
+
+  const handleConfirmAppointment =
+    async (
+      appointmentId
+    ) => {
+
+      try {
+
+        const token =
+          getToken();
+
+        if (!token) {
+
+          alert(
+            "Admin token not found"
+          );
+
+          return;
+
+        }
+
+        const response =
+          await fetch(
+            `${API_URL}/${appointmentId}`,
+            {
+              method: "PUT",
+
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+                status:
+                  "confirmed",
+              }),
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            "Failed to confirm appointment"
+          );
+
+        }
+
+        await fetchAppointments(
+          false
+        );
+
+        setOpenMenu(null);
+
+      } catch (error) {
+
+        console.error(
+          "Confirm appointment error:",
+          error
+        );
+
+        alert(error.message);
+
       }
-
-      if (
-        left + menuWidth >
-        window.innerWidth - 10
-      ) {
-
-          left =
-            window.innerWidth -
-            menuWidth -
-            10;
-
-        }
-
-      if (
-        top + menuHeight >
-        window.innerHeight - 10
-      ) {
-
-          top =
-            rect.top -
-            menuHeight -
-            6;
-
-        }
-
-      setMenuPosition({
-        top,
-        left,
-      });
-
-      setOpenMenu(
-        openMenu === appointmentId
-          ? null
-          : appointmentId
-      );
 
     };
 
 
-  /* =====================================================
-     VIEW APPOINTMENT
-  ===================================================== */
-
-  const handleViewAppointment =
-    (appointment) => {
-
-      setSelectedAppointment(
-        appointment
-      );
-
-          setShowDetails(true);
-
-          setOpenMenu(null);
-
-      };
-
-
-  /* =====================================================
-     CONFIRM APPOINTMENT
-  ===================================================== */
-
-  const handleConfirmAppointment =
-    async (appointmentId) => {
-
-      try {
-
-              const token =
-                getToken();
-
-              if (!token) {
-
-                  alert(
-                    "Admin token not found"
-                  );
-
-                  return;
-                }
-
-              const response =
-                await fetch(
-                  `${API_URL}/${appointmentId}`,
-                  {
-                    method: "PUT",
-
-                          headers: {
-                            Authorization:
-                              `Bearer ${token}`,
-                            "Content-Type":
-                              "application/json",
-                          },
-
-                        body:
-                          JSON.stringify({
-                            status:
-                              "confirmed",
-                          }),
-                      }
-                    );
-
-              const data =
-                await response.json();
-
-              if (!response.ok) {
-
-                  throw new Error(
-                    data.message ||
-                    "Failed to confirm appointment"
-                  );
-
-                }
-
-              await fetchAppointments();
-
-              setOpenMenu(null);
-
-            } catch (error) {
-
-              console.error(
-                "Confirm appointment error:",
-                error
-              );
-
-              alert(error.message);
-
-            }
-
-      };
-
-
-  /* =====================================================
-     COMPLETE APPOINTMENT
-  ===================================================== */
+  // ===================================================
+  // COMPLETE APPOINTMENT
+  // ===================================================
 
   const handleCompleteAppointment =
-    async (appointmentId) => {
+    async (
+      appointmentId
+    ) => {
 
       try {
 
-              const token =
-                getToken();
+        const token =
+          getToken();
 
-              if (!token) {
+        if (!token) {
 
-                  alert(
-                    "Admin token not found"
-                  );
+          alert(
+            "Admin token not found"
+          );
 
-                  return;
-                }
+          return;
 
-              const response =
-                await fetch(
-                  `${API_URL}/${appointmentId}`,
-                  {
-                    method: "PUT",
+        }
 
-                          headers: {
-                            Authorization:
-                              `Bearer ${token}`,
-                            "Content-Type":
-                              "application/json",
-                          },
+        const response =
+          await fetch(
+            `${API_URL}/${appointmentId}`,
+            {
+              method: "PUT",
 
-                        body:
-                          JSON.stringify({
-                            status:
-                              "completed",
-                          }),
-                      }
-                    );
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
 
-              const data =
-                await response.json();
+                "Content-Type":
+                  "application/json",
+              },
 
-              if (!response.ok) {
-
-                  throw new Error(
-                    data.message ||
-                    "Failed to complete appointment"
-                  );
-
-                }
-
-              await fetchAppointments();
-
-              setOpenMenu(null);
-
-            } catch (error) {
-
-              console.error(
-                "Complete appointment error:",
-                error
-              );
-
-              alert(error.message);
-
+              body: JSON.stringify({
+                status:
+                  "completed",
+              }),
             }
+          );
 
-      };
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            "Failed to complete appointment"
+          );
+
+        }
+
+        await fetchAppointments(
+          false
+        );
+
+        setOpenMenu(null);
+
+      } catch (error) {
+
+        console.error(
+          "Complete appointment error:",
+          error
+        );
+
+        alert(error.message);
+
+      }
+
+    };
 
 
-  /* =====================================================
-     DELETE APPOINTMENT
-  ===================================================== */
+  // ===================================================
+  // CANCEL APPOINTMENT
+  // ===================================================
+
+  const handleCancelAppointment =
+    async () => {
+
+      if (!cancelAppointment) {
+        return;
+      }
+
+      const reason =
+        cancellationReason.trim();
+
+      if (!reason) {
+
+        alert(
+          "Please enter a cancellation reason."
+        );
+
+        return;
+
+      }
+
+      try {
+
+        setCancelling(true);
+
+        const token =
+          getToken();
+
+        if (!token) {
+
+          alert(
+            "Admin token not found"
+          );
+
+          return;
+
+        }
+
+        const response =
+          await fetch(
+            `${API_URL}/${cancelAppointment.id}/cancel`,
+            {
+              method: "PATCH",
+
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+                cancellationReason:
+                  reason,
+              }),
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            "Failed to cancel appointment"
+          );
+
+        }
+
+        await fetchAppointments(
+          false
+        );
+
+        setCancelAppointment(
+          null
+        );
+
+        setCancellationReason(
+          ""
+        );
+
+        setOpenMenu(null);
+
+      } catch (error) {
+
+        console.error(
+          "Cancel appointment error:",
+          error
+        );
+
+        alert(error.message);
+
+      } finally {
+
+        setCancelling(false);
+
+      }
+
+    };
+
+
+  // ===================================================
+  // DELETE APPOINTMENT
+  // ===================================================
 
   const handleDeleteAppointment =
     async () => {
 
-          if (!deleteAppointment) {
-            return;
-          }
+      if (!deleteAppointment) {
+        return;
+      }
 
-          try {
+      try {
 
-              const token =
-                getToken();
+        const token =
+          getToken();
 
-              if (!token) {
+        if (!token) {
 
-                  alert(
-                    "Admin token not found"
-                  );
+          alert(
+            "Admin token not found"
+          );
 
-                  return;
-                }
+          return;
 
-              const response =
-                await fetch(
-                  `${API_URL}/${deleteAppointment.id}`,
-                  {
-                    method: "DELETE",
+        }
 
-                          headers: {
-                          Authorization:
-                            `Bearer ${token}`,
-                          "Content-Type":
-                            "application/json",
-                        },
-                      }
-                    );
+        const response =
+          await fetch(
+            `${API_URL}/${deleteAppointment.id}`,
+            {
+              method: "DELETE",
 
-              const data =
-                await response.json();
-
-              if (!response.ok) {
-
-                  throw new Error(
-                    data.message ||
-                    "Failed to delete appointment"
-                  );
-
-                }
-
-              await fetchAppointments();
-
-              setDeleteAppointment(null);
-
-            } catch (error) {
-
-              console.error(
-                "Delete appointment error:",
-                error
-              );
-
-              alert(error.message);
-
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
             }
+          );
 
-      };
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            "Failed to delete appointment"
+          );
+
+        }
+
+        await fetchAppointments(
+          false
+        );
+
+        setDeleteAppointment(
+          null
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Delete appointment error:",
+          error
+        );
+
+        alert(error.message);
+
+      }
+
+    };
 
 
-  /* =====================================================
-     CLOSE MENU
-  ===================================================== */
+  // ===================================================
+  // CLOSE MENU ON OUTSIDE CLICK
+  // ===================================================
 
   useEffect(() => {
 
-      const handleOutsideClick =
-        (event) => {
+    const handleOutsideClick =
+      (event) => {
 
-          if (
-            !event.target.closest(
-              "[data-appointment-menu]"
-            )
-          ) {
+        if (
+          !event.target.closest(
+            "[data-appointment-menu]"
+          )
+        ) {
 
-                  setOpenMenu(null);
+          setOpenMenu(null);
 
-                }
+        }
 
-          };
-
-      const handleScroll = () => {
-        setOpenMenu(null);
       };
 
-      const handleResize = () => {
-        setOpenMenu(null);
-      };
+    const handleScroll = () => {
+      setOpenMenu(null);
+    };
 
-      document.addEventListener(
+    const handleResize = () => {
+      setOpenMenu(null);
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      true
+    );
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () => {
+
+      document.removeEventListener(
         "mousedown",
         handleOutsideClick
       );
 
-      window.addEventListener(
+      window.removeEventListener(
         "scroll",
         handleScroll,
         true
       );
 
-      window.addEventListener(
+      window.removeEventListener(
         "resize",
         handleResize
       );
 
-      return () => {
+    };
 
-          document.removeEventListener(
-            "mousedown",
-            handleOutsideClick
-          );
-
-          window.removeEventListener(
-            "scroll",
-            handleScroll,
-            true
-          );
-
-          window.removeEventListener(
-            "resize",
-            handleResize
-          );
-
-        };
-
-    }, []);
+  }, []);
 
 
-  return (
+  // ===================================================
+  // LOADING
+  // ===================================================
 
-      <div className="space-y-6">
+  if (loading) {
 
+    return (
 
-        {/* =====================================================
-                PAGE HEADER
-            ===================================================== */}
+      <div className="!flex !min-h-[500px] !items-center !justify-center">
 
-        <div>
+        <div className="!flex !flex-col !items-center !gap-3">
 
-          <h1 className="!text-2xl font-bold text-[#294b68]">
-            Appointments
-          </h1>
+          <div className="!h-9 !w-9 !animate-spin !rounded-full !border-2 !border-[#1976c8] !border-t-transparent"></div>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Manage and track patient appointments.
+          <p className="!text-sm !text-gray-500">
+            Loading appointments...
           </p>
 
         </div>
 
+      </div>
 
-        {/* =====================================================
-                3 SUMMARY CARDS
-            ===================================================== */}
+    );
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-
-
-          {/* TOTAL APPOINTMENTS */}
-
-          <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
-
-            <div className="flex items-center justify-between">
-
-              <div>
-
-                <p className="text-sm font-medium text-gray-500">
-                  Total Appointments
-                </p>
-
-                <p className="mt-2 text-2xl font-bold text-[#294b68]">
-                  {totalAppointments}
-                </p>
-
-                <p className="mt-1 text-xs text-gray-400">
-                  All scheduled appointments
-                </p>
-
-              </div>
-
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#1976c8] group-hover:text-white">
-
-                <ClipboardList size={23} />
-
-              </div>
-
-            </div>
-
-            <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
-
-          </div>
+  }
 
 
-          {/* PENDING */}
+  // ===================================================
+  // RETURN
+  // ===================================================
 
-          <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
+  return (
 
-            <div className="flex items-center justify-between">
-
-              <div>
-
-                <p className="text-sm font-medium text-gray-500">
-                  Pending
-                </p>
-
-                <p className="mt-2 text-2xl font-bold text-amber-600">
-                  {pendingAppointments}
-                </p>
-
-                <p className="mt-1 text-xs text-gray-400">
-                  Awaiting confirmation
-                </p>
-
-              </div>
-
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-500 transition-all duration-300 group-hover:scale-105">
-
-                <CircleAlert size={23} />
-
-              </div>
-
-            </div>
-
-            <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-amber-500 transition-all duration-300 group-hover:w-full" />
-
-          </div>
+    <div className="!w-full">
 
 
-          {/* CONFIRMED */}
+      {/* =================================================
+          PAGE HEADER
+      ================================================= */}
 
-          <div className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]">
+      <div className="!mb-8">
 
-            <div className="flex items-center justify-between">
+        <div className="!flex !flex-col !gap-4 md:!flex-row md:!items-center md:!justify-between">
 
-              <div>
+          <div>
 
-                <p className="text-sm font-medium text-gray-500">
-                  Confirmed
-                </p>
+            <h1 className="!m-0 !text-[28px] !font-bold !text-[#294b68]">
+              Appointments
+            </h1>
 
-                <p className="mt-2 text-2xl font-bold text-[#1976c8]">
-                  {confirmedAppointments}
-                </p>
-
-                <p className="mt-1 text-xs text-gray-400">
-                  Confirmed appointments
-                </p>
-
-              </div>
-
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#1976c8] transition-all duration-300 group-hover:scale-105 group-hover:bg-[#1976c8] group-hover:text-white">
-
-                <CheckCircle2 size={23} />
-
-              </div>
-
-            </div>
-
-            <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+            <p className="!mb-0 !mt-2 !text-sm !text-gray-500">
+              Manage and monitor patient
+              appointments.
+            </p>
 
           </div>
 
         </div>
 
+      </div>
 
-        {/* =====================================================
-                SEARCH + FILTER
-            ===================================================== */}
 
-        <div className="rounded-2xl border border-[#e5edf3] bg-white p-4 shadow-sm">
+      {/* =================================================
+          STATISTIC CARDS
+      ================================================= */}
 
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="!mb-8 !grid  !grid-cols-1 !gap-5 sm:!grid-cols-2 lg:!grid-cols-3 xl:!grid-cols-5">
 
 
-            {/* SEARCH */}
+        {/* TOTAL */}
 
-            <div className="relative w-full lg:max-w-md">
+        <div className="!rounded-xl  !border !border-[#e7edf2] !bg-white !p-5 !shadow-[0_3px_15px_rgba(41,75,104,0.04)]">
 
-              <Search
-                size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
+          <div className="!flex !items-center !justify-between h-[100px]">
 
-              <input
-                type="text"
-                value={search}
-                onChange={(event) =>
-                  setSearch(
-                    event.target.value
-                  )
-                }
-                placeholder="Search patient or doctor..."
-                className="w-full rounded-xl border border-gray-200 bg-[#fafcfd] py-2.5 pl-10 pr-4 text-sm text-gray-600 outline-none transition focus:border-[#1976c8] focus:bg-white"
-              />
+            <div>
 
-            </div>
-
-
-            {/* FILTERS */}
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(
-                    event.target.value
-                  )
-                }
-                className="rounded-xl border border-gray-200 bg-[#fafcfd] px-4 py-2.5 text-sm text-gray-600 outline-none transition focus:border-[#1976c8] focus:bg-white"
-              >
-
-                <option>
-                  All Status
-                </option>
-
-                <option>
-                  Pending
-                </option>
-
-                <option>
-                  Confirmed
-                </option>
-
-                <option>
-                  Rescheduled
-                </option>
-
-                <option>
-                  Cancelled
-                </option>
-
-                <option>
-                  Completed
-                </option>
-
-              </select>
-
-
-              <select
-                value={departmentFilter}
-                onChange={(event) =>
-                  setDepartmentFilter(
-                    event.target.value
-                  )
-                }
-                className="rounded-xl border border-gray-200 bg-[#fafcfd] px-4 py-2.5 text-sm text-gray-600 outline-none transition focus:border-[#1976c8] focus:bg-white"
-              >
-
-                <option>
-                  All Departments
-                </option>
-
-                <option>
-                  Cardiology & Heart Care
-                </option>
-
-                <option>
-                  Orthopedics
-                </option>
-
-                <option>
-                  Dermatology
-                </option>
-
-              </select>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* =====================================================
-                DESKTOP TABLE
-            ===================================================== */}
-
-        <div className="hidden overflow-hidden rounded-2xl border border-[#e5edf3] bg-white shadow-sm lg:block">
-
-
-          {/* FIXED TABLE HEADER */}
-
-          <div className="overflow-hidden">
-
-            <table className="w-full min-w-[950px] table-fixed text-left">
-
-              <thead className="border-b border-gray-100 bg-[#f8fafc]">
-
-                <tr>
-
-                  <th className="w-[22%] px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Patient
-                  </th>
-
-                  <th className="w-[18%] px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Doctor
-                  </th>
-
-                  <th className="w-[18%] px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Department
-                  </th>
-
-                  <th className="w-[20%] px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Date & Time
-                  </th>
-
-                  <th className="w-[14%] px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Status
-                  </th>
-
-                  <th className="w-[8%] px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                    Action
-                  </th>
-
-                </tr>
-
-              </thead>
-
-            </table>
-
-          </div>
-
-
-          {/* SCROLLABLE TABLE BODY */}
-
-          <div
-            ref={appointmentListRef}
-            className="h-[640px] overflow-auto scroll-smooth"
-          >
-
-            <table className="w-full min-w-[950px] table-fixed text-left">
-
-              <tbody className="divide-y divide-gray-100">
-
-                {loading ? (
-
-                  <tr>
-
-                    <td
-                      colSpan="6"
-                      className="px-6 py-14 text-center"
-                    >
-
-                      <div className="flex flex-col items-center justify-center">
-
-                        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
-
-                        <p className="mt-3 text-sm text-gray-500">
-                          Loading appointments...
-                        </p>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                ) : filteredAppointments.length > 0 ? (
-
-                    filteredAppointments.map(
-                      (appointment) => (
-
-                                    <tr
-                                      key={appointment.id}
-                                      className="group transition hover:bg-[#f9fcfe]"
-                                    >
-
-
-                                      {/* PATIENT */}
-
-                                      <td className="w-[22%] px-6 py-5">
-
-                                        <div className="flex items-center gap-3">
-
-                                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition group-hover:bg-[#1976c8] group-hover:text-white">
-
-                                            <UserRound size={19} />
-
-                                          </div>
-
-                                          <div className="min-w-0">
-
-                                            <p className="truncate font-semibold text-[#294b68]">
-                                              {appointment.patient}
-                                            </p>
-
-                                            <p className="mt-0.5 truncate text-xs text-gray-400">
-                                              Appointment ID: {appointment.id}
-                                            </p>
-
-                                          </div>
-
-                                        </div>
-
-                                      </td>
-
-
-                                      {/* DOCTOR */}
-
-                                      <td className="w-[18%] px-6 py-5">
-
-                                        <div className="flex items-center gap-2">
-
-                                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
-
-                                            <Stethoscope size={15} />
-
-                                          </div>
-
-                                          <span className="truncate text-sm font-medium text-gray-600">
-                                            {appointment.doctor}
-                                          </span>
-
-                                        </div>
-
-                                      </td>
-
-
-                                      {/* DEPARTMENT */}
-
-                                      <td className="w-[18%] px-6 py-5">
-
-                                        <span className="inline-flex max-w-full truncate rounded-lg bg-[#f6f9fc] px-3 py-1.5 text-xs font-medium text-gray-600">
-                                          {appointment.department}
-                                        </span>
-
-                                      </td>
-
-
-                                      {/* DATE + TIME */}
-
-                                      <td className="w-[20%] px-6 py-5">
-
-                                        <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
-
-                                          <CalendarDays
-                                            size={16}
-                                            className="shrink-0 text-[#1976c8]"
-                                          />
-
-                                          <span>
-                                            {appointment.date}
-                                          </span>
-
-                                        </div>
-
-                                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
-
-                                          <Clock3
-                                            size={13}
-                                            className="shrink-0"
-                                          />
-
-                                          {appointment.time}
-
-                                        </div>
-
-                                      </td>
-
-
-                                      {/* STATUS */}
-
-                                      <td className="w-[14%] px-6 py-5">
-
-                                        <span
-                                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[
-                                              appointment.status
-                                            ]?.badge ||
-                                            "bg-gray-100 text-gray-500"
-                                            }`}
-                                        >
-
-                                          <span
-                                            className={`h-1.5 w-1.5 rounded-full ${statusStyle[
-                                                appointment.status
-                                              ]?.dot ||
-                                              "bg-gray-400"
-                                              }`}
-                                          />
-
-                                          {appointment.status}
-
-                                        </span>
-
-                                      </td>
-
-
-                                      {/* ACTION */}
-
-                                      <td className="w-[8%] px-6 py-5">
-
-                                        <button
-                                          type="button"
-                                          data-appointment-menu
-                                          onClick={(event) =>
-                                            handleMenuClick(
-                                              event,
-                                              appointment.id
-                                            )
-                                          }
-                                          className="rounded-lg p-2 text-gray-400 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                        >
-
-                                          <MoreVertical size={18} />
-
-                                        </button>
-
-                                      </td>
-
-                                    </tr>
-
-                                  )
-                                )
-
-                  ) : (
-
-                      <tr>
-
-                        <td
-                          colSpan="6"
-                          className="px-6 py-14 text-center"
-                        >
-
-                          <ClipboardList
-                            size={40}
-                            className="mx-auto text-gray-300"
-                          />
-
-                          <h3 className="mt-4 !text-lg font-semibold text-[#294b68]">
-                            No appointments found
-                          </h3>
-
-                          <p className="mt-1 text-sm text-gray-500">
-                            Try changing your search or filters.
-                          </p>
-
-                    </td>
-
-                  </tr>
-
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-
-        {/* =====================================================
-                MOBILE APPOINTMENT CARDS
-            ===================================================== */}
-
-        <div className="space-y-4 lg:hidden">
-
-          {loading ? (
-
-            <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
-
-              <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-[#eaf5fb] border-t-[#1976c8]" />
-
-              <p className="mt-3 text-sm text-gray-500">
-                Loading appointments...
+              <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                Total Appointments
               </p>
 
+              <h3 className="!m-0 !text-[28px] !font-bold !text-[#294b68]">
+                {totalAppointments}
+              </h3>
+
             </div>
 
-          ) : filteredAppointments.length > 0 ? (
+            <div className="!flex !h-11 !w-11 !items-center !justify-center !rounded-xl !bg-[#eef6fc] !text-[#1976c8]">
 
-              filteredAppointments.map(
-                (appointment) => (
+              <CalendarDays
+                size={21}
+              />
 
-                        <div
-                          key={appointment.id}
-                          className="group relative overflow-hidden rounded-2xl border border-[#e5edf3] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#cfe5f5] hover:shadow-[0_12px_30px_rgba(25,118,200,0.12)]"
-                        >
+            </div>
+
+          </div>
+
+        </div>
 
 
-                          {/* TOP */}
+        {/* PENDING */}
 
-                          <div className="flex items-start justify-between">
+        <div className="!rounded-xl !border !border-[#e7edf2] !bg-white !p-5 !shadow-[0_3px_15px_rgba(41,75,104,0.04)]">
 
-                            <div className="flex min-w-0 items-center gap-3">
+          <div className="!flex !items-center !justify-between h-[100px]">
 
-                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eaf5fb] text-[#1976c8] transition-all duration-300 group-hover:bg-[#1976c8] group-hover:text-white">
+            <div>
 
-                                <UserRound size={19} />
+              <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                Pending
+              </p>
 
-                              </div>
+              <h3 className="!m-0 !text-[28px] !font-bold !text-[#294b68]">
+                {pendingAppointments}
+              </h3>
 
-                              <div className="min-w-0">
+            </div>
 
-                                <h2 className="!text-base truncate font-bold text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8]">
-                                  {appointment.patient}
-                                </h2>
+            <div className="!flex !h-11 !w-11 !items-center !justify-center !rounded-xl !bg-amber-50 !text-amber-500">
 
-                                <p className="mt-0.5 truncate text-xs text-gray-400">
-                                  Appointment ID: {appointment.id}
-                                </p>
+              <Clock3
+                size={21}
+              />
 
-                              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* CONFIRMED */}
+
+        <div className="!rounded-xl !border !border-[#e7edf2] !bg-white !p-5 !shadow-[0_3px_15px_rgba(41,75,104,0.04)]">
+
+          <div className="!flex !items-center !justify-between h-[100px]">
+
+            <div>
+
+              <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                Confirmed
+              </p>
+
+              <h3 className="!m-0 !text-[28px] !font-bold !text-[#294b68]">
+                {confirmedAppointments}
+              </h3>
+
+            </div>
+
+            <div className="!flex !h-11 !w-11 !items-center !justify-center !rounded-xl !bg-blue-50 !text-blue-500">
+
+              <CheckCircle2
+                size={21}
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* CANCELLED */}
+
+        <div className="!rounded-xl !border !border-[#e7edf2] !bg-white !p-5 !shadow-[0_3px_15px_rgba(41,75,104,0.04)]">
+
+          <div className="!flex !items-center !justify-between h-[100px]">
+
+            <div>
+
+              <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                Cancelled
+              </p>
+
+              <h3 className="!m-0 !text-[28px] !font-bold !text-[#294b68]">
+                {cancelledAppointments}
+              </h3>
+
+            </div>
+
+            <div className="!flex !h-11 !w-11 !items-center !justify-center !rounded-xl !bg-red-50 !text-red-500">
+
+              <Ban
+                size={21}
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        {/* COMPLETED */}
+
+        <div className="!rounded-xl !border !border-[#e7edf2] !bg-white !p-5 !shadow-[0_3px_15px_rgba(41,75,104,0.04)]">
+
+          <div className="!flex !items-center !justify-between h-[100px] ">
+
+            <div>
+
+              <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                Completed
+              </p>
+
+              <h3 className="!m-0 !text-[28px] !font-bold !text-[#294b68]">
+                {completedAppointments}
+              </h3>
+
+          </div>
+
+            <div className="!flex !h-11 !w-11 !items-center !justify-center !rounded-xl !bg-green-50 !text-green-500">
+
+              <CheckCircle2
+                size={21}
+              />
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      {/* =================================================
+          SEARCH + FILTER
+      ================================================= */}
+
+      <div className="!sticky !top-0 !z-40 !mb-6 !rounded-xl !border !border-[#e7edf2] !bg-white !p-4 !shadow-[0_3px_15px_rgba(41,75,104,0.04)]">
+
+        <div className="!grid !grid-cols-1 !gap-3 md:!grid-cols-[1fr_180px_200px]">
+
+          {/* SEARCH */}
+
+          <div className="!relative">
+
+            <Search
+              size={17}
+              className="!absolute !left-4 !top-1/2 !-translate-y-1/2 !text-gray-400"
+            />
+
+            <input
+              type="text"
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Search patient, doctor, department, reason..."
+              className="!h-[46px] !w-full !rounded-xl !border !border-gray-200 !bg-[#fafcfd] !pl-11 !pr-4 !text-sm !text-gray-600 !outline-none transition focus:!border-[#1976c8] focus:!bg-white"
+            />
+
+          </div>
+
+          {/* STATUS */}
+
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value)
+            }
+            className="!h-[46px] !rounded-xl !border !border-gray-200 !bg-[#fafcfd] !px-4 !text-sm !text-gray-600 !outline-none focus:!border-[#1976c8]"
+          >
+            <option value="All">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Rescheduled">Rescheduled</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Completed">Completed</option>
+          </select>
+
+          {/* DEPARTMENT */}
+
+          <select
+            value={departmentFilter}
+            onChange={(event) =>
+              setDepartmentFilter(event.target.value)
+            }
+            className="!h-[46px] !rounded-xl !border !border-gray-200 !bg-[#fafcfd] !px-4 !text-sm !text-gray-600 !outline-none focus:!border-[#1976c8]"
+          >
+            {departments.map((department) => (
+              <option
+                key={department}
+                value={department}
+              >
+                {department === "All"
+                  ? "All Departments"
+                  : department}
+              </option>
+            ))}
+          </select>
+
+        </div>
+
+      </div>
+
+
+      {/* =================================================
+          APPOINTMENTS LIST
+      ================================================= */}
+
+      <div
+        ref={appointmentListRef}
+        className="!w-full !overflow-hidden !rounded-xl !border !border-[#e7edf2] !bg-white !shadow-[0_3px_15px_rgba(41,75,104,0.04)]"
+      >
+
+
+        {/* =================================================
+            DESKTOP TABLE
+        ================================================= */}
+
+        <div className="!hidden lg:!block h-[730px]">
+
+
+          {/* TABLE HEADER */}
+
+          <div className="!grid !grid-cols-[1.3fr_1.2fr_1.1fr_1.5fr_1fr_1fr_140px] !items-center !border-b !border-[#edf1f4] !bg-[#fafcfd] !px-5 !py-4">
+
+            <p className="!m-0 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+              Patient
+            </p>
+
+            <p className="!m-0 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+              Doctor
+            </p>
+
+            <p className="!m-0 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+              Department
+            </p>
+
+            <p className="!m-0 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+              Reason
+            </p>
+
+            <p className="!m-0 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+              Date
+            </p>
+
+            <p className="!m-0 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+              Status
+            </p>
+
+            <p className="!m-0 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400 !text-right">
+              Action
+            </p>
+
+          </div>
+
+
+          {/* TABLE BODY */}
+
+          <div className="!h-[640px] !overflow-y-auto">
+
+            {filteredAppointments.length ===
+              0 ? (
+
+                <div className="!flex !h-[400px] !items-center !justify-center">
+
+                  <div className="!text-center">
+
+                    <CalendarDays
+                      size={40}
+                      className="!mx-auto !mb-3 !text-gray-300"
+                    />
+
+                    <p className="!m-0 !text-sm !font-medium !text-gray-500">
+                      No appointments found
+                    </p>
+
+                    <p className="!mb-0 !mt-1 !text-xs !text-gray-400">
+                      Try changing your search
+                      or filters.
+                    </p>
+
+                  </div>
+
+                </div>
+
+            ) : (
+
+                filteredAppointments.map(
+                  (appointment) => {
+
+                    const status =
+                      statusStyle[
+                      appointment.status
+                      ] ||
+                      statusStyle.Pending;
+
+                    return (
+
+                      <div
+                        key={
+                          appointment.id
+                        }
+                        className="!grid !grid-cols-[1.3fr_1.2fr_1.1fr_1.5fr_1fr_1fr_140px] !items-center !border-b !border-[#edf1f4] !px-5 !py-4 transition hover:!bg-[#fbfdff]"
+                      >
+
+
+                        {/* PATIENT */}
+
+                        <div className="!min-w-0">
+
+                          <div className="!flex !items-center !gap-3">
+
+                            <div className="!flex !h-9 !w-9 !shrink-0 !items-center !justify-center !rounded-xl !bg-[#eef6fc] !text-[#1976c8]">
+
+                              <UserRound
+                                size={16}
+                              />
 
                             </div>
 
+                            <div className="!min-w-0">
 
-                            {/* ACTION */}
+                              <p className="!m-0 !truncate !text-sm !font-semibold !text-[#294b68]">
+                                {
+                                  appointment.patient
+                                }
+                              </p>
 
-                            <button
-                              type="button"
-                              data-appointment-menu
-                              onClick={(event) =>
-                                handleMenuClick(
-                                  event,
-                                  appointment.id
-                                )
-                              }
-                              className="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#1976c8]"
-                            >
+                              <p className="!mb-0 !mt-1 !truncate !text-xs !text-gray-400">
+                                {
+                                  appointment.phone
+                                }
+                              </p>
 
-                              <MoreVertical size={18} />
+                            </div>
 
-                            </button>
+                          </div>
+
+                        </div>
+
+
+                        {/* DOCTOR */}
+
+                        <div className="!flex !items-center !gap-2">
+
+                          <Stethoscope
+                            size={15}
+                            className="!shrink-0 !text-[#1976c8]"
+                          />
+
+                          <span className="!truncate !text-sm !font-medium !text-gray-600">
+                            {
+                              appointment.doctor
+                            }
+                          </span>
+
+                        </div>
+
+
+                        {/* DEPARTMENT */}
+
+                        <div className="!min-w-0">
+
+                          <span className="!block !truncate !text-sm !text-gray-500">
+                            {
+                              appointment.department
+                            }
+                          </span>
+
+                        </div>
+
+
+                        {/* REASON */}
+
+                        <div className="!min-w-0">
+
+                          <p
+                            title={
+                              appointment.reason
+                            }
+                            className="!m-0 !truncate !text-sm !text-gray-500"
+                          >
+                            {
+                              appointment.reason ||
+                              "No reason provided"
+                            }
+                          </p>
+
+                        </div>
+
+
+                        {/* DATE */}
+
+                        <div>
+
+                          <p className="!m-0 !text-sm !font-medium !text-gray-600">
+                            {
+                              appointment.date
+                            }
+                          </p>
+
+                          <p className="!mb-0 !mt-1 !text-xs !text-gray-400">
+                            {
+                              appointment.time
+                            }
+                          </p>
+
+                        </div>
+
+
+                        {/* STATUS */}
+
+                        <div>
+
+                          <span
+                            className={`!inline-flex !items-center !gap-2 !rounded-full !px-3 !py-1.5 !text-xs !font-semibold ${status.bg} ${status.text}`}
+                          >
+
+                            <span
+                              className={`!h-1.5 !w-1.5 !rounded-full ${status.dot}`}
+                            ></span>
+
+                            {
+                              appointment.status
+                            }
+
+                          </span>
+
+                        </div>
+
+
+                        {/* ACTION */}
+
+                        <div className="!flex !justify-end">
+
+                          <button
+                            type="button"
+                            data-appointment-menu
+                            onClick={(event) =>
+                              handleMenuClick(
+                                event,
+                                appointment.id
+                              )
+                            }
+                            className="!flex !h-9 !w-9 !items-center !justify-center !rounded-xl !border-0 !bg-transparent !text-gray-400 transition hover:!bg-[#eef6fc] hover:!text-[#1976c8]"
+                          >
+
+                            <MoreVertical
+                              size={18}
+                            />
+
+                          </button>
+
+                        </div>
+
+                      </div>
+
+                    );
+
+                  }
+                )
+
+            )}
+
+          </div>
+
+        </div>
+
+
+        {/* =================================================
+            MOBILE CARDS
+        ================================================= */}
+
+        <div className="!block lg:!hidden">
+
+          <div className="!max-h-[640px] !overflow-y-auto">
+
+            {filteredAppointments.length ===
+              0 ? (
+
+                <div className="!flex !h-[400px] !items-center !justify-center">
+
+                  <div className="!text-center">
+
+                    <CalendarDays
+                      size={40}
+                      className="!mx-auto !mb-3 !text-gray-300"
+                    />
+
+                    <p className="!m-0 !text-sm !font-medium !text-gray-500">
+                      No appointments found
+                    </p>
+
+                  </div>
+
+                </div>
+
+            ) : (
+
+                filteredAppointments.map(
+                  (appointment) => {
+
+                    const status =
+                      statusStyle[
+                      appointment.status
+                      ] ||
+                      statusStyle.Pending;
+
+                    return (
+
+                      <div
+                        key={
+                          appointment.id
+                        }
+                        className="!border-b !border-[#edf1f4] !p-5 last:!border-b-0"
+                      >
+
+
+                        {/* PATIENT HEADER */}
+
+                        <div className="!flex !items-start !justify-between !gap-3">
+
+                          <div className="!flex !min-w-0 !items-center !gap-3">
+
+                            <div className="!flex !h-10 !w-10 !shrink-0 !items-center !justify-center !rounded-xl !bg-[#eef6fc] !text-[#1976c8]">
+
+                              <UserRound
+                                size={17}
+                              />
+
+                            </div>
+
+                            <div className="!min-w-0">
+
+                              <p className="!m-0 !truncate !text-sm !font-semibold !text-[#294b68]">
+                                {
+                                  appointment.patient
+                                }
+                              </p>
+
+                              <p className="!mb-0 !mt-1 !truncate !text-xs !text-gray-400">
+                                {
+                                  appointment.phone
+                                }
+                              </p>
+
+                            </div>
 
                           </div>
 
 
+                          <button
+                            type="button"
+                            data-appointment-menu
+                            onClick={(event) =>
+                              handleMenuClick(
+                                event,
+                                appointment.id
+                              )
+                            }
+                            className="!flex !h-9 !w-9 !shrink-0 !items-center !justify-center !rounded-xl !border-0 !bg-transparent !text-gray-400 hover:!bg-[#eef6fc] hover:!text-[#1976c8]"
+                          >
+
+                            <MoreVertical
+                              size={18}
+                            />
+
+                          </button>
+
+                        </div>
+
+
+                        {/* INFORMATION GRID */}
+
+                        <div className="!mt-4 !grid !grid-cols-2 !gap-4">
+
+
                           {/* DOCTOR */}
 
-                          <div className="mt-5 flex items-center gap-3">
+                          <div>
 
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
+                            <p className="!mb-1 !text-[11px] !font-semibold !uppercase !tracking-wide !text-gray-400">
+                              Doctor
+                            </p>
 
-                              <Stethoscope size={15} />
-
-                            </div>
-
-                            <div className="min-w-0">
-
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                Doctor
-                              </p>
-
-                              <p className="mt-0.5 truncate text-sm font-semibold text-gray-600">
-                                {appointment.doctor}
-                              </p>
-
-                            </div>
+                            <p className="!m-0 !truncate !text-sm !font-medium !text-gray-600">
+                              {
+                                appointment.doctor
+                              }
+                            </p>
 
                           </div>
 
 
                           {/* DEPARTMENT */}
 
-                          <div className="mt-5 flex items-center gap-3">
+                          <div>
 
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f4f8fb] text-[#1976c8]">
+                            <p className="!mb-1 !text-[11px] !font-semibold !uppercase !tracking-wide !text-gray-400">
+                              Department
+                            </p>
 
-                              <ClipboardList size={15} />
-
-                            </div>
-
-                            <div className="min-w-0">
-
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                                Department
-                              </p>
-
-                              <p className="mt-0.5 truncate text-sm font-semibold text-gray-600">
-                                {appointment.department}
-                              </p>
-
-                            </div>
+                            <p className="!m-0 !truncate !text-sm !text-gray-600">
+                              {
+                                appointment.department
+                              }
+                            </p>
 
                           </div>
 
 
-                          {/* DATE + TIME */}
+                          {/* REASON */}
 
-                          <div className="mt-5 grid grid-cols-2 gap-3">
+                          <div className="!min-w-0">
 
-                            <div className="rounded-xl bg-[#f8fafc] p-3">
+                            <p className="!mb-1 !text-[11px] !font-semibold !uppercase !tracking-wide !text-gray-400">
+                              Reason
+                            </p>
 
-                              <div className="flex items-center gap-2 text-[#1976c8]">
-
-                                <CalendarDays size={15} />
-
-                                <span className="text-[10px] font-semibold uppercase">
-                                  Date
-                                </span>
-
-                              </div>
-
-                              <p className="mt-1 truncate text-xs font-semibold text-gray-600">
-                                {appointment.date}
-                              </p>
-
-                            </div>
-
-
-                            <div className="rounded-xl bg-[#f8fafc] p-3">
-
-                              <div className="flex items-center gap-2 text-[#1976c8]">
-
-                                <Clock3 size={15} />
-
-                                <span className="text-[10px] font-semibold uppercase">
-                                  Time
-                                </span>
-
-                              </div>
-
-                              <p className="mt-1 truncate text-xs font-semibold text-gray-600">
-                                {appointment.time}
-                              </p>
-
-                            </div>
-
-                          </div>
-
-
-                          {/* STATUS */}
-
-                          <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                              Status
-                            </span>
-
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[
-                                  appointment.status
-                                ]?.badge ||
-                                "bg-gray-100 text-gray-500"
-                                }`}
+                            <p
+                              title={
+                                appointment.reason
+                              }
+                              className="!m-0 !truncate !text-sm !text-gray-600"
                             >
-
-                              <span
-                                className={`h-1.5 w-1.5 rounded-full ${statusStyle[
-                                    appointment.status
-                                  ]?.dot ||
-                                  "bg-gray-400"
-                                  }`}
-                              />
-
-                              {appointment.status}
-
-                            </span>
+                              {
+                                appointment.reason ||
+                                "No reason provided"
+                              }
+                            </p>
 
                           </div>
 
 
-                          {/* BOTTOM ACCENT */}
+                          {/* DATE */}
 
-                          <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-[#1976c8] transition-all duration-300 group-hover:w-full" />
+                          <div>
+
+                            <p className="!mb-1 !text-[11px] !font-semibold !uppercase !tracking-wide !text-gray-400">
+                              Date
+                            </p>
+
+                            <p className="!m-0 !text-sm !font-medium !text-gray-600">
+                              {
+                                appointment.date
+                              }
+                            </p>
+
+                          </div>
+
+
+                          {/* TIME */}
+
+                          <div>
+
+                            <p className="!mb-1 !text-[11px] !font-semibold !uppercase !tracking-wide !text-gray-400">
+                              Time
+                            </p>
+
+                            <p className="!m-0 !text-sm !font-medium !text-gray-600">
+                              {
+                                appointment.time
+                              }
+                            </p>
+
+                          </div>
 
                         </div>
 
-                      )
-                    )
 
-            ) : (
+                        {/* STATUS */}
 
-                <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
+                        <div className="!mt-4">
 
-                  <ClipboardList
-                    size={40}
-                    className="mx-auto text-gray-300"
-                  />
+                          <span
+                            className={`!inline-flex !items-center !gap-2 !rounded-full !px-3 !py-1.5 !text-xs !font-semibold ${status.bg} ${status.text}`}
+                          >
 
-                  <h3 className="mt-4 !text-lg font-semibold text-[#294b68]">
-                    No appointments found
-                  </h3>
+                            <span
+                              className={`!h-1.5 !w-1.5 !rounded-full ${status.dot}`}
+                            ></span>
 
-                  <p className="mt-1 text-sm text-gray-500">
-                    Try changing your search or filters.
-                  </p>
+                            {
+                              appointment.status
+                            }
 
-                </div>
+                          </span>
 
-          )}
+                        </div>
+
+                      </div>
+
+                    );
+
+                  }
+                )
+
+            )}
+
+          </div>
 
         </div>
 
+      </div>
 
-        {/* =====================================================
-                ACTION MENU
-            ===================================================== */}
 
-        {openMenu &&
-          createPortal(
+      {/* =================================================
+          PORTAL ACTION MENU
+      ================================================= */}
 
-                  <div
-                    data-appointment-menu
-                    style={{
-                      position: "fixed",
-                      top: menuPosition.top,
-                      left: menuPosition.left,
-                    }}
-                    className="z-[100] w-[195px] overflow-hidden rounded-xl border border-gray-100 bg-white p-1.5 shadow-[0_12px_35px_rgba(41,75,104,0.18)]"
+      {openMenu &&
+        createPortal(
+
+          <div
+            data-appointment-menu
+            className="!fixed !z-[100] !w-[190px] !rounded-xl !border !border-[#e5ebef] !bg-white !p-2 !shadow-[0_12px_35px_rgba(41,75,104,0.15)]"
+            style={{
+              top:
+                menuPosition.top,
+
+              left:
+                menuPosition.left,
+            }}
+          >
+
+            {(() => {
+
+              const appointment =
+                appointments.find(
+                  (item) =>
+                    item.id ===
+                    openMenu
+                );
+
+              if (!appointment) {
+                return null;
+              }
+
+              return (
+                <>
+
+
+                  {/* VIEW */}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleViewAppointment(
+                        appointment
+                      )
+                    }
+                    className="!flex !w-full !items-center !gap-3 !rounded-lg !px-3 !py-2.5 !text-sm !font-medium !text-gray-600 transition hover:!bg-[#f5f9fd] hover:!text-[#1976c8]"
                   >
 
-                    {(() => {
+                    <Eye
+                      size={16}
+                    />
 
-                      const appointment =
-                        appointments.find(
-                          (item) =>
-                                    item.id ===
-                                    openMenu
-                                );
+                    View Details
 
-                      if (!appointment) {
-                        return null;
+                  </button>
+
+
+                  {/* CONFIRM */}
+
+                  {appointment.status ===
+                    "Pending" && (
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleConfirmAppointment(
+                          appointment.id
+                        )
                       }
+                      className="!flex !w-full !items-center !gap-3 !rounded-lg !px-3 !py-2.5 !text-sm !font-medium !text-blue-600 transition hover:!bg-blue-50"
+                    >
 
-                      return (
-                        <>
+                      <Check
+                        size={16}
+                      />
 
-                                {/* VIEW */}
+                      Confirm Appointment
 
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleViewAppointment(
-                                      appointment
-                                    )
-                                  }
-                                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-[#eaf5fb] hover:text-[#1976c8]"
-                                >
+                    </button>
 
-                                  <Eye size={16} />
-
-                                  View Details
-
-                                </button>
+                    )}
 
 
-                                {/* CONFIRM */}
+                  {/* COMPLETE */}
 
-                                {appointment.status ===
-                                  "Pending" && (
+                  {appointment.status ===
+                    "Confirmed" && (
 
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleConfirmAppointment(
-                                        appointment.id
-                                      )
-                                    }
-                                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-green-50 hover:text-green-600"
-                                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCompleteAppointment(
+                          appointment.id
+                        )
+                      }
+                      className="!flex !w-full !items-center !gap-3 !rounded-lg !px-3 !py-2.5 !text-sm !font-medium !text-green-600 transition hover:!bg-green-50"
+                    >
 
-                                    <Check size={16} />
+                      <CheckCircle2
+                        size={16}
+                      />
 
-                                    Confirm
+                      Mark Completed
 
-                                  </button>
+                    </button>
 
-                                  )}
-
-
-                                {/* COMPLETE */}
-
-                                {appointment.status ===
-                                  "Confirmed" && (
-
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleCompleteAppointment(
-                                        appointment.id
-                                      )
-                                    }
-                                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-blue-50 hover:text-[#1976c8]"
-                                  >
-
-                                    <CheckCircle2
-                                      size={16}
-                                    />
-
-                                    Mark Completed
-
-                                  </button>
-
-                                  )}
+                    )}
 
 
-                                {/* DELETE */}
+                  {/* CANCEL */}
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
+                  {[
+                    "Pending",
+                    "Confirmed",
+                  ].includes(
+                    appointment.status
+                  ) && (
 
-                                          setDeleteAppointment(
-                                            appointment
-                                          );
+                      <button
+                        type="button"
+                        onClick={() => {
 
-                                          setOpenMenu(
-                                            null
-                                          );
+                          setCancelAppointment(
+                            appointment
+                          );
 
-                                  }}
-                                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50"
-                                >
+                          setCancellationReason(
+                            ""
+                          );
 
-                                  <Trash2 size={16} />
+                          setOpenMenu(
+                            null
+                          );
 
-                                  Delete
+                        }}
+                        className="!flex !w-full !items-center !gap-3 !rounded-lg !px-3 !py-2.5 !text-sm !font-medium !text-red-500 transition hover:!bg-red-50"
+                      >
 
-                                </button>
+                        <Ban
+                          size={16}
+                        />
 
-                              </>
-                            );
+                        Cancel Appointment
 
-                    })()}
+                      </button>
 
-                  </div>,
-
-                  document.body
-
-          )}
-
-
-        {/* =====================================================
-                VIEW DETAILS MODAL
-            ===================================================== */}
-
-        {showDetails &&
-          selectedAppointment && (
-
-          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
-
-            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+                    )}
 
 
-              {/* HEADER */}
+                  {/* DELETE */}
 
-              <div className="flex items-start justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
 
-                <div>
+                      setDeleteAppointment(
+                        appointment
+                      );
 
-                  <h2 className="!text-lg font-bold text-[#294b68]">
-                    Appointment Details
-                  </h2>
+                      setOpenMenu(
+                        null
+                      );
 
-                  <p className="mt-1 text-sm text-gray-500">
-                    Appointment #
-                    {selectedAppointment.id}
-                  </p>
+                    }}
+                    className="!flex !w-full !items-center !gap-3 !rounded-lg !px-3 !py-2.5 !text-sm !font-medium !text-red-500 transition hover:!bg-red-50"
+                  >
 
-                </div>
+                    <Trash2
+                      size={16}
+                    />
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowDetails(false)
-                  }
-                  className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#294b68]"
-                >
+                    Delete
 
-                  <X size={19} />
+                  </button>
 
-                </button>
+                </>
+              );
+
+            })()}
+
+          </div>,
+
+          document.body
+
+        )}
+
+
+      {/* =================================================
+          VIEW DETAILS MODAL
+      ================================================= */}
+
+      {showDetails &&
+        selectedAppointment && (
+
+        <div className="!fixed !inset-0 !z-[110] !flex !items-center !justify-center !bg-[#102a43]/40 !p-4 !backdrop-blur-sm">
+
+          <div className="!max-h-[90vh] !w-full !max-w-2xl !overflow-y-auto !rounded-2xl !border !border-[#dcebf5] !bg-white !shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+
+
+            {/* MODAL HEADER */}
+
+            <div className="!flex !items-center !justify-between !border-b !border-[#edf1f4] !px-6 !py-5">
+
+              <div>
+
+                <h2 className="!m-0 !text-lg !font-bold !text-[#294b68]">
+                  Appointment Details
+                </h2>
+
+                <p className="!mb-0 !mt-1 !text-xs !text-gray-400">
+                  Complete appointment information
+                </p>
 
               </div>
 
+              <button
+                type="button"
+                onClick={() =>
+                  setShowDetails(
+                    false
+                  )
+                }
+                className="!flex !h-9 !w-9 !items-center !justify-center !rounded-xl !border-0 !bg-gray-50 !text-gray-400 transition hover:!bg-gray-100 hover:!text-gray-600"
+              >
 
-              {/* DETAILS */}
+                <X
+                  size={18}
+                />
 
-              <div className="mt-6 space-y-4">
+              </button>
 
-
-                {/* PATIENT */}
-
-                <div>
-
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Patient
-                  </p>
-
-                  <p className="mt-1 font-semibold text-[#294b68]">
-                    {
-                      selectedAppointment.patient
-                    }
-                  </p>
-
-                </div>
+            </div>
 
 
-                {/* PHONE */}
+            {/* MODAL BODY */}
 
-                {selectedAppointment.phone && (
+            <div className="!space-y-5 !p-6">
+
+
+              {/* PATIENT */}
+
+              <div className="!rounded-xl !bg-[#f8fbfd] !p-4">
+
+                <div className="!flex !items-center !gap-3">
+
+                  <div className="!flex !h-11 !w-11 !items-center !justify-center !rounded-xl !bg-[#eef6fc] !text-[#1976c8]">
+
+                    <UserRound
+                      size={19}
+                    />
+
+                  </div>
 
                   <div>
 
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Phone
+                    <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                      Patient
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-600">
+                    <p className="!m-0 !text-sm !font-bold !text-[#294b68]">
                       {
-                        selectedAppointment.phone
+                        selectedAppointment.patient
                       }
                     </p>
 
                   </div>
 
-                )}
+                </div>
+
+              </div>
+
+
+              {/* INFORMATION GRID */}
+
+              <div className="!grid !grid-cols-1 !gap-4 sm:!grid-cols-2">
 
 
                 {/* DOCTOR */}
 
-                <div>
+                <div className="!rounded-xl !border !border-[#edf1f4] !p-4">
 
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Doctor
-                  </p>
+                  <div className="!flex !items-center !gap-3">
 
-                  <p className="mt-1 text-sm text-gray-600">
-                    {
-                      selectedAppointment.doctor
-                    }
-                  </p>
+                    <Stethoscope
+                      size={18}
+                      className="!text-[#1976c8]"
+                    />
+
+                    <div>
+
+                      <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                        Doctor
+                      </p>
+
+                      <p className="!m-0 !text-sm !font-semibold !text-[#294b68]">
+                        {
+                          selectedAppointment.doctor
+                        }
+                      </p>
+
+                    </div>
+
+                  </div>
 
                 </div>
 
 
                 {/* DEPARTMENT */}
 
-                <div>
+                <div className="!rounded-xl !border !border-[#edf1f4] !p-4">
 
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                    Department
-                  </p>
+                  <div className="!flex !items-center !gap-3">
 
-                  <p className="mt-1 text-sm text-gray-600">
-                    {
-                      selectedAppointment.department
-                    }
-                  </p>
+                    <ClipboardList
+                      size={18}
+                      className="!text-[#1976c8]"
+                    />
 
-                </div>
+                    <div>
 
+                      <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                        Department
+                      </p>
 
-                {/* DATE + TIME */}
+                      <p className="!m-0 !text-sm !font-semibold !text-[#294b68]">
+                        {
+                          selectedAppointment.department
+                        }
+                      </p>
 
-                <div className="grid grid-cols-2 gap-3">
-
-                  <div className="rounded-xl bg-[#f6f9fc] p-3">
-
-                    <p className="text-xs text-gray-400">
-                      Date
-                    </p>
-
-                    <p className="mt-1 text-sm font-semibold text-[#294b68]">
-                      {
-                        selectedAppointment.date
-                      }
-                    </p>
-
-                  </div>
-
-
-                  <div className="rounded-xl bg-[#f6f9fc] p-3">
-
-                    <p className="text-xs text-gray-400">
-                      Time
-                    </p>
-
-                    <p className="mt-1 text-sm font-semibold text-[#294b68]">
-                      {
-                        selectedAppointment.time
-                      }
-                    </p>
+                    </div>
 
                   </div>
 
                 </div>
 
 
-                {/* REASON */}
+                {/* DATE */}
 
-                {selectedAppointment.reason && (
+                <div className="!rounded-xl !border !border-[#edf1f4] !p-4">
 
-                  <div>
+                  <div className="!flex !items-center !gap-3">
 
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Reason
-                    </p>
+                    <CalendarDays
+                      size={18}
+                      className="!text-[#1976c8]"
+                    />
 
-                    <p className="mt-1 text-sm leading-6 text-gray-600">
-                      {
-                        selectedAppointment.reason
-                      }
-                    </p>
+                    <div>
 
-                  </div>
+                      <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                        Date
+                      </p>
 
-                )}
+                      <p className="!m-0 !text-sm !font-semibold !text-[#294b68]">
+                        {
+                          selectedAppointment.date
+                        }
+                      </p>
 
-
-                {/* NOTES */}
-
-                {selectedAppointment.notes && (
-
-                  <div>
-
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      Notes
-                    </p>
-
-                    <p className="mt-1 text-sm leading-6 text-gray-600">
-                      {
-                        selectedAppointment.notes
-                      }
-                    </p>
+                    </div>
 
                   </div>
 
-                )}
+                </div>
+
+
+                {/* TIME */}
+
+                <div className="!rounded-xl !border !border-[#edf1f4] !p-4">
+
+                  <div className="!flex !items-center !gap-3">
+
+                    <Clock3
+                      size={18}
+                      className="!text-[#1976c8]"
+                    />
+
+                    <div>
+
+                      <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                        Time
+                      </p>
+
+                      <p className="!m-0 !text-sm !font-semibold !text-[#294b68]">
+                        {
+                          selectedAppointment.time
+                        }
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* PHONE */}
+
+                <div className="!rounded-xl !border !border-[#edf1f4] !p-4">
+
+                  <div className="!flex !items-center !gap-3">
+
+                    <UserRound
+                      size={18}
+                      className="!text-[#1976c8]"
+                    />
+
+                    <div>
+
+                      <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                        Phone
+                      </p>
+
+                      <p className="!m-0 !text-sm !font-semibold !text-[#294b68]">
+                        {
+                          selectedAppointment.phone
+                        }
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
 
 
                 {/* STATUS */}
 
-                <div>
+                <div className="!rounded-xl !border !border-[#edf1f4] !p-4">
 
-                  <p className="text-xs text-gray-400">
+                  <p className="!mb-2 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
                     Status
                   </p>
 
-                  <span
-                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${statusStyle[
-                        selectedAppointment.status
-                      ]?.badge ||
-                      "bg-gray-100 text-gray-500"
-                      }`}
-                  >
+                  {(() => {
 
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${statusStyle[
-                          selectedAppointment.status
-                        ]?.dot ||
-                        "bg-gray-400"
-                        }`}
-                    />
-
-                    {
+                    const status =
+                      statusStyle[
                       selectedAppointment.status
-                    }
+                      ] ||
+                      statusStyle.Pending;
 
-                  </span>
+                    return (
+
+                      <span
+                        className={`!inline-flex !items-center !gap-2 !rounded-full !px-3 !py-1.5 !text-xs !font-semibold ${status.bg} ${status.text}`}
+                      >
+
+                        <span
+                          className={`!h-1.5 !w-1.5 !rounded-full ${status.dot}`}
+                        ></span>
+
+                        {
+                          selectedAppointment.status
+                        }
+
+                      </span>
+
+                    );
+
+                  })()}
 
                 </div>
 
               </div>
 
 
-              {/* CLOSE */}
+              {/* APPOINTMENT REASON */}
 
-              <div className="mt-6 flex justify-end">
+              <div className="!rounded-xl !bg-[#f8fbfd] !p-4">
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowDetails(false)
-                  }
-                  className="!rounded-xl bg-[#1976c8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1565a8]"
-                >
-                  Close
-                </button>
+                <div className="!flex !items-start !gap-3">
+
+                  <CircleAlert
+                    size={18}
+                    className="!mt-0.5 !shrink-0 !text-[#1976c8]"
+                  />
+
+                  <div>
+
+                    <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                      Appointment Reason
+                    </p>
+
+                    <p className="!m-0 !text-sm !leading-6 !text-gray-600">
+                      {
+                        selectedAppointment.reason ||
+                        "No reason provided"
+                      }
+                    </p>
+
+                  </div>
+
+                </div>
 
               </div>
+
+
+              {/* NOTES */}
+
+              {selectedAppointment.notes && (
+
+                <div className="!rounded-xl !bg-[#f8fbfd] !p-4">
+
+                  <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                    Notes
+                  </p>
+
+                  <p className="!m-0 !text-sm !leading-6 !text-gray-600">
+                    {
+                      selectedAppointment.notes
+                    }
+                  </p>
+
+                </div>
+
+              )}
+
+
+              {/* CANCELLATION REASON */}
+
+              {selectedAppointment.status ===
+                "Cancelled" && (
+
+                <div className="!rounded-xl !border !border-red-100 !bg-red-50 !p-4">
+
+                  <div className="!flex !items-start !gap-3">
+
+                    <div className="!flex !h-9 !w-9 !shrink-0 !items-center !justify-center !rounded-xl !bg-white !text-red-500">
+
+                      <Ban
+                        size={18}
+                      />
+
+                    </div>
+
+                    <div className="!min-w-0">
+
+                      <p className="!mb-1 !text-xs !font-semibold !uppercase !tracking-wide !text-red-400">
+                        Cancellation Reason
+                      </p>
+
+                      <p className="!m-0 !text-sm !leading-6 !text-red-600">
+
+                        {
+                          selectedAppointment.cancellationReason ||
+                          "No cancellation reason was provided."
+                        }
+
+                      </p>
+
+                      {selectedAppointment.cancelledAt && (
+
+                        <p className="!mb-0 !mt-2 !text-xs !text-red-400">
+
+                          Cancelled on{" "}
+
+                          {new Date(
+                            selectedAppointment.cancelledAt
+                          ).toLocaleString()}
+
+                        </p>
+
+                      )}
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                )}
+
+            </div>
+
+
+            {/* MODAL FOOTER */}
+
+            <div className="!flex !justify-end !border-t !border-[#edf1f4] !px-6 !py-4">
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowDetails(
+                    false
+                  )
+                }
+                className="!rounded-xl !border !border-gray-200 !bg-white !px-5 !py-2.5 !text-sm !font-semibold !text-gray-500 transition hover:!bg-gray-50"
+              >
+                Close
+              </button>
 
             </div>
 
           </div>
 
-          )}
-
-
-        {/* =====================================================
-                DELETE CONFIRMATION
-            ===================================================== */}
-
-        {deleteAppointment && (
-
-          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#102a43]/40 p-4 backdrop-blur-sm">
-
-            <div className="w-full max-w-md rounded-2xl border border-[#dcebf5] bg-white p-6 shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
-
-
-              {/* ICON */}
-
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
-
-                <Trash2 size={22} />
-
-              </div>
-
-
-              {/* TITLE */}
-
-              <h2 className="mt-4 !text-lg font-bold text-[#294b68]">
-                Delete Appointment?
-              </h2>
-
-
-              {/* MESSAGE */}
-
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-
-                Are you sure you want to
-                delete the appointment for{" "}
-
-                <span className="font-semibold text-[#294b68]">
-                  {
-                    deleteAppointment.patient
-                  }
-                </span>
-
-                ? This action cannot be
-                undone.
-
-              </p>
-
-
-              {/* BUTTONS */}
-
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDeleteAppointment(
-                      null
-                    )
-                  }
-                  className="!rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-
-
-                <button
-                  type="button"
-                  onClick={
-                    handleDeleteAppointment
-                  }
-                  className="!rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
-                >
-                  Delete Appointment
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
+        </div>
 
         )}
 
-      </div>
-    );
+
+      {/* =================================================
+          CANCEL APPOINTMENT MODAL
+      ================================================= */}
+
+      {cancelAppointment && (
+
+        <div className="!fixed !inset-0 !z-[125] !flex !items-center !justify-center !bg-[#102a43]/40 !p-4 !backdrop-blur-sm">
+
+          <div className="!w-full !max-w-md !rounded-2xl !border !border-[#dcebf5] !bg-white !p-6 !shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+
+
+            <div className="!flex !h-12 !w-12 !items-center !justify-center !rounded-xl !bg-red-50 !text-red-500">
+
+              <Ban
+                size={22}
+              />
+
+            </div>
+
+
+            <h2 className="!mt-4 !text-lg !font-bold !text-[#294b68]">
+              Cancel Appointment?
+            </h2>
+
+
+            <p className="!mt-2 !text-sm !leading-6 !text-gray-500">
+
+              Enter the reason for cancelling
+              the appointment for{" "}
+
+              <span className="!font-semibold !text-[#294b68]">
+                {
+                  cancelAppointment.patient
+                }
+              </span>
+              .
+
+              The patient will be able
+              to see this reason.
+
+            </p>
+
+
+            <div className="!mt-5">
+
+              <label className="!text-xs !font-semibold !uppercase !tracking-wide !text-gray-400">
+                Cancellation Reason
+              </label>
+
+              <textarea
+                value={
+                  cancellationReason
+                }
+                onChange={(event) =>
+                  setCancellationReason(
+                    event.target.value
+                  )
+                }
+                maxLength={500}
+                rows={4}
+                placeholder="Enter cancellation reason..."
+                className="!mt-2 !w-full !resize-none !rounded-xl !border !border-gray-200 !bg-[#fafcfd] !px-4 !py-3 !text-sm !text-gray-600 !outline-none transition focus:!border-[#1976c8] focus:!bg-white"
+              />
+
+              <div className="!mt-1 !text-right !text-xs !text-gray-400">
+
+                {
+                  cancellationReason.length
+                }
+                /500
+
+              </div>
+
+            </div>
+
+
+            <div className="!mt-6 !flex !flex-col-reverse !gap-3 sm:!flex-row sm:!justify-end">
+
+              <button
+                type="button"
+                onClick={() => {
+
+                  if (!cancelling) {
+
+                    setCancelAppointment(
+                      null
+                    );
+
+                    setCancellationReason(
+                      ""
+                    );
+
+                  }
+
+                }}
+                disabled={cancelling}
+                className="!rounded-xl !border !border-gray-200 !px-5 !py-2.5 !text-sm !font-semibold !text-gray-500 transition hover:!bg-gray-50 disabled:!cursor-not-allowed disabled:!opacity-60"
+              >
+                Keep Appointment
+              </button>
+
+
+              <button
+                type="button"
+                onClick={
+                  handleCancelAppointment
+                }
+                disabled={cancelling}
+                className="!rounded-xl !bg-red-500 !px-5 !py-2.5 !text-sm !font-semibold !text-white transition hover:!bg-red-600 disabled:!cursor-not-allowed disabled:!opacity-60"
+              >
+
+                {cancelling
+                  ? "Cancelling..."
+                  : "Cancel Appointment"}
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* =================================================
+          DELETE CONFIRMATION MODAL
+      ================================================= */}
+
+      {deleteAppointment && (
+
+        <div className="!fixed !inset-0 !z-[120] !flex !items-center !justify-center !bg-[#102a43]/40 !p-4 !backdrop-blur-sm">
+
+          <div className="!w-full !max-w-md !rounded-2xl !border !border-[#dcebf5] !bg-white !p-6 !shadow-[0_20px_60px_rgba(41,75,104,0.20)]">
+
+
+            <div className="!flex !h-12 !w-12 !items-center !justify-center !rounded-xl !bg-red-50 !text-red-500">
+
+              <Trash2
+                size={21}
+              />
+
+            </div>
+
+
+            <h2 className="!mt-4 !text-lg !font-bold !text-[#294b68]">
+              Delete Appointment?
+            </h2>
+
+
+            <p className="!mt-2 !text-sm !leading-6 !text-gray-500">
+
+              Are you sure you want to
+              permanently delete the appointment
+              for{" "}
+
+              <span className="!font-semibold !text-[#294b68]">
+                {
+                  deleteAppointment.patient
+                }
+              </span>
+              ?
+
+              This action cannot be undone.
+
+            </p>
+
+
+            <div className="!mt-6 !flex !flex-col-reverse !gap-3 sm:!flex-row sm:!justify-end">
+
+              <button
+                type="button"
+                onClick={() =>
+                  setDeleteAppointment(
+                    null
+                  )
+                }
+                className="!rounded-xl !border !border-gray-200 !px-5 !py-2.5 !text-sm !font-semibold !text-gray-500 transition hover:!bg-gray-50"
+              >
+                Keep Appointment
+              </button>
+
+
+              <button
+                type="button"
+                onClick={
+                  handleDeleteAppointment
+                }
+                className="!rounded-xl !bg-red-500 !px-5 !py-2.5 !text-sm !font-semibold !text-white transition hover:!bg-red-600"
+              >
+                Delete Appointment
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
+
+  );
+
 };
+
 
 export default Appointments;

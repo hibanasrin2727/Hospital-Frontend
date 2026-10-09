@@ -211,7 +211,7 @@ const Doctors = () => {
                   <Link
                     key={doctor._id}
                     to={`/doctors/${doctor._id}`}
-                    className="group flex min-h-[220px] items-center rounded-[4px] bg-white p-[30px] shadow-[0_4px_25px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(41,75,104,0.12)]"
+                    className="group !no-underline hover:!no-underline focus:!no-underline flex min-h-[220px] items-center rounded-[4px] bg-white p-[30px] shadow-[0_4px_25px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(41,75,104,0.12)]"
                   >
 
                     {/* ================= DOCTOR IMAGE ================= */}
@@ -237,29 +237,22 @@ const Doctors = () => {
                     <div className="ml-[30px] min-w-0">
 
                       {/* Name */}
-
-                      <h3 className="text-[20px]  font-bold leading-[1.3] text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8] md:text-[21px]">
+                      <h3 className="!no-underline text-[20px] font-bold leading-[1.3] text-[#294b68] transition-colors duration-300 group-hover:text-[#1976c8] md:text-[21px]">
                         {doctor.name}
                       </h3>
 
-
                       {/* Specialization */}
-
-                      <p className="mt-[5px] text-[14px] font-medium text-[#222]">
+                      <p className="!no-underline mt-[5px] text-[14px] font-medium text-[#222]">
                         {doctor.specialization ||
                           doctor.specialty ||
                           "Medical Specialist"}
                       </p>
 
-
                       {/* Divider */}
-
-                      <div className="mt-[13px] h-[1px] w-[50px] bg-[#dddddd]"></div>
-
+                      <div className="mb-[13px] h-[1px] w-[50px] bg-[#dddddd]"></div>
 
                       {/* Description */}
-
-                      <p className="mt-[12px] line-clamp-2 text-[14px] leading-[1.55] text-[#444]">
+                      <p className="!no-underline mt-[12px] line-clamp-2 text-[14px] leading-[1.55] text-[#444]">
                         {doctor.description ||
                           `${doctor.name} provides professional healthcare services to patients.`}
                       </p>

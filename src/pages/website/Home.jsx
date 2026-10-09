@@ -8,6 +8,8 @@ import FAQ from "./FAQ";
 import Gallery from "./Gallery";
 import Contact from "./Contact";
 import Stats from "./Stats";
+import Footer from "./Footer";
+
 
 
 
@@ -244,6 +246,10 @@ const Home = () => {
           CONTACT SECTION
           ===================================================== */}
       <Contact />
+
+      <Footer />
+
+
 
 
     </main>
